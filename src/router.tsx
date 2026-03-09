@@ -3,6 +3,7 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import Dashboard from './components/Dashboard';
 import Calendar from './components/Calendar';
 import TaskDetails from './components/TaskDetails';
+import EditEntry from './components/EditEntry';
 import CreateEntry from './components/CreateEntry';
 import Metrics from './components/Metrics';
 import ShoppingList from './components/ShoppingList';
@@ -57,6 +58,12 @@ export const taskDetailsRoute = createRoute({
   component: TaskDetails,
 });
 
+export const editEntryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/task/$taskId/edit',
+  component: EditEntry,
+});
+
 interface CreateEntrySearch {
   date?: string;
 }
@@ -80,6 +87,7 @@ const routeTree = rootRoute.addChildren([
     shoppingRoute,
   ]),
   taskDetailsRoute,
+  editEntryRoute,
   createEntryRoute,
 ]);
 

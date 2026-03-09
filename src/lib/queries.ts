@@ -116,6 +116,29 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
   return data;
 }
 
+export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
+
+export async function updateTask(taskId: string, input: UpdateTaskInput): Promise<Task> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      ...input,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', taskId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTask(taskId: string): Promise<void> {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', taskId);
+  if (error) throw error;
+}
 export async function completeTask(taskId: string): Promise<void> {
   // Get the task for points
   const task = await getTaskById(taskId);

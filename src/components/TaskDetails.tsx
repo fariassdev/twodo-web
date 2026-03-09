@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById } from '../lib/queries';
+import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById, deleteTask } from '../lib/queries';
 import type { Task, LoveNote, Profile } from '../lib/types';
 
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -13,7 +13,7 @@ export default function TaskDetails() {
   const [lastDoneByProfile, setLastDoneByProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
-
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     if (taskId) loadTask(taskId);
   }, [taskId]);
@@ -105,6 +105,43 @@ export default function TaskDetails() {
 
   return (
     <div className="flex flex-col min-h-screen pb-32">
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 flex justify-center">
+          <div 
+            className="absolute inset-0 bg-background-dark/60 backdrop-blur-[2px]" 
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="w-full max-w-md relative pointer-events-none">
+            <div className="absolute right-4 top-[60px] w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } });
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-slate-100 hover:bg-slate-700 transition-colors w-full text-left"
+              >
+                <span className="material-symbols-outlined text-slate-400">edit</span>
+                <span className="font-semibold text-sm">Editar</span>
+              </button>
+              <div className="h-px bg-slate-700/50 w-full" />
+              <button
+                onClick={async () => {
+                  if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
+                    setMenuOpen(false);
+                    setActing(true);
+                    await deleteTask(task.id);
+                    navigate({ to: '/' });
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-slate-700 transition-colors w-full text-left"
+              >
+                <span className="material-symbols-outlined">delete</span>
+                <span className="font-semibold text-sm">Eliminar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="flex items-center px-4 py-4 justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-10 max-w-md mx-auto w-full">
         <button onClick={() => navigate({ to: '/' })} className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
           <span className="material-symbols-outlined text-slate-100">arrow_back</span>
@@ -112,7 +149,10 @@ export default function TaskDetails() {
         <h2 className="text-lg font-bold flex-1 text-center">
           {task.type === 'event' ? 'Detalle de Evento' : 'Detalle de Tarea'}
         </h2>
-        <button className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
+        >
           <span className="material-symbols-outlined text-slate-100">more_vert</span>
         </button>
       </header>
@@ -131,6 +171,11 @@ export default function TaskDetails() {
               <span className="text-slate-400 text-xs font-medium">Asignada a: {assignedProfile.name}</span>
             )}
           </div>
+          {task.date && (
+            <p className="text-slate-400 text-sm font-medium mb-1 capitalize">
+              {new Date(task.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          )}
           <h1 className="text-3xl font-bold leading-tight mb-4">{task.title}</h1>
 
           <div className="flex flex-wrap gap-2">
@@ -182,22 +227,13 @@ export default function TaskDetails() {
                 <span className="material-symbols-outlined font-bold">check_circle</span>
                 {acting ? 'Procesando...' : 'Marcar como completada'}
               </button>
-              <div className="flex gap-3">
-                <button
-                  onClick={handlePostpone}
-                  disabled={acting}
-                  className="flex-1 bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center disabled:opacity-50"
-                >
-                  Posponer
-                </button>
-                <button
-                  onClick={() => navigate({ to: '/create' })}
-                  className="flex-1 bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined">edit</span>
-                  <span>Editar</span>
-                </button>
-              </div>
+              <button
+                onClick={handlePostpone}
+                disabled={acting}
+                className="w-full bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center disabled:opacity-50"
+              >
+                Posponer
+              </button>
             </div>
           )}
         </div>
