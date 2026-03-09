@@ -7,11 +7,18 @@ import { useNavigate } from '@tanstack/react-router';
 export default function Calendar() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const saved = localStorage.getItem('calendarSelectedDate');
+    return saved ? new Date(saved) : new Date();
+  });
   const [monthTasks, setMonthTasks] = useState<Task[]>([]);
   const [dayTasks, setDayTasks] = useState<Task[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem('calendarSelectedDate', selectedDate.toISOString());
+  }, [selectedDate]);
 
   useEffect(() => {
     getProfiles().then(setProfiles).catch(console.error);
