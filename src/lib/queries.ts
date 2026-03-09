@@ -213,14 +213,45 @@ export async function completeTask(taskId: string): Promise<void> {
   if (updateError) throw updateError;
 
   // Record completion
-  const { error: completionError } = await supabase
-    .from('task_completions')
-    .insert({
-      task_id: taskId,
-      completed_by: CURRENT_USER_ID,
-      points_earned: task.points,
-    });
-  if (completionError) throw completionError;
+  if (task.assignment_type === 'team_work') {
+    const profiles = await getProfiles();
+    if (profiles.length === 2) {
+      const halfPoints = Math.floor(task.points / 2);
+      const { error: completionError } = await supabase
+        .from('task_completions')
+        .insert([
+          {
+            task_id: taskId,
+            completed_by: profiles[0].id,
+            points_earned: halfPoints,
+          },
+          {
+            task_id: taskId,
+            completed_by: profiles[1].id,
+            points_earned: task.points - halfPoints,
+          }
+        ]);
+      if (completionError) throw completionError;
+    } else {
+      const { error: completionError } = await supabase
+        .from('task_completions')
+        .insert({
+          task_id: taskId,
+          completed_by: CURRENT_USER_ID,
+          points_earned: task.points,
+        });
+      if (completionError) throw completionError;
+    }
+  } else {
+    const { error: completionError } = await supabase
+      .from('task_completions')
+      .insert({
+        task_id: taskId,
+        completed_by: CURRENT_USER_ID,
+        points_earned: task.points,
+      });
+    if (completionError) throw completionError;
+  }
 }
 
 export async function postponeTask(taskId: string): Promise<void> {

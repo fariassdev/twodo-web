@@ -170,13 +170,11 @@ export default function TaskDetails() {
                   if (task.recurrence_id) {
                     setMenuOpen(false);
                     setDeleteModalOpen(true);
-                  } else {
-                    if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
-                      setMenuOpen(false);
-                      setActing(true);
-                      await deleteTask(task.id);
-                      navigate({ to: '/' });
-                    }
+                  } else if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
+                    setMenuOpen(false);
+                    setActing(true);
+                    await deleteTask(task.id);
+                    navigate({ to: '/' });
                   }
                 }}
                 className="flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-slate-700 transition-colors w-full text-left"

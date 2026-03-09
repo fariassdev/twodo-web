@@ -174,7 +174,7 @@ export default function Calendar() {
                   <div className="absolute bottom-1.5 flex items-center gap-0.5">
                     {dots.slice(0, 3).map((type, idx) => (
                       <div
-                        key={idx}
+                        key={`${type}-${idx}`}
                         className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : type === 'task' ? 'bg-[var(--color-dot-task)]' : 'bg-[var(--color-dot-event)]'}`}
                       ></div>
                     ))}
