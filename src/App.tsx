@@ -12,13 +12,16 @@ type Screen = 'dashboard' | 'calendar' | 'details' | 'create' | 'metrics' | 'sho
 export default function App() {
   const [screen, setScreen] = useState<Screen>('dashboard');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
   // A counter to force refetch when data changes
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const navigate = (s: string, taskId?: string) => {
+  const navigate = (s: string, taskId?: string, dateStr?: string) => {
     if (taskId) setSelectedTaskId(taskId);
+    if (dateStr) setSelectedDateStr(dateStr);
     setScreen(s as Screen);
   };
+
 
   const navigateWithRefresh = (s: string) => {
     setRefreshKey((k) => k + 1);
@@ -30,7 +33,7 @@ export default function App() {
       {screen === 'dashboard' && <Dashboard key={refreshKey} onNavigate={navigate} />}
       {screen === 'calendar' && <Calendar key={refreshKey} onNavigate={navigate} />}
       {screen === 'details' && <TaskDetails taskId={selectedTaskId} onNavigate={navigate} onDataChange={navigateWithRefresh} />}
-      {screen === 'create' && <CreateEntry onNavigate={navigate} onCreated={() => navigateWithRefresh('dashboard')} />}
+      {screen === 'create' && <CreateEntry onNavigate={navigate} onCreated={() => navigateWithRefresh('dashboard')} initialDate={selectedDateStr} />}
       {screen === 'metrics' && <Metrics key={refreshKey} />}
       {screen === 'shopping' && <ShoppingList key={refreshKey} />}
 

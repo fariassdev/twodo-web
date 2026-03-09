@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getTasksForMonth, getTasksForDate } from '../lib/queries';
-import type { Task } from '../lib/types';
+import { getTasksForMonth, getTasksForDate, getProfiles } from '../lib/queries';
+import type { Task, Profile } from '../lib/types';
 
 interface CalendarProps {
   key?: React.Key;
-  onNavigate: (screen: string, taskId?: string) => void;
+  onNavigate: (screen: string, taskId?: string, dateStr?: string) => void;
 }
 
 export default function Calendar({ onNavigate }: CalendarProps) {
@@ -12,7 +12,12 @@ export default function Calendar({ onNavigate }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [monthTasks, setMonthTasks] = useState<Task[]>([]);
   const [dayTasks, setDayTasks] = useState<Task[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProfiles().then(setProfiles).catch(console.error);
+  }, []);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -39,7 +44,7 @@ export default function Calendar({ onNavigate }: CalendarProps) {
 
   async function loadDay() {
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
       const tasks = await getTasksForDate(dateStr);
       setDayTasks(tasks);
     } catch (err) {
@@ -91,12 +96,11 @@ export default function Calendar({ onNavigate }: CalendarProps) {
   }
 
   // Map task dates for dots
-  const taskDateMap = new Map<string, { hasTask: boolean; hasEvent: boolean }>();
+  const taskDateMap = new Map<string, string[]>();
   for (const t of monthTasks) {
     if (!t.date) continue;
-    const existing = taskDateMap.get(t.date) || { hasTask: false, hasEvent: false };
-    if (t.type === 'task') existing.hasTask = true;
-    if (t.type === 'event') existing.hasEvent = true;
+    const existing = taskDateMap.get(t.date) || [];
+    existing.push(t.type);
     taskDateMap.set(t.date, existing);
   }
 
@@ -161,10 +165,14 @@ export default function Calendar({ onNavigate }: CalendarProps) {
                 }`}
               >
                 <span className="text-sm font-medium">{cd.day}</span>
-                {dots && cd.isCurrentMonth && (
-                  <div className="absolute bottom-2 flex gap-0.5">
-                    {dots.hasTask && <div className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : 'bg-primary'}`}></div>}
-                    {dots.hasEvent && <div className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : 'bg-blue-400'}`}></div>}
+                {dots && dots.length > 0 && cd.isCurrentMonth && (
+                  <div className="absolute bottom-1.5 flex items-center gap-0.5">
+                    {dots.slice(0, 3).map((type, idx) => (
+                      <div
+                        key={idx}
+                        className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : type === 'task' ? 'bg-[var(--color-dot-task)]' : 'bg-[var(--color-dot-event)]'}`}
+                      ></div>
+                    ))}
                   </div>
                 )}
               </button>
@@ -176,7 +184,7 @@ export default function Calendar({ onNavigate }: CalendarProps) {
       <div className="flex-1 bg-slate-900/40 rounded-t-xl p-4 shadow-2xl border-t border-slate-800 overflow-y-auto max-w-md mx-auto w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
-          <button onClick={() => onNavigate('create')} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
+          <button onClick={() => onNavigate('create', undefined, selectedStr)} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
         </div>
         <div className="space-y-3">
           {dayTasks.length === 0 && (
@@ -186,26 +194,47 @@ export default function Calendar({ onNavigate }: CalendarProps) {
             <div
               key={task.id}
               onClick={() => onNavigate('details', task.id)}
-              className="flex gap-4 p-4 bg-slate-800/60 rounded-xl border border-transparent hover:border-primary/30 transition-all cursor-pointer"
+              className="flex items-center gap-4 p-4 bg-slate-800/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer"
             >
-              <div className={`flex flex-col items-center justify-center rounded-lg px-3 py-1 h-fit ${
-                task.type === 'event' ? 'bg-primary/20 text-primary' : 'bg-blue-400/20 text-blue-400'
-              }`}>
-                <span className="text-xs font-bold">
-                  {task.date ? new Date(task.date + 'T00:00:00').toLocaleString('es-ES', { month: 'short' }).toUpperCase() : ''}
-                </span>
-                <span className="text-lg font-bold">
-                  {task.date ? String(new Date(task.date + 'T00:00:00').getDate()).padStart(2, '0') : ''}
-                </span>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-sm">{task.title}</h4>
-                <p className="text-xs text-slate-400 mt-1">
+              {/* Status Icon */}
+              {task.status === 'completed' ? (
+                <div className="w-12 h-12 shrink-0 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-500 filled-icon text-[28px]">check_circle</span>
+                </div>
+              ) : task.status === 'postponed' ? (
+                <div className="w-12 h-12 shrink-0 rounded-2xl bg-orange-500/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-orange-500 filled-icon text-[28px]">more_horiz</span>
+                </div>
+              ) : (
+                <div className="w-12 h-12 shrink-0 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full border-[3px] border-blue-400"></div>
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-base text-slate-100 truncate mb-0.5">{task.title}</h4>
+                <p className="text-sm text-slate-400 truncate flex items-center gap-1">
                   {task.start_time && (
-                    <><span className="material-symbols-outlined text-[12px] align-middle">schedule</span> {task.start_time.slice(0, 5)}</>
+                    <><span className="material-symbols-outlined text-[16px]">schedule</span> {task.start_time.slice(0, 5)}</>
                   )}
-                  {task.location && <> • <span className="text-primary font-medium">{task.location}</span></>}
+                  {task.start_time && task.location && <span className="mx-0.5">•</span>}
+                  {task.location && (
+                    <span className={task.start_time ? "text-emerald-400" : ""}>{task.location}</span>
+                  )}
                 </p>
+              </div>
+
+              {/* Avatars */}
+              <div className="shrink-0 flex -space-x-2">
+                {task.assignment_type === 'team_work' ? (
+                  profiles.map(p => (
+                    <img key={p.id} src={p.avatar_url || ''} className="w-7 h-7 rounded-full border-[1.5px] border-slate-800 bg-slate-700 object-cover" alt={p.name} />
+                  ))
+                ) : (
+                  profiles.filter(p => p.id === task.assigned_to).map(p => (
+                    <img key={p.id} src={p.avatar_url || ''} className="w-7 h-7 rounded-full border-[1.5px] border-slate-800 bg-slate-700 object-cover" alt={p.name} />
+                  ))
+                )}
               </div>
             </div>
           ))}

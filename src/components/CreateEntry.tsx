@@ -5,11 +5,12 @@ import type { CreateTaskInput } from '../lib/queries';
 interface CreateEntryProps {
   onNavigate: (screen: string) => void;
   onCreated: () => void;
+  initialDate?: string | null;
 }
 
-export default function CreateEntry({ onNavigate, onCreated }: CreateEntryProps) {
+export default function CreateEntry({ onNavigate, onCreated, initialDate }: CreateEntryProps) {
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [points, setPoints] = useState(10);
   const [priority, setPriority] = useState<'critical' | 'flexible'>('critical');
   const [isRecurring, setIsRecurring] = useState(false);
