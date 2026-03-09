@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById, deleteTask, deleteTaskSeries } from '../lib/queries';
 import type { Task, LoveNote, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 import { useNavigate, useParams } from '@tanstack/react-router';
 
@@ -163,64 +164,50 @@ export default function TaskDetails() {
         </div>
       )}
 
-      {menuOpen && !deleteModalOpen && (
-        <div className="fixed inset-0 z-40 flex justify-center">
-          <div 
-            className="absolute inset-0 bg-background-dark/60 backdrop-blur-[2px]" 
-            onClick={() => setMenuOpen(false)}
-          />
-          <div className="w-full max-w-md relative pointer-events-none">
-            <div className="absolute right-4 top-[60px] w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto z-50">
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } });
-                }}
-                className="flex items-center gap-3 px-4 py-3 text-slate-100 hover:bg-slate-700 transition-colors w-full text-left"
-              >
-                <span className="material-symbols-outlined text-slate-400">edit</span>
-                <span className="font-semibold text-sm">{t('taskDetails.edit')}</span>
-              </button>
-              <div className="h-px bg-slate-700/50 w-full" />
-              <button
-                onClick={async () => {
-                  if (task.recurrence_id) {
-                    setMenuOpen(false);
-                    setDeleteModalOpen(true);
-                  } else if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-                    setMenuOpen(false);
-                    setActing(true);
-                    await deleteTask(task.id);
-                    navigate({ to: '/' });
-                  }
-                }}
-                className="flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-slate-700 transition-colors w-full text-left"
-              >
-                <span className="material-symbols-outlined">delete</span>
-                <span className="font-semibold text-sm">{t('taskDetails.delete')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      <header className="flex items-center px-4 py-4 justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-10 max-w-md mx-auto w-full">
-        <button onClick={() => navigate({ to: '/' })} className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
-          <span className="material-symbols-outlined text-slate-100">arrow_back</span>
-        </button>
-        <h2 className="text-lg font-bold flex-1 text-center">
-          {task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
-        </h2>
-        {!task.deleted_at ? (
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-slate-100">more_vert</span>
-          </button>
-        ) : (
-          <div className="size-10 flex shrink-0" />
-        )}
-      </header>
+      <TopBar
+        title={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
+        titleIcon={task.type === 'event' ? 'event' : 'task_alt'}
+        leftAction={{
+          ariaLabel: t('topBar.back'),
+          icon: 'arrow_back',
+          onClick: () => navigate({ to: '/' }),
+        }}
+        rightMenu={!task.deleted_at ? {
+          ariaLabel: t('topBar.openMenu'),
+          closeAriaLabel: t('topBar.closeMenu'),
+          open: menuOpen,
+          onOpenChange: setMenuOpen,
+          items: [
+            {
+              id: 'edit-task',
+              icon: 'edit',
+              label: t('taskDetails.edit'),
+              onClick: () => {
+                navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } });
+              },
+            },
+            {
+              id: 'delete-task',
+              icon: 'delete',
+              label: t('taskDetails.delete'),
+              danger: true,
+              separatorBefore: true,
+              onClick: async () => {
+                if (task.recurrence_id) {
+                  setDeleteModalOpen(true);
+                  return;
+                }
+
+                if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
+                  setActing(true);
+                  await deleteTask(task.id);
+                  navigate({ to: '/' });
+                }
+              },
+            },
+          ],
+        } : undefined}
+      />
 
       <main className="flex-1 px-4 max-w-md mx-auto w-full">
         <div className="pt-4 pb-6">

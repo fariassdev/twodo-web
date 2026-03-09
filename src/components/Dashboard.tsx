@@ -3,6 +3,7 @@ import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask, get
 import { getActiveProfileId } from '../lib/supabase';
 import type { Task, LoveNote, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -83,29 +84,24 @@ export default function Dashboard() {
 
   return (
     <div className="pb-24">
-      <header className="sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md border-b border-primary/10 px-4 py-4">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-2xl">grid_view</span>
-            <h1 className="text-xl font-bold tracking-tight">{t('dashboard.title')}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full bg-primary/10 text-primary">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button 
-              onClick={() => navigate({ to: '/profile' })}
-              className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary cursor-pointer hover:border-primary/80 transition-colors"
-            >
-              {profile?.avatar_url ? (
-                <img alt={t('profile.title')} className="w-full h-full object-cover" src={profile.avatar_url}/>
-              ) : (
-                <span className="material-symbols-outlined text-primary">person</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <TopBar
+        title={t('dashboard.title')}
+        titleIcon="grid_view"
+        rightSlot={(
+          <button
+            aria-label={t('topBar.openProfile')}
+            className="flex size-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/20 transition-colors hover:border-primary/80"
+            onClick={() => navigate({ to: '/profile' })}
+            type="button"
+          >
+            {profile?.avatar_url ? (
+              <img alt={t('profile.title')} className="h-full w-full object-cover" src={profile.avatar_url} />
+            ) : (
+              <span className="material-symbols-outlined text-primary">person</span>
+            )}
+          </button>
+        )}
+      />
 
       <main className="max-w-md mx-auto px-4 pt-6">
         <div className="relative mb-8">

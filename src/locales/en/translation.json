@@ -15,6 +15,14 @@
     "saving": "...",
     "hourSuffix": "h"
   },
+  "topBar": {
+    "back": "Go back",
+    "close": "Close",
+    "save": "Save entry",
+    "openMenu": "Open actions menu",
+    "closeMenu": "Close actions menu",
+    "openProfile": "Open profile"
+  },
   "calendar": {
     "title": "Our Calendar",
     "hideDeleted": "Hide deleted",

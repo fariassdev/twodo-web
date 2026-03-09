@@ -3,6 +3,7 @@ import { getTaskById, updateTask, createTasks, deleteTasksAfter, getProfiles } f
 import type { UpdateTaskInput, CreateTaskInput } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
@@ -205,17 +206,26 @@ export default function EditEntry() {
         </div>
       )}
 
-      <div className="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-dark z-10 max-w-md mx-auto w-full">
-        <div onClick={() => router.history.back()} className="text-slate-100 flex size-12 shrink-0 items-center justify-start cursor-pointer">
-          <span className="material-symbols-outlined">close</span>
-        </div>
-        <h2 className="text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">{t('entryEdit.title')}</h2>
-        <div onClick={handleSave} className="flex w-12 items-center justify-end cursor-pointer">
-          <p className={`text-base font-bold leading-normal tracking-[0.015em] shrink-0 ${saving ? 'text-primary/40' : 'text-primary'}`}>
+      <TopBar
+        title={t('entryEdit.title')}
+        titleIcon="edit_note"
+        leftAction={{
+          ariaLabel: t('topBar.close'),
+          icon: 'close',
+          onClick: () => router.history.back(),
+        }}
+        rightSlot={(
+          <button
+            aria-label={t('topBar.save')}
+            className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
+            disabled={saving}
+            onClick={handleSave}
+            type="button"
+          >
             {saving ? t('common.saving') : t('cta.save')}
-          </p>
-        </div>
-      </div>
+          </button>
+        )}
+      />
 
       <div className="flex flex-col gap-6 px-4 py-4 max-w-md mx-auto w-full">
         <label className="flex flex-col w-full">

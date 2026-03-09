@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getTasksForMonth, getTasksForDate, getProfiles } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -133,39 +134,24 @@ export default function Calendar() {
 
   return (
     <div className="pb-24 flex flex-col min-h-screen">
-      <header className="flex items-center justify-between p-4 sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md">
-        <button className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-        <h1 className="text-lg font-bold tracking-tight">{t('calendar.title')}</h1>
-        
-        <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
-            <span className="material-symbols-outlined">more_vert</span>
-          </button>
-          
-          {menuOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-40 bg-transparent" 
-                onClick={() => setMenuOpen(false)}
-              />
-              <div className="absolute right-0 top-12 w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto z-50">
-                <button
-                  onClick={() => {
-                    setShowDeleted(!showDeleted);
-                    setMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 text-slate-100 hover:bg-slate-700 transition-colors w-full text-left"
-                >
-                  <span className="material-symbols-outlined text-slate-400">{showDeleted ? 'visibility_off' : 'visibility'}</span>
-                  <span className="font-semibold text-sm">{showDeleted ? t('calendar.hideDeleted') : t('calendar.showDeleted')}</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </header>
+      <TopBar
+        title={t('calendar.title')}
+        titleIcon="calendar_month"
+        rightMenu={{
+          ariaLabel: t('topBar.openMenu'),
+          closeAriaLabel: t('topBar.closeMenu'),
+          open: menuOpen,
+          onOpenChange: setMenuOpen,
+          items: [
+            {
+              id: 'toggle-deleted',
+              icon: showDeleted ? 'visibility_off' : 'visibility',
+              label: showDeleted ? t('calendar.hideDeleted') : t('calendar.showDeleted'),
+              onClick: () => setShowDeleted(!showDeleted),
+            },
+          ],
+        }}
+      />
 
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
         <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-800">

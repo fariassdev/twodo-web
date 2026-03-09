@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getProfileById, updateProfile } from '../lib/queries';
 import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
+import TopBar from './ui/TopBar';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -80,15 +81,17 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background-dark text-slate-100 pb-40">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center mb-6">
-        <button onClick={() => navigate({ to: '/' })} className="text-primary p-2 -ml-2 rounded-full hover:bg-primary/10 transition-colors">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 className="text-xl font-bold flex-1 text-center pr-8">{t('profile.title')}</h1>
-      </header>
+      <TopBar
+        title={t('profile.title')}
+        titleIcon="person"
+        leftAction={{
+          ariaLabel: t('topBar.back'),
+          icon: 'arrow_back',
+          onClick: () => navigate({ to: '/' }),
+        }}
+      />
 
-      <main className="max-w-md mx-auto px-6 space-y-8">
+      <main className="max-w-md mx-auto px-6 pt-6 space-y-8">
         
         {/* Profile Switcher */}
         <div className="flex justify-center -mt-2 mb-2">

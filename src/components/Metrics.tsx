@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getEquityBalance, getWeeklyPulse, getPointsBreakdown } from '../lib/queries';
 import type { EquityBalance, WeeklyPulse, PointsBreakdown } from '../lib/queries';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 export default function Metrics() {
   const { t } = useTranslation();
@@ -45,18 +46,7 @@ export default function Metrics() {
 
   return (
     <div className="pb-24 flex flex-col min-h-screen">
-      <header className="flex items-center bg-background-dark p-4 sticky top-0 z-10 border-b border-primary/10 max-w-md mx-auto w-full">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <span className="material-symbols-outlined">menu</span>
-        </div>
-        <h2 className="text-slate-100 text-lg font-bold leading-tight flex-1 text-center">{t('metrics.title')}</h2>
-        <div className="flex size-10 items-center justify-end">
-          <button className="relative flex items-center justify-center text-slate-400">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-primary"></span>
-          </button>
-        </div>
-      </header>
+      <TopBar title={t('metrics.title')} titleIcon="monitoring" />
 
       <main className="flex-1 overflow-y-auto custom-scrollbar max-w-md mx-auto w-full">
         {/* House Harmony */}

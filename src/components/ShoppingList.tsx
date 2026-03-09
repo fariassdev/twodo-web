@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getShoppingItems, addShoppingItem, togglePurchased, updateQuantity, deleteShoppingItem } from '../lib/queries';
 import type { ShoppingItem as ShoppingItemType } from '../lib/types';
 import { useTranslation } from 'react-i18next';
+import TopBar from './ui/TopBar';
 
 export default function ShoppingList() {
   const { t } = useTranslation();
@@ -94,14 +95,7 @@ export default function ShoppingList() {
 
   return (
     <div className="flex flex-col min-h-screen pb-24">
-      <header className="p-6 pt-12 max-w-md mx-auto w-full">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/20 rounded-lg">
-            <span className="material-symbols-outlined text-primary">favorite</span>
-          </div>
-          <h1 className="text-xl font-bold tracking-tight">{t('shopping.title')}</h1>
-        </div>
-      </header>
+      <TopBar title={t('shopping.title')} titleIcon="shopping_cart" />
 
       <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         <form onSubmit={handleAdd} className="mt-8 mb-10">
