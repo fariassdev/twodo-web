@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { getProfileById, updateProfile } from '../lib/queries';
 import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
 export default function Profile() {
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   // Active Profile State
   const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
@@ -18,7 +20,7 @@ export default function Profile() {
   const [bio, setBio] = useState('');
 
   // Settings state (visual only for now)
-  const [language, setLanguage] = useState<'EN' | 'ES'>('EN');
+
   const [notifications, setNotifications] = useState(true);
 
   useEffect(() => {
@@ -192,14 +194,14 @@ export default function Profile() {
               </div>
               <div className="bg-slate-800 rounded-lg p-0.5 flex text-xs font-bold">
                 <button 
-                  onClick={() => setLanguage('EN')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${language === 'EN' ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                  onClick={() => i18n.changeLanguage('en')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('en') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   EN
                 </button>
                 <button 
-                  onClick={() => setLanguage('ES')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${language === 'ES' ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                  onClick={() => i18n.changeLanguage('es')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('es') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   ES
                 </button>

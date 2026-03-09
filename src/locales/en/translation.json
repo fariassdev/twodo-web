@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "metrics": "Metrics",
+    "shopping": "Shopping",
+    "profile": "Profile"
+  },
+  "cta": {
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel"
+  }
+}

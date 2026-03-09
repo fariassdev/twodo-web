@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "calendar": "Calendario",
+    "metrics": "Métricas",
+    "shopping": "Compra",
+    "profile": "Perfil"
+  },
+  "cta": {
+    "add": "Añadir",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  }
+}

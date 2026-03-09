@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { useLanguageChange } from './hooks/useLanguageChange';
 import Dashboard from './components/Dashboard';
 import Calendar from './components/Calendar';
 import TaskDetails from './components/TaskDetails';
@@ -10,12 +11,17 @@ import ShoppingList from './components/ShoppingList';
 import Profile from './components/Profile';
 import BottomNav from './components/BottomNav';
 
-export const rootRoute = createRootRoute({
-  component: () => (
+function RootComponent() {
+  useLanguageChange();
+  return (
     <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
       <Outlet />
     </div>
-  ),
+  );
+}
+
+export const rootRoute = createRootRoute({
+  component: RootComponent,
 });
 
 export const mainLayoutRoute = createRoute({
