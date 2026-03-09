@@ -11,18 +11,31 @@ type Screen = 'dashboard' | 'calendar' | 'details' | 'create' | 'metrics' | 'sho
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('dashboard');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // A counter to force refetch when data changes
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const navigate = (s: string, taskId?: string) => {
+    if (taskId) setSelectedTaskId(taskId);
+    setScreen(s as Screen);
+  };
+
+  const navigateWithRefresh = (s: string) => {
+    setRefreshKey((k) => k + 1);
+    setScreen(s as Screen);
+  };
 
   return (
     <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
-      {screen === 'dashboard' && <Dashboard onNavigate={setScreen} />}
-      {screen === 'calendar' && <Calendar onNavigate={setScreen} />}
-      {screen === 'details' && <TaskDetails onNavigate={setScreen} />}
-      {screen === 'create' && <CreateEntry onNavigate={setScreen} />}
-      {screen === 'metrics' && <Metrics />}
-      {screen === 'shopping' && <ShoppingList />}
+      {screen === 'dashboard' && <Dashboard key={refreshKey} onNavigate={navigate} />}
+      {screen === 'calendar' && <Calendar key={refreshKey} onNavigate={navigate} />}
+      {screen === 'details' && <TaskDetails taskId={selectedTaskId} onNavigate={navigate} onDataChange={navigateWithRefresh} />}
+      {screen === 'create' && <CreateEntry onNavigate={navigate} onCreated={() => navigateWithRefresh('dashboard')} />}
+      {screen === 'metrics' && <Metrics key={refreshKey} />}
+      {screen === 'shopping' && <ShoppingList key={refreshKey} />}
 
       {['dashboard', 'calendar', 'metrics', 'shopping'].includes(screen) && (
-        <BottomNav currentScreen={screen} onNavigate={setScreen} />
+        <BottomNav currentScreen={screen} onNavigate={navigate} />
       )}
     </div>
   );

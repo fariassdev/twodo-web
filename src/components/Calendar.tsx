@@ -1,6 +1,118 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getTasksForMonth, getTasksForDate } from '../lib/queries';
+import type { Task } from '../lib/types';
 
-export default function Calendar({ onNavigate }: { onNavigate: (s: string) => void }) {
+interface CalendarProps {
+  onNavigate: (screen: string, taskId?: string) => void;
+}
+
+export default function Calendar({ onNavigate }: CalendarProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [monthTasks, setMonthTasks] = useState<Task[]>([]);
+  const [dayTasks, setDayTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  useEffect(() => {
+    loadMonth();
+  }, [year, month]);
+
+  useEffect(() => {
+    loadDay();
+  }, [selectedDate]);
+
+  async function loadMonth() {
+    setLoading(true);
+    try {
+      const tasks = await getTasksForMonth(year, month);
+      setMonthTasks(tasks);
+    } catch (err) {
+      console.error('Load month error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadDay() {
+    try {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const tasks = await getTasksForDate(dateStr);
+      setDayTasks(tasks);
+    } catch (err) {
+      console.error('Load day error:', err);
+    }
+  }
+
+  function prevMonth() {
+    setCurrentDate(new Date(year, month - 1, 1));
+  }
+
+  function nextMonth() {
+    setCurrentDate(new Date(year, month + 1, 1));
+  }
+
+  // Build calendar grid
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  const calendarDays: { day: number; isCurrentMonth: boolean; date: Date }[] = [];
+
+  // Previous month days
+  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+    calendarDays.push({
+      day: daysInPrevMonth - i,
+      isCurrentMonth: false,
+      date: new Date(year, month - 1, daysInPrevMonth - i),
+    });
+  }
+
+  // Current month days
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push({
+      day: i,
+      isCurrentMonth: true,
+      date: new Date(year, month, i),
+    });
+  }
+
+  // Next month days to fill grid
+  const remaining = 42 - calendarDays.length;
+  for (let i = 1; i <= remaining; i++) {
+    calendarDays.push({
+      day: i,
+      isCurrentMonth: false,
+      date: new Date(year, month + 1, i),
+    });
+  }
+
+  // Map task dates for dots
+  const taskDateMap = new Map<string, { hasTask: boolean; hasEvent: boolean }>();
+  for (const t of monthTasks) {
+    if (!t.date) continue;
+    const existing = taskDateMap.get(t.date) || { hasTask: false, hasEvent: false };
+    if (t.type === 'task') existing.hasTask = true;
+    if (t.type === 'event') existing.hasEvent = true;
+    taskDateMap.set(t.date, existing);
+  }
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  function formatSelectedDate() {
+    const d = selectedDate;
+    const day = d.getDate();
+    const monthName = monthNames[d.getMonth()];
+    const yr = d.getFullYear();
+    return `${day} ${monthName} ${yr}`;
+  }
+
   return (
     <div className="pb-24 flex flex-col min-h-screen">
       <header className="flex items-center justify-between p-4 sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md">
@@ -13,116 +125,89 @@ export default function Calendar({ onNavigate }: { onNavigate: (s: string) => vo
         </button>
       </header>
 
-      <div className="px-4 mb-4 max-w-md mx-auto w-full">
-        <div className="flex p-1 bg-slate-800/50 rounded-lg">
-          <button className="flex-1 py-2 text-sm font-bold rounded-md bg-primary text-background-dark shadow-sm">Monthly</button>
-          <button className="flex-1 py-2 text-sm font-bold text-slate-400">Weekly</button>
-        </div>
-      </div>
-
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
-        <button className="p-2 rounded-full hover:bg-slate-800">
+        <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-800">
           <span className="material-symbols-outlined">chevron_left</span>
         </button>
-        <h2 className="text-base font-bold">October 2023</h2>
-        <button className="p-2 rounded-full hover:bg-slate-800">
+        <h2 className="text-base font-bold">{monthNames[month]} {year}</h2>
+        <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-800">
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
       </div>
 
       <div className="px-4 mb-6 max-w-md mx-auto w-full">
         <div className="grid grid-cols-7 mb-2">
-          {['S','M','T','W','T','F','S'].map(d => (
-            <div key={d} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">{d}</div>
+          {['D','L','M','X','J','V','S'].map((d, i) => (
+            <div key={i} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-2">
-          <div className="h-12 flex items-center justify-center text-slate-700">27</div>
-          <div className="h-12 flex items-center justify-center text-slate-700">28</div>
-          <div className="h-12 flex items-center justify-center text-slate-700">29</div>
-          <div className="h-12 flex items-center justify-center text-slate-700">30</div>
-          
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl hover:bg-slate-800">
-            <span className="text-sm font-medium">1</span>
-            <div className="absolute bottom-2 size-1 bg-slate-400 rounded-full"></div>
-          </button>
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl hover:bg-slate-800">
-            <span className="text-sm font-medium">2</span>
-          </button>
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl hover:bg-slate-800">
-            <span className="text-sm font-medium">3</span>
-            <div className="absolute bottom-2 flex gap-0.5">
-              <div className="size-1 bg-primary rounded-full"></div>
-              <div className="size-1 bg-blue-400 rounded-full"></div>
-            </div>
-          </button>
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl hover:bg-slate-800">
-            <span className="text-sm font-medium">4</span>
-          </button>
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl bg-primary text-background-dark font-bold shadow-lg shadow-primary/20">
-            <span className="text-sm">5</span>
-            <div className="absolute bottom-2 size-1 bg-background-dark rounded-full"></div>
-          </button>
-          
-          {[6,7,8].map(d => (
-            <button key={d} className="h-12 flex items-center justify-center rounded-xl hover:bg-slate-800">{d}</button>
-          ))}
-          
-          <button className="relative h-12 flex flex-col items-center justify-center rounded-xl hover:bg-slate-800">
-            <span className="text-sm font-medium">9</span>
-            <div className="absolute bottom-2 size-1 bg-primary rounded-full"></div>
-          </button>
-          
-          {Array.from({length: 22}, (_, i) => i + 10).map(d => (
-            <button key={d} className="h-12 flex items-center justify-center rounded-xl hover:bg-slate-800">{d}</button>
-          ))}
+          {calendarDays.map((cd, i) => {
+            const dateStr = `${cd.date.getFullYear()}-${String(cd.date.getMonth() + 1).padStart(2, '0')}-${String(cd.date.getDate()).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+            const isSelected = dateStr === selectedStr;
+            const dots = taskDateMap.get(dateStr);
+
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedDate(new Date(cd.date))}
+                className={`relative h-12 flex flex-col items-center justify-center rounded-xl transition-colors ${
+                  !cd.isCurrentMonth ? 'text-slate-700' :
+                  isSelected ? 'bg-primary text-background-dark font-bold shadow-lg shadow-primary/20' :
+                  isToday ? 'bg-primary/20 text-primary font-bold' :
+                  'hover:bg-slate-800'
+                }`}
+              >
+                <span className="text-sm font-medium">{cd.day}</span>
+                {dots && cd.isCurrentMonth && (
+                  <div className="absolute bottom-2 flex gap-0.5">
+                    {dots.hasTask && <div className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : 'bg-primary'}`}></div>}
+                    {dots.hasEvent && <div className={`size-1 rounded-full ${isSelected ? 'bg-background-dark' : 'bg-blue-400'}`}></div>}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="flex-1 bg-slate-900/40 rounded-t-xl p-4 shadow-2xl border-t border-slate-800 overflow-y-auto max-w-md mx-auto w-full">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold">Events 5 Oct 2023</h3>
+          <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
           <button onClick={() => onNavigate('create')} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
         </div>
         <div className="space-y-3">
-          <div onClick={() => onNavigate('details')} className="flex gap-4 p-4 bg-slate-800/60 rounded-xl border border-transparent hover:border-primary/30 transition-all cursor-pointer">
-            <div className="flex flex-col items-center justify-center bg-primary/20 text-primary rounded-lg px-3 py-1 h-fit">
-              <span className="text-xs font-bold">OCT</span>
-              <span className="text-lg font-bold">05</span>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-sm">Dinner at Le Petit</h4>
-              <p className="text-xs text-slate-400 mt-1">
-                <span className="material-symbols-outlined text-[12px] align-middle">schedule</span> 19:30 • <span className="text-primary font-medium">Table for 2</span>
-              </p>
-            </div>
-            <div className="flex -space-x-2 items-center">
-              <div className="size-6 rounded-full border-2 border-background-dark overflow-hidden bg-slate-300">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyr0nRCLq3UAyXUI_b1NDmyRX6wK0qEmv6EPIO2oD8dTspS-X9RV41khHSQgpSzh9i9Qc-mln24qWuQRw8GFoGKdhTUWQw6e3rysO5NpX94uhYgtNzcPrtbdDsPLzF-DsURg82_3Vhd-zTOZSq1HW8fDAxA8QBl6LoBv47sVXccLvjX-AXBQ6UOwtwunQobl9Crf8i_QK5hhczU2YyR5R8tluidwgmgiyaIcQyYP8BXjvGYDiGitcFrtjFD9ZymwKhDQw7U-rYOu_Q" alt="Avatar" />
+          {dayTasks.length === 0 && (
+            <p className="text-slate-500 text-sm text-center py-4">No hay eventos para este día</p>
+          )}
+          {dayTasks.map((task) => (
+            <div
+              key={task.id}
+              onClick={() => onNavigate('details', task.id)}
+              className="flex gap-4 p-4 bg-slate-800/60 rounded-xl border border-transparent hover:border-primary/30 transition-all cursor-pointer"
+            >
+              <div className={`flex flex-col items-center justify-center rounded-lg px-3 py-1 h-fit ${
+                task.type === 'event' ? 'bg-primary/20 text-primary' : 'bg-blue-400/20 text-blue-400'
+              }`}>
+                <span className="text-xs font-bold">
+                  {task.date ? new Date(task.date + 'T00:00:00').toLocaleString('es-ES', { month: 'short' }).toUpperCase() : ''}
+                </span>
+                <span className="text-lg font-bold">
+                  {task.date ? String(new Date(task.date + 'T00:00:00').getDate()).padStart(2, '0') : ''}
+                </span>
               </div>
-              <div className="size-6 rounded-full border-2 border-background-dark overflow-hidden bg-slate-300">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB7RrjNMeWm4NyD8p7LGiQFBC4N6ab4QxjcaT3V8U4nwh3se3rhRfUpg_PYrMKqlr4zaXRErK5-k4w-2MA9vNnkkzbTpx3L6ry_hbVQpE3OB1g2HAQUJwJ5xfeR2QYCczsAxxJ2RT-qSerMpMVVayqvqAcXeLaBc4n63IbJdNnxSKqK12OX3xF2QUhGz5tfejSgI9sBJlJrKUkxrk8HzSZzXT3vQ2W4QWkV0Bav8mQDLTn0ehmCIiP3kuvbVDNvLfHzyOkbMmKQYH5" alt="Avatar" />
-              </div>
-            </div>
-          </div>
-
-          <div onClick={() => onNavigate('details')} className="flex gap-4 p-4 bg-slate-800/60 rounded-xl border border-transparent cursor-pointer">
-            <div className="flex flex-col items-center justify-center bg-blue-400/20 text-blue-400 rounded-lg px-3 py-1 h-fit">
-              <span className="text-xs font-bold">OCT</span>
-              <span className="text-lg font-bold">09</span>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-sm">Weekly Grocery Run</h4>
-              <p className="text-xs text-slate-400 mt-1">
-                <span className="material-symbols-outlined text-[12px] align-middle">shopping_cart</span> Farmers Market
-              </p>
-            </div>
-            <div className="flex items-center">
-              <div className="size-6 rounded-full border-2 border-background-dark overflow-hidden bg-slate-300">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLHQ6aBLncHKo1KQfh1UetKwUEb-v-N3zRBDj20PuPSZoJ49F46r_OEIjazMeg_7boNYRtO4jHoKFcIW4HuKLu5YTyMdTawRFbyScATHi8hkxXMZhMJw0wsh0aXd8V9ZxwpDFBITWwlAmE2P0Kr6PgZ2DX4rJLpbTbXW0JAaEyujMP5JJbMJTlqO5upkQMfNOzFqK1yKXlEALM6-93tbDGz3taXazjMUIK-R2Pbcim4AI-e-W7x7qpJuvQbAV8PwSaWnwojipDWY9M" alt="Avatar" />
+              <div className="flex-1">
+                <h4 className="font-bold text-sm">{task.title}</h4>
+                <p className="text-xs text-slate-400 mt-1">
+                  {task.start_time && (
+                    <><span className="material-symbols-outlined text-[12px] align-middle">schedule</span> {task.start_time.slice(0, 5)}</>
+                  )}
+                  {task.location && <> • <span className="text-primary font-medium">{task.location}</span></>}
+                </p>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
