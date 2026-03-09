@@ -94,6 +94,7 @@ export interface CreateTaskInput {
   points?: number;
   is_recurring: boolean;
   frequency?: 'daily' | 'weekly' | 'monthly' | null;
+  recurrence_id?: string | null;
   assignment_type: 'strict_rotation' | 'team_work' | 'individual';
   assigned_to?: string | null;
   location?: string;
@@ -114,6 +115,22 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function createTasks(inputs: CreateTaskInput[]): Promise<Task[]> {
+  const tasksToInsert = inputs.map(input => ({
+    ...input,
+    status: 'pending',
+    created_by: CURRENT_USER_ID,
+    assigned_to: input.assigned_to || CURRENT_USER_ID,
+  }));
+  
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert(tasksToInsert)
+    .select();
+  if (error) throw error;
+  return data ?? [];
 }
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
@@ -137,6 +154,46 @@ export async function deleteTask(taskId: string): Promise<void> {
     .from('tasks')
     .delete()
     .eq('id', taskId);
+  if (error) throw error;
+}
+
+export async function updateTaskSeries(
+  recurrenceId: string,
+  fromDate: string,
+  input: UpdateTaskInput
+): Promise<void> {
+  const { error } = await supabase
+    .from('tasks')
+    .update({
+      ...input,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('recurrence_id', recurrenceId)
+    .gte('date', fromDate);
+  if (error) throw error;
+}
+
+export async function deleteTaskSeries(
+  recurrenceId: string,
+  fromDate?: string
+): Promise<void> {
+  let query = supabase.from('tasks').delete().eq('recurrence_id', recurrenceId);
+  if (fromDate) {
+    query = query.gte('date', fromDate);
+  }
+  const { error } = await query;
+  if (error) throw error;
+}
+
+export async function deleteTasksAfter(
+  recurrenceId: string,
+  date: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('recurrence_id', recurrenceId)
+    .gt('date', date);
   if (error) throw error;
 }
 export async function completeTask(taskId: string): Promise<void> {

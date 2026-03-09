@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById, deleteTask } from '../lib/queries';
+import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById, deleteTask, deleteTaskSeries } from '../lib/queries';
 import type { Task, LoveNote, Profile } from '../lib/types';
 
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -14,6 +14,8 @@ export default function TaskDetails() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
   useEffect(() => {
     if (taskId) loadTask(taskId);
   }, [taskId]);
@@ -63,6 +65,27 @@ export default function TaskDetails() {
     }
   }
 
+  async function handleDeleteSingle() {
+    if (!task) return;
+    setActing(true);
+    await deleteTask(task.id);
+    navigate({ to: '/' });
+  }
+
+  async function handleDeleteFollowing() {
+    if (!task || !task.recurrence_id) return;
+    setActing(true);
+    await deleteTaskSeries(task.recurrence_id, task.date || undefined);
+    navigate({ to: '/' });
+  }
+
+  async function handleDeleteAll() {
+    if (!task || !task.recurrence_id) return;
+    setActing(true);
+    await deleteTaskSeries(task.recurrence_id);
+    navigate({ to: '/' });
+  }
+
   const statusLabels: Record<string, string> = {
     pending: 'Pendiente',
     completed: 'Completada',
@@ -105,14 +128,32 @@ export default function TaskDetails() {
 
   return (
     <div className="flex flex-col min-h-screen pb-32">
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 flex justify-center">
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={() => setDeleteModalOpen(false)} />
+          <div className="relative w-full max-w-sm bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col pointer-events-auto z-10">
+            <div className="p-6 pb-4">
+              <h3 className="text-lg font-bold text-slate-100 mb-2">Eliminar evento recurrente</h3>
+              <p className="text-slate-400 text-sm">Este evento se repite. ¿Qué quieres eliminar?</p>
+            </div>
+            <div className="flex flex-col border-t border-slate-700 divide-y divide-slate-700">
+              <button onClick={handleDeleteSingle} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">Solo este evento</button>
+              <button onClick={handleDeleteFollowing} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">Este y los siguientes</button>
+              <button onClick={handleDeleteAll} className="p-4 text-left text-rose-500 hover:bg-slate-700 transition-colors font-medium">Todos los eventos</button>
+              <button onClick={() => setDeleteModalOpen(false)} className="p-4 text-center text-slate-400 hover:bg-slate-700 transition-colors font-medium bg-slate-800/50">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {menuOpen && !deleteModalOpen && (
+        <div className="fixed inset-0 z-40 flex justify-center">
           <div 
             className="absolute inset-0 bg-background-dark/60 backdrop-blur-[2px]" 
             onClick={() => setMenuOpen(false)}
           />
           <div className="w-full max-w-md relative pointer-events-none">
-            <div className="absolute right-4 top-[60px] w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto">
+            <div className="absolute right-4 top-[60px] w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto z-50">
               <button
                 onClick={() => {
                   setMenuOpen(false);
@@ -126,11 +167,16 @@ export default function TaskDetails() {
               <div className="h-px bg-slate-700/50 w-full" />
               <button
                 onClick={async () => {
-                  if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
+                  if (task.recurrence_id) {
                     setMenuOpen(false);
-                    setActing(true);
-                    await deleteTask(task.id);
-                    navigate({ to: '/' });
+                    setDeleteModalOpen(true);
+                  } else {
+                    if (window.confirm('¿Seguro que quieres eliminar esta tarea?')) {
+                      setMenuOpen(false);
+                      setActing(true);
+                      await deleteTask(task.id);
+                      navigate({ to: '/' });
+                    }
                   }
                 }}
                 className="flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-slate-700 transition-colors w-full text-left"

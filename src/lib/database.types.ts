@@ -216,6 +216,7 @@ export type Database = {
           location: string | null
           points: number
           priority: string
+          recurrence_id: string | null
           start_time: string | null
           status: string
           title: string
@@ -237,6 +238,7 @@ export type Database = {
           location?: string | null
           points?: number
           priority?: string
+          recurrence_id?: string | null
           start_time?: string | null
           status?: string
           title: string
@@ -258,6 +260,7 @@ export type Database = {
           location?: string | null
           points?: number
           priority?: string
+          recurrence_id?: string | null
           start_time?: string | null
           status?: string
           title?: string

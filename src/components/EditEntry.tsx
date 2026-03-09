@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getTaskById, updateTask } from '../lib/queries';
-import type { UpdateTaskInput } from '../lib/queries';
+import { getTaskById, updateTask, createTasks, deleteTasksAfter } from '../lib/queries';
+import type { UpdateTaskInput, CreateTaskInput } from '../lib/queries';
+import type { Task } from '../lib/types';
 
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
@@ -22,10 +23,14 @@ export default function EditEntry() {
   const [location, setLocation] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [originalTask, setOriginalTask] = useState<Task | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
   useEffect(() => {
     if (taskId) {
       getTaskById(taskId).then(task => {
         if (task) {
+          setOriginalTask(task);
           setTitle(task.title);
           setDate(task.date || '');
           setPoints(task.points || 0);
@@ -44,7 +49,20 @@ export default function EditEntry() {
 
   async function handleSave() {
     if (!title.trim() || !taskId) return;
+    
+    if (originalTask?.recurrence_id) {
+      setEditModalOpen(true);
+      return;
+    }
+    
+    await saveChanges('single');
+  }
+
+  async function saveChanges(mode: 'single' | 'following') {
+    if (!taskId || !originalTask) return;
     setSaving(true);
+    setEditModalOpen(false);
+
     try {
       const input: UpdateTaskInput = {
         title: title.trim(),
@@ -58,7 +76,60 @@ export default function EditEntry() {
         assignment_type: assignmentType,
         location: location.trim() || undefined,
       };
+
       await updateTask(taskId, input);
+
+      if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
+        // Delete any existing future tasks in this series
+        await deleteTasksAfter(originalTask.recurrence_id, originalTask.date);
+
+        // If it's still recurring, generate the new future tasks based on the updated frequency
+        if (isRecurring && frequency && date) {
+          const newTasks: CreateTaskInput[] = [];
+          
+          let currentDate = new Date(date);
+          const endDate = new Date(currentDate);
+          endDate.setFullYear(endDate.getFullYear() + 1);
+
+          // Advance by one frequency step to skip the current task we just updated
+          if (frequency === 'daily') {
+            currentDate.setDate(currentDate.getDate() + 1);
+          } else if (frequency === 'weekly') {
+            currentDate.setDate(currentDate.getDate() + 7);
+          } else if (frequency === 'monthly') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+          }
+
+          while (currentDate <= endDate) {
+            newTasks.push({
+              title: title.trim(),
+              description: description.trim() || undefined,
+              type,
+              priority,
+              date: currentDate.toISOString().split('T')[0],
+              points,
+              is_recurring: true,
+              frequency,
+              assignment_type: assignmentType,
+              location: location.trim() || undefined,
+              recurrence_id: originalTask.recurrence_id,
+            });
+
+            if (frequency === 'daily') {
+              currentDate.setDate(currentDate.getDate() + 1);
+            } else if (frequency === 'weekly') {
+              currentDate.setDate(currentDate.getDate() + 7);
+            } else if (frequency === 'monthly') {
+              currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+          }
+
+          if (newTasks.length > 0) {
+            await createTasks(newTasks);
+          }
+        }
+      }
+
       navigate({ to: '/task/$taskId', params: { taskId } });
     } catch (err) {
       console.error('Update task error:', err);
@@ -76,6 +147,23 @@ export default function EditEntry() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={() => setEditModalOpen(false)} />
+          <div className="relative w-full max-w-sm bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col pointer-events-auto z-10">
+            <div className="p-6 pb-4">
+              <h3 className="text-lg font-bold text-slate-100 mb-2">Editar evento recurrente</h3>
+              <p className="text-slate-400 text-sm">Este evento se repite. ¿Cómo quieres guardar los cambios?</p>
+            </div>
+            <div className="flex flex-col border-t border-slate-700 divide-y divide-slate-700">
+              <button onClick={() => saveChanges('single')} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">Solo este evento</button>
+              <button onClick={() => saveChanges('following')} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">Este y los siguientes</button>
+              <button onClick={() => setEditModalOpen(false)} className="p-4 text-center text-slate-400 hover:bg-slate-700 transition-colors font-medium bg-slate-800/50">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-dark z-10 max-w-md mx-auto w-full">
         <div onClick={() => router.history.back()} className="text-slate-100 flex size-12 shrink-0 items-center justify-start cursor-pointer">
           <span className="material-symbols-outlined">close</span>

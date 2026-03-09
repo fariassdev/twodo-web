@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createTask } from '../lib/queries';
+import { createTask, createTasks } from '../lib/queries';
 import type { CreateTaskInput } from '../lib/queries';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
@@ -25,21 +25,53 @@ export default function CreateEntry() {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const input: CreateTaskInput = {
+      let inputs: CreateTaskInput[] = [];
+      const baseInput = {
         title: title.trim(),
         description: description.trim() || undefined,
         type,
         priority,
-        date: date || undefined,
         points,
         is_recurring: isRecurring,
         frequency: isRecurring ? frequency : null,
         assignment_type: assignmentType,
         location: location.trim() || undefined,
       };
-      const newTask = await createTask(input);
-      // If resolving the mutation, navigate to the task view
-      navigate({ to: '/task/$taskId', params: { taskId: newTask.id } });
+
+      if (isRecurring && frequency && date) {
+        const recurrenceId = crypto.randomUUID();
+        const baseDate = new Date(date);
+        let instancesCount = frequency === 'daily' ? 365 : frequency === 'weekly' ? 52 : 12;
+
+        for (let i = 0; i < instancesCount; i++) {
+          const instanceDate = new Date(baseDate);
+          if (frequency === 'daily') {
+            instanceDate.setDate(instanceDate.getDate() + i);
+          } else if (frequency === 'weekly') {
+            instanceDate.setDate(instanceDate.getDate() + i * 7);
+          } else if (frequency === 'monthly') {
+            instanceDate.setMonth(instanceDate.getMonth() + i);
+          }
+          inputs.push({
+            ...baseInput,
+            date: instanceDate.toISOString().split('T')[0],
+            recurrence_id: recurrenceId,
+          });
+        }
+      } else {
+        inputs.push({
+          ...baseInput,
+          date: date || undefined,
+        });
+      }
+
+      const createdTasks = await createTasks(inputs);
+      const firstTask = createdTasks[0];
+      if (firstTask) {
+        navigate({ to: '/task/$taskId', params: { taskId: firstTask.id } });
+      } else {
+        router.history.back();
+      }
     } catch (err) {
       console.error('Create task error:', err);
       setSaving(false);
