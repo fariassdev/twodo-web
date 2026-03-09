@@ -30,6 +30,7 @@ export async function getTodaysTasks(): Promise<Task[]> {
     .eq('date', today)
     .eq('type', 'task')
     .in('status', ['pending', 'postponed'])
+    .is('deleted_at', null)
     .order('priority', { ascending: true }); // critical first
   if (error) throw error;
   return data ?? [];
@@ -43,6 +44,7 @@ export async function getUpcomingEvents(): Promise<Task[]> {
     .eq('type', 'event')
     .gte('date', today)
     .neq('status', 'completed')
+    .is('deleted_at', null)
     .order('date', { ascending: true })
     .limit(10);
   if (error) throw error;
@@ -59,28 +61,40 @@ export async function getTaskById(id: string): Promise<Task | null> {
   return data;
 }
 
-export async function getTasksForMonth(year: number, month: number): Promise<Task[]> {
+export async function getTasksForMonth(year: number, month: number, includeDeleted = false): Promise<Task[]> {
   const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const endDate = month === 11
     ? `${year + 1}-01-01`
     : `${year}-${String(month + 2).padStart(2, '0')}-01`;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('tasks')
     .select('*')
     .gte('date', startDate)
     .lt('date', endDate)
     .order('date', { ascending: true });
+
+  if (!includeDeleted) {
+    query = query.is('deleted_at', null);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
 }
 
-export async function getTasksForDate(date: string): Promise<Task[]> {
-  const { data, error } = await supabase
+export async function getTasksForDate(date: string, includeDeleted = false): Promise<Task[]> {
+  let query = supabase
     .from('tasks')
     .select('*')
     .eq('date', date)
     .order('start_time', { ascending: true });
+
+  if (!includeDeleted) {
+    query = query.is('deleted_at', null);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
 }
@@ -150,11 +164,24 @@ export async function updateTask(taskId: string, input: UpdateTaskInput): Promis
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('id', taskId);
-  if (error) throw error;
+  const { data: completions } = await supabase
+    .from('task_completions')
+    .select('id')
+    .eq('task_id', taskId);
+
+  if (completions && completions.length > 0) {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', taskId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+    if (error) throw error;
+  }
 }
 
 export async function updateTaskSeries(
@@ -177,11 +204,11 @@ export async function deleteTaskSeries(
   recurrenceId: string,
   fromDate?: string
 ): Promise<void> {
-  let query = supabase.from('tasks').delete().eq('recurrence_id', recurrenceId);
-  if (fromDate) {
-    query = query.gte('date', fromDate);
-  }
-  const { error } = await query;
+  const { error } = await supabase.rpc('delete_task_series_rpc', {
+    p_recurrence_id: recurrenceId,
+    p_from_date: fromDate || undefined,
+  });
+  
   if (error) throw error;
 }
 
@@ -189,11 +216,11 @@ export async function deleteTasksAfter(
   recurrenceId: string,
   date: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('recurrence_id', recurrenceId)
-    .gt('date', date);
+  const { error } = await supabase.rpc('delete_tasks_after_rpc', {
+    p_recurrence_id: recurrenceId,
+    p_date: date,
+  });
+
   if (error) throw error;
 }
 export async function completeTask(taskId: string): Promise<void> {

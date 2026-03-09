@@ -15,6 +15,8 @@ export default function Calendar() {
   const [dayTasks, setDayTasks] = useState<Task[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('calendarSelectedDate', selectedDate.toISOString());
@@ -29,16 +31,16 @@ export default function Calendar() {
 
   useEffect(() => {
     loadMonth();
-  }, [year, month]);
+  }, [year, month, showDeleted]);
 
   useEffect(() => {
     loadDay();
-  }, [selectedDate]);
+  }, [selectedDate, showDeleted]);
 
   async function loadMonth() {
     setLoading(true);
     try {
-      const tasks = await getTasksForMonth(year, month);
+      const tasks = await getTasksForMonth(year, month, showDeleted);
       setMonthTasks(tasks);
     } catch (err) {
       console.error('Load month error:', err);
@@ -50,7 +52,7 @@ export default function Calendar() {
   async function loadDay() {
     try {
       const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-      const tasks = await getTasksForDate(dateStr);
+      const tasks = await getTasksForDate(dateStr, showDeleted);
       setDayTasks(tasks);
     } catch (err) {
       console.error('Load day error:', err);
@@ -130,9 +132,33 @@ export default function Calendar() {
           <span className="material-symbols-outlined">menu</span>
         </button>
         <h1 className="text-lg font-bold tracking-tight">Our Calendar</h1>
-        <button className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
+        
+        <div className="relative">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
+            <span className="material-symbols-outlined">more_vert</span>
+          </button>
+          
+          {menuOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40 bg-transparent" 
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute right-0 top-12 w-48 bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col py-1 pointer-events-auto z-50">
+                <button
+                  onClick={() => {
+                    setShowDeleted(!showDeleted);
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 text-slate-100 hover:bg-slate-700 transition-colors w-full text-left"
+                >
+                  <span className="material-symbols-outlined text-slate-400">{showDeleted ? 'visibility_off' : 'visibility'}</span>
+                  <span className="font-semibold text-sm">{showDeleted ? 'Ocultar eliminadas' : 'Ver eliminadas'}</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
@@ -195,39 +221,46 @@ export default function Calendar() {
           {dayTasks.length === 0 && (
             <p className="text-slate-500 text-sm text-center py-4">No hay eventos para este día</p>
           )}
-          {dayTasks.map((task) => (
-            <div
-              key={task.id}
-              onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-              className="flex items-center gap-4 p-4 bg-slate-800/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer"
-            >
-              {/* Status Icon */}
-              {task.status === 'completed' ? (
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-emerald-500 filled-icon text-[28px]">check_circle</span>
-                </div>
-              ) : task.status === 'postponed' ? (
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-orange-500/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-orange-500 filled-icon text-[28px]">more_horiz</span>
-                </div>
-              ) : (
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-blue-500/20 flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-full border-[3px] border-blue-400"></div>
-                </div>
-              )}
+          {dayTasks.map((task) => {
+            const isDeleted = task.deleted_at !== null;
+            return (
+              <div
+                key={task.id}
+                onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+                className={`flex items-center gap-4 p-4 bg-slate-800/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
+              >
+                {/* Status Icon */}
+                {task.status === 'completed' ? (
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-emerald-500 filled-icon text-[28px]">check_circle</span>
+                  </div>
+                ) : task.status === 'postponed' ? (
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-orange-500/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-orange-500 filled-icon text-[28px]">more_horiz</span>
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 shrink-0 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full border-[3px] border-blue-400"></div>
+                  </div>
+                )}
 
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-base text-slate-100 truncate mb-0.5">{task.title}</h4>
-                <p className="text-sm text-slate-400 truncate flex items-center gap-1">
-                  {task.start_time && (
-                    <><span className="material-symbols-outlined text-[16px]">schedule</span> {task.start_time.slice(0, 5)}</>
-                  )}
-                  {task.start_time && task.location && <span className="mx-0.5">•</span>}
-                  {task.location && (
-                    <span className={task.start_time ? "text-emerald-400" : ""}>{task.location}</span>
-                  )}
-                </p>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className={`font-bold text-base text-slate-100 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
+                    {isDeleted && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">Eliminada</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-400 truncate flex items-center gap-1">
+                    {task.start_time && (
+                      <><span className="material-symbols-outlined text-[16px]">schedule</span> {task.start_time.slice(0, 5)}</>
+                    )}
+                    {task.start_time && task.location && <span className="mx-0.5">•</span>}
+                    {task.location && (
+                      <span className={task.start_time ? "text-emerald-400" : ""}>{task.location}</span>
+                    )}
+                  </p>
+                </div>
 
               {/* Avatars */}
               <div className="shrink-0 flex -space-x-2">
@@ -242,7 +275,8 @@ export default function Calendar() {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

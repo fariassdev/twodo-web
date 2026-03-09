@@ -68,22 +68,37 @@ export default function TaskDetails() {
   async function handleDeleteSingle() {
     if (!task) return;
     setActing(true);
-    await deleteTask(task.id);
-    navigate({ to: '/' });
+    try {
+      await deleteTask(task.id);
+      navigate({ to: '/' });
+    } catch (err) {
+      console.error('Delete error:', err);
+      setActing(false);
+    }
   }
 
   async function handleDeleteFollowing() {
     if (!task || !task.recurrence_id) return;
     setActing(true);
-    await deleteTaskSeries(task.recurrence_id, task.date || undefined);
-    navigate({ to: '/' });
+    try {
+      await deleteTaskSeries(task.recurrence_id, task.date || undefined);
+      navigate({ to: '/' });
+    } catch (err) {
+      console.error('Delete series error:', err);
+      setActing(false);
+    }
   }
 
   async function handleDeleteAll() {
     if (!task || !task.recurrence_id) return;
     setActing(true);
-    await deleteTaskSeries(task.recurrence_id);
-    navigate({ to: '/' });
+    try {
+      await deleteTaskSeries(task.recurrence_id);
+      navigate({ to: '/' });
+    } catch (err) {
+      console.error('Delete all error:', err);
+      setActing(false);
+    }
   }
 
   const statusLabels: Record<string, string> = {
@@ -193,24 +208,34 @@ export default function TaskDetails() {
         <h2 className="text-lg font-bold flex-1 text-center">
           {task.type === 'event' ? 'Detalle de Evento' : 'Detalle de Tarea'}
         </h2>
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
-        >
-          <span className="material-symbols-outlined text-slate-100">more_vert</span>
-        </button>
+        {!task.deleted_at ? (
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-slate-100">more_vert</span>
+          </button>
+        ) : (
+          <div className="size-10 flex shrink-0" />
+        )}
       </header>
 
       <main className="flex-1 px-4 max-w-md mx-auto w-full">
         <div className="pt-4 pb-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              task.status === 'completed' ? 'bg-primary/20 text-primary' :
-              task.status === 'postponed' ? 'bg-yellow-500/20 text-yellow-500' :
-              'bg-primary/20 text-primary'
-            }`}>
-              {statusLabels[task.status] || task.status}
-            </span>
+            {task.deleted_at ? (
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500">
+                Eliminada
+              </span>
+            ) : (
+              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                task.status === 'completed' ? 'bg-primary/20 text-primary' :
+                task.status === 'postponed' ? 'bg-yellow-500/20 text-yellow-500' :
+                'bg-primary/20 text-primary'
+              }`}>
+                {statusLabels[task.status] || task.status}
+              </span>
+            )}
             {assignedProfile && (
               <span className="text-slate-400 text-xs font-medium">Asignada a: {assignedProfile.name}</span>
             )}
@@ -261,7 +286,7 @@ export default function TaskDetails() {
             </div>
           )}
 
-          {task.status === 'pending' && (
+          {task.status === 'pending' && !task.deleted_at && (
             <div className="flex flex-col gap-3 mt-6 mb-2">
               <button
                 onClick={handleComplete}

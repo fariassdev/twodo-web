@@ -207,6 +207,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           date: string | null
+          deleted_at: string | null
           description: string | null
           end_time: string | null
           frequency: string | null
@@ -229,6 +230,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date?: string | null
+          deleted_at?: string | null
           description?: string | null
           end_time?: string | null
           frequency?: string | null
@@ -251,6 +253,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date?: string | null
+          deleted_at?: string | null
           description?: string | null
           end_time?: string | null
           frequency?: string | null
@@ -296,7 +299,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_task_series_rpc: {
+        Args: { p_from_date?: string; p_recurrence_id: string }
+        Returns: undefined
+      }
+      delete_tasks_after_rpc: {
+        Args: { p_date: string; p_recurrence_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
