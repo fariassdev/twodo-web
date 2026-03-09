@@ -21,6 +21,23 @@ export async function getProfileById(id: string): Promise<Profile | null> {
   return data;
 }
 
+export interface UpdateProfileInput {
+  name?: string;
+  email?: string;
+  bio?: string;
+}
+
+export async function updateProfile(id: string, input: UpdateProfileInput): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(input)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ─── Tasks ──────────────────────────────────────────────
 export async function getTodaysTasks(): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];

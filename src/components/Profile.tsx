@@ -1,0 +1,221 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { getProfileById, updateProfile } from '../lib/queries';
+import { CURRENT_USER_ID } from '../lib/supabase';
+import type { Profile } from '../lib/types';
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [bio, setBio] = useState('');
+
+  // Settings state (visual only for now)
+  const [language, setLanguage] = useState<'EN' | 'ES'>('EN');
+  const [notifications, setNotifications] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getProfileById(CURRENT_USER_ID);
+        if (data) {
+          setProfile(data);
+          setName(data.name || '');
+          setEmail(data.email || '');
+          setBio(data.bio || '');
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  async function handleSave() {
+    if (!profile) return;
+    setSaving(true);
+    try {
+      await updateProfile(CURRENT_USER_ID, {
+        name,
+        email,
+        bio,
+      });
+      // Updating local state after save
+      setProfile((prev) => prev ? { ...prev, name, email, bio } : null);
+      alert('Perfil guardado exitosamente.');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Ocurrió un error al guardar el perfil.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background-dark text-slate-100 pb-24">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center mb-6">
+        <button onClick={() => navigate({ to: '/' })} className="text-primary p-2 -ml-2 rounded-full hover:bg-primary/10 transition-colors">
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="text-xl font-bold flex-1 text-center pr-8">My Profile</h1>
+      </header>
+
+      <main className="max-w-md mx-auto px-6 space-y-8">
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-primary/20 flex items-center justify-center">
+              {profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt={name || 'Profile Avatar'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="material-symbols-outlined text-4xl text-primary">person</span>
+              )}
+            </div>
+            <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-background-dark rounded-full flex items-center justify-center shadow-lg border-4 border-background-dark hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+            </button>
+          </div>
+          
+          <div className="mt-4 text-center">
+            <h2 className="text-2xl font-bold">{name || 'Sin Nombre'}</h2>
+            <div className="mt-1 relative max-w-xs mx-auto">
+               <input
+                type="text"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Añade una descripción..."
+                className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
+               />
+            </div>
+          </div>
+        </div>
+
+        {/* Personal Information */}
+        <section>
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+            Personal Information
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="displayName" className="block text-sm text-slate-300 mb-1.5 ml-1">Display Name</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">person</span>
+                <input
+                  id="displayName"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="emailAddress" className="block text-sm text-slate-300 mb-1.5 ml-1">Email Address</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">mail</span>
+                <input
+                  id="emailAddress"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* App Settings */}
+        <section>
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+            App Settings
+          </h3>
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl divide-y divide-primary/10">
+            {/* Language */}
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">language</span>
+                <div>
+                  <h4 className="font-semibold text-[15px]">Language</h4>
+                  <p className="text-xs text-slate-400">Preferred app language</p>
+                </div>
+              </div>
+              <div className="bg-slate-800 rounded-lg p-0.5 flex text-xs font-bold">
+                <button 
+                  onClick={() => setLanguage('EN')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${language === 'EN' ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  EN
+                </button>
+                <button 
+                  onClick={() => setLanguage('ES')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${language === 'ES' ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  ES
+                </button>
+              </div>
+            </div>
+
+            {/* Notifications */}
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">notifications</span>
+                <div>
+                  <h4 className="font-semibold text-[15px]">Joint Notifications</h4>
+                  <p className="text-xs text-slate-400">Sync alerts with your partner</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setNotifications(!notifications)}
+                className={`w-12 h-6 rounded-full relative transition-colors ${notifications ? 'bg-primary' : 'bg-slate-700'}`}
+              >
+                <span 
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifications ? 'right-1' : 'left-1'}`}
+                />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Save Button */}
+        <div className="pt-4">
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-primary text-background-dark font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+          >
+            {saving ? (
+              <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+            ) : (
+              <>
+                <span className="material-symbols-outlined mr-2">save</span>
+                <span>Save Changes</span>
+              </>
+            )}
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+}

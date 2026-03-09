@@ -88,9 +88,12 @@ export default function Dashboard() {
             <button className="p-2 rounded-full bg-primary/10 text-primary">
               <span className="material-symbols-outlined">notifications</span>
             </button>
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
+            <button 
+              onClick={() => navigate({ to: '/profile' })}
+              className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary cursor-pointer hover:border-primary/80 transition-colors"
+            >
               <img alt="Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzYn9U1SkV6vaNTTMqDRHEPXwjoYhfu5IRtpwUQf99KhUleg55dJ4oio_qWVWDGxBqxBRxREm1ZcBlbNyx4v4xqDDr9xvRMCizBJHI36cAARAnkRsAicA0oDZ6UQZtxbrH-TWjlCCYcEjAbM5rHItsLtdsrN1xUP1Bgi0Ao1gPOQ7gkHtDMLeSIHDGQ53d9Oo2JG4_n-hpHcbnwQsctruL-1z0G39mJgjrBEuXu7amTofTRddeojEl1cE3HpcyD_i0vFxrR4eaY5c1"/>
-            </div>
+            </button>
           </div>
         </div>
       </header>

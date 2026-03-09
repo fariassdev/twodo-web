@@ -7,6 +7,7 @@ import EditEntry from './components/EditEntry';
 import CreateEntry from './components/CreateEntry';
 import Metrics from './components/Metrics';
 import ShoppingList from './components/ShoppingList';
+import Profile from './components/Profile';
 import BottomNav from './components/BottomNav';
 
 export const rootRoute = createRootRoute({
@@ -58,6 +59,12 @@ export const taskDetailsRoute = createRoute({
   component: TaskDetails,
 });
 
+export const profileRoute = createRoute({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/profile',
+  component: Profile,
+});
+
 export const editEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/task/$taskId/edit',
@@ -85,6 +92,7 @@ const routeTree = rootRoute.addChildren([
     calendarRoute,
     metricsRoute,
     shoppingRoute,
+    profileRoute,
   ]),
   taskDetailsRoute,
   editEntryRoute,
