@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getShoppingItems, addShoppingItem, togglePurchased, updateQuantity, deleteShoppingItem } from '../lib/queries';
 import type { ShoppingItem as ShoppingItemType } from '../lib/types';
+import { useTranslation } from 'react-i18next';
 
 export default function ShoppingList() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ShoppingItemType[]>([]);
   const [newItem, setNewItem] = useState('');
   const [loading, setLoading] = useState(true);
@@ -97,18 +99,18 @@ export default function ShoppingList() {
           <div className="p-2 bg-primary/20 rounded-lg">
             <span className="material-symbols-outlined text-primary">favorite</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Shopping List</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t('shopping.title')}</h1>
         </div>
       </header>
 
       <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         <form onSubmit={handleAdd} className="mt-8 mb-10">
-          <label className="block text-sm font-medium text-primary mb-3" htmlFor="new-item">Add to list</label>
+          <label className="block text-sm font-medium text-primary mb-3" htmlFor="new-item">{t('shopping.addToList')}</label>
           <div className="relative">
             <input
               className="w-full bg-primary/5 border-none rounded-xl h-16 px-6 text-xl placeholder:text-slate-600 focus:ring-2 focus:ring-primary focus:bg-primary/10 transition-all font-display"
               id="new-item"
-              placeholder="¿Qué falta?"
+              placeholder={t('shopping.newItemPlaceholder')}
               type="text"
               value={newItem}
               onChange={(e) => setNewItem(e.target.value)}
@@ -124,11 +126,11 @@ export default function ShoppingList() {
 
         <div className="space-y-4 mb-8">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
-            To Buy ({toBuy.length})
+            {t('shopping.toBuyWithCount', { count: toBuy.length })}
           </h2>
 
           {toBuy.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">¡Lista vacía! Añade algo arriba.</p>
+            <p className="text-slate-500 text-sm text-center py-4">{t('shopping.emptyToBuy')}</p>
           )}
 
           {toBuy.map((item) => (
@@ -172,7 +174,7 @@ export default function ShoppingList() {
         {purchased.length > 0 && (
           <div className="space-y-4 mb-24">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
-              Purchased ({purchased.length})
+              {t('shopping.purchasedWithCount', { count: purchased.length })}
             </h2>
             {purchased.map((item) => (
               <div key={item.id} className="flex items-center gap-4 bg-slate-800/20 p-4 rounded-xl border border-primary/5 shadow-sm opacity-60">

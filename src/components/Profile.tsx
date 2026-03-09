@@ -6,7 +6,7 @@ import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../
 import type { Profile } from '../lib/types';
 
 export default function Profile() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   // Active Profile State
   const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
@@ -61,10 +61,10 @@ export default function Profile() {
       });
       // Updating local state after save
       setProfile((prev) => prev ? { ...prev, name, email, bio } : null);
-      alert('Perfil guardado exitosamente.');
+      alert(t('profile.alertSaved'));
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Ocurrió un error al guardar el perfil.');
+      alert(t('profile.alertSaveError'));
     } finally {
       setSaving(false);
     }
@@ -85,7 +85,7 @@ export default function Profile() {
         <button onClick={() => navigate({ to: '/' })} className="text-primary p-2 -ml-2 rounded-full hover:bg-primary/10 transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="text-xl font-bold flex-1 text-center pr-8">My Profile</h1>
+        <h1 className="text-xl font-bold flex-1 text-center pr-8">{t('profile.title')}</h1>
       </header>
 
       <main className="max-w-md mx-auto px-6 space-y-8">
@@ -97,13 +97,13 @@ export default function Profile() {
               onClick={() => handleProfileSwitch(MAIN_ID)}
               className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === MAIN_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
             >
-              Primary
+              {t('profile.primary')}
             </button>
             <button 
               onClick={() => handleProfileSwitch(PARTNER_ID)}
               className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === PARTNER_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
             >
-              Partner
+              {t('profile.partner')}
             </button>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function Profile() {
               {profile?.avatar_url ? (
                 <img 
                   src={profile.avatar_url} 
-                  alt={name || 'Profile Avatar'} 
+                  alt={name || t('profile.avatarFallbackAlt')} 
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -128,13 +128,13 @@ export default function Profile() {
           </div>
           
           <div className="mt-4 text-center">
-            <h2 className="text-2xl font-bold">{name || 'Sin Nombre'}</h2>
+            <h2 className="text-2xl font-bold">{name || t('profile.noName')}</h2>
             <div className="mt-1 relative max-w-xs mx-auto">
                <input
                 type="text"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Añade una descripción..."
+                placeholder={t('profile.bioPlaceholder')}
                 className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
                />
             </div>
@@ -144,11 +144,11 @@ export default function Profile() {
         {/* Personal Information */}
         <section>
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-            Personal Information
+            {t('profile.personalInfo')}
           </h3>
           <div className="space-y-4">
             <div>
-              <label htmlFor="displayName" className="block text-sm text-slate-300 mb-1.5 ml-1">Display Name</label>
+              <label htmlFor="displayName" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.displayName')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">person</span>
                 <input
@@ -162,7 +162,7 @@ export default function Profile() {
             </div>
             
             <div>
-              <label htmlFor="emailAddress" className="block text-sm text-slate-300 mb-1.5 ml-1">Email Address</label>
+              <label htmlFor="emailAddress" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.emailAddress')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">mail</span>
                 <input
@@ -180,7 +180,7 @@ export default function Profile() {
         {/* App Settings */}
         <section>
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-            App Settings
+            {t('profile.appSettings')}
           </h3>
           <div className="bg-primary/5 border border-primary/20 rounded-2xl divide-y divide-primary/10">
             {/* Language */}
@@ -188,8 +188,8 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary text-xl">language</span>
                 <div>
-                  <h4 className="font-semibold text-[15px]">Language</h4>
-                  <p className="text-xs text-slate-400">Preferred app language</p>
+                  <h4 className="font-semibold text-[15px]">{t('profile.language')}</h4>
+                  <p className="text-xs text-slate-400">{t('profile.preferredLanguage')}</p>
                 </div>
               </div>
               <div className="bg-slate-800 rounded-lg p-0.5 flex text-xs font-bold">
@@ -197,13 +197,13 @@ export default function Profile() {
                   onClick={() => i18n.changeLanguage('en')}
                   className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('en') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
                 >
-                  EN
+                  {t('profile.langEn')}
                 </button>
                 <button 
                   onClick={() => i18n.changeLanguage('es')}
                   className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('es') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
                 >
-                  ES
+                  {t('profile.langEs')}
                 </button>
               </div>
             </div>
@@ -213,8 +213,8 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary text-xl">notifications</span>
                 <div>
-                  <h4 className="font-semibold text-[15px]">Joint Notifications</h4>
-                  <p className="text-xs text-slate-400">Sync alerts with your partner</p>
+                  <h4 className="font-semibold text-[15px]">{t('profile.jointNotifications')}</h4>
+                  <p className="text-xs text-slate-400">{t('profile.syncAlerts')}</p>
                 </div>
               </div>
               <button 
@@ -241,7 +241,7 @@ export default function Profile() {
             ) : (
               <>
                 <span className="material-symbols-outlined mr-2">save</span>
-                <span>Save Changes</span>
+                <span>{t('profile.saveChanges')}</span>
               </>
             )}
           </button>

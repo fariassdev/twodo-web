@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getTasksForMonth, getTasksForDate, getProfiles } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
+import { useTranslation } from 'react-i18next';
 
 import { useNavigate } from '@tanstack/react-router';
 
 export default function Calendar() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -115,14 +117,18 @@ export default function Calendar() {
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const monthName = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(year, month, 1));
+  const weekdayLabels = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(Date.UTC(2024, 0, 7 + i));
+    return new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(date).toUpperCase();
+  });
 
   function formatSelectedDate() {
-    const d = selectedDate;
-    const day = d.getDate();
-    const monthName = monthNames[d.getMonth()];
-    const yr = d.getFullYear();
-    return `${day} ${monthName} ${yr}`;
+    return new Intl.DateTimeFormat(i18n.language, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(selectedDate);
   }
 
   return (
@@ -131,7 +137,7 @@ export default function Calendar() {
         <button className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <h1 className="text-lg font-bold tracking-tight">Our Calendar</h1>
+        <h1 className="text-lg font-bold tracking-tight">{t('calendar.title')}</h1>
         
         <div className="relative">
           <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center justify-center size-10 rounded-full hover:bg-slate-800 transition-colors">
@@ -153,7 +159,7 @@ export default function Calendar() {
                   className="flex items-center gap-3 px-4 py-3 text-slate-100 hover:bg-slate-700 transition-colors w-full text-left"
                 >
                   <span className="material-symbols-outlined text-slate-400">{showDeleted ? 'visibility_off' : 'visibility'}</span>
-                  <span className="font-semibold text-sm">{showDeleted ? 'Ocultar eliminadas' : 'Ver eliminadas'}</span>
+                  <span className="font-semibold text-sm">{showDeleted ? t('calendar.hideDeleted') : t('calendar.showDeleted')}</span>
                 </button>
               </div>
             </>
@@ -165,7 +171,7 @@ export default function Calendar() {
         <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-800">
           <span className="material-symbols-outlined">chevron_left</span>
         </button>
-        <h2 className="text-base font-bold">{monthNames[month]} {year}</h2>
+        <h2 className="text-base font-bold">{monthName} {year}</h2>
         <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-800">
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
@@ -173,7 +179,7 @@ export default function Calendar() {
 
       <div className="px-4 mb-6 max-w-md mx-auto w-full">
         <div className="grid grid-cols-7 mb-2">
-          {['D','L','M','X','J','V','S'].map((d, i) => (
+          {weekdayLabels.map((d, i) => (
             <div key={i} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">{d}</div>
           ))}
         </div>
@@ -215,11 +221,11 @@ export default function Calendar() {
       <div className="flex-1 bg-slate-900/40 rounded-t-xl p-4 shadow-2xl border-t border-slate-800 overflow-y-auto max-w-md mx-auto w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
-          <button onClick={() => navigate({ to: '/create', search: { date: selectedStr } })} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
+          <button onClick={() => navigate({ to: '/create', search: { date: selectedStr } })} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{t('calendar.addEvent')}</button>
         </div>
         <div className="space-y-3">
           {dayTasks.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">No hay eventos para este día</p>
+            <p className="text-slate-500 text-sm text-center py-4">{t('calendar.emptyDay')}</p>
           )}
           {dayTasks.map((task) => {
             const isDeleted = task.deleted_at !== null;
@@ -248,7 +254,7 @@ export default function Calendar() {
                   <div className="flex items-center gap-2 mb-0.5">
                     <h4 className={`font-bold text-base text-slate-100 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
                     {isDeleted && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">Eliminada</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">{t('calendar.deletedBadge')}</span>
                     )}
                   </div>
                   <p className="text-sm text-slate-400 truncate flex items-center gap-1">

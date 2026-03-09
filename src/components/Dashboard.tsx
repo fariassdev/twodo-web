@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask, getProfileById } from '../lib/queries';
 import { getActiveProfileId } from '../lib/supabase';
 import type { Task, LoveNote, Profile } from '../lib/types';
+import { useTranslation } from 'react-i18next';
 
 import { useNavigate } from '@tanstack/react-router';
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Task[]>([]);
@@ -58,7 +60,7 @@ export default function Dashboard() {
 
   function formatEventDate(dateStr: string) {
     const d = new Date(dateStr + 'T00:00:00');
-    const month = d.toLocaleString('es-ES', { month: 'short' });
+    const month = d.toLocaleString(i18n.language, { month: 'short' });
     const day = String(d.getDate()).padStart(2, '0');
     return { month: month.charAt(0).toUpperCase() + month.slice(1), day };
   }
@@ -85,7 +87,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between max-w-md mx-auto">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-2xl">grid_view</span>
-            <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-xl font-bold tracking-tight">{t('dashboard.title')}</h1>
           </div>
           <div className="flex items-center gap-3">
             <button className="p-2 rounded-full bg-primary/10 text-primary">
@@ -96,7 +98,7 @@ export default function Dashboard() {
               className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary cursor-pointer hover:border-primary/80 transition-colors"
             >
               {profile?.avatar_url ? (
-                <img alt="Profile" className="w-full h-full object-cover" src={profile.avatar_url}/>
+                <img alt={t('profile.title')} className="w-full h-full object-cover" src={profile.avatar_url}/>
               ) : (
                 <span className="material-symbols-outlined text-primary">person</span>
               )}
@@ -110,7 +112,7 @@ export default function Dashboard() {
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
           <input
             className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-xl focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500"
-            placeholder="Buscar misiones o planes..."
+            placeholder={t('dashboard.searchPlaceholder')}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -119,15 +121,15 @@ export default function Dashboard() {
 
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[22px] font-bold tracking-tight">Misiones de hoy</h2>
+            <h2 className="text-[22px] font-bold tracking-tight">{t('dashboard.todayMissions')}</h2>
             <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded-lg uppercase tracking-wider">
-              {pendingCount} Pendiente{pendingCount !== 1 ? 's' : ''}
+              {t('dashboard.pendingCount', { count: pendingCount })}
             </span>
           </div>
           <div className="space-y-3">
             {filteredTasks.length === 0 && (
               <p className="text-slate-500 text-sm text-center py-4">
-                {search ? 'No se encontraron tareas' : '¡Todo completado por hoy! 🎉'}
+                {search ? t('dashboard.noTasksFound') : t('dashboard.allDoneToday')}
               </p>
             )}
             {filteredTasks.map((task) => (
@@ -151,7 +153,7 @@ export default function Dashboard() {
                         ? 'bg-red-500/10 text-red-500'
                         : 'bg-primary/20 text-primary'
                     }`}>
-                      {task.priority === 'critical' ? 'Crítico' : 'Flexible'}
+                      {task.priority === 'critical' ? t('entryForm.priorityCritical') : t('entryForm.priorityFlexible')}
                     </span>
                   </div>
                   <p className="text-slate-400 text-sm">{task.location || task.description || ''}</p>
@@ -175,14 +177,14 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex-grow">
-                  <h2 className="text-sm font-bold text-yellow-200 uppercase tracking-wider mb-1">Nota de amor</h2>
+                  <h2 className="text-sm font-bold text-yellow-200 uppercase tracking-wider mb-1">{t('dashboard.loveNoteTitle')}</h2>
                   <p className="text-slate-300 italic font-medium leading-relaxed">
                     "{loveNote.content}"
                   </p>
                   <div className="mt-3 flex justify-end">
                     <button className="text-xs font-bold text-yellow-400 flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">edit</span>
-                      <span>Responder</span>
+                      <span>{t('dashboard.reply')}</span>
                     </button>
                   </div>
                 </div>
@@ -193,15 +195,15 @@ export default function Dashboard() {
 
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[22px] font-bold tracking-tight text-slate-100">Planes conjuntos</h2>
-            <button className="text-primary font-bold text-sm" onClick={() => navigate({ to: '/calendar' })}>Ver calendario</button>
+            <h2 className="text-[22px] font-bold tracking-tight text-slate-100">{t('dashboard.sharedPlans')}</h2>
+            <button className="text-primary font-bold text-sm" onClick={() => navigate({ to: '/calendar' })}>{t('dashboard.viewCalendar')}</button>
           </div>
           <div className="space-y-4">
             {filteredEvents.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-4">No hay eventos próximos</p>
+              <p className="text-slate-500 text-sm text-center py-4">{t('dashboard.noUpcomingEvents')}</p>
             )}
             {filteredEvents.map((event) => {
-              const { month, day } = event.date ? formatEventDate(event.date) : { month: '---', day: '--' };
+              const { month, day } = event.date ? formatEventDate(event.date) : { month: t('dashboard.noDateMonth'), day: t('dashboard.noDateDay') };
               return (
                 <div
                   key={event.id}
@@ -224,7 +226,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-sm">schedule</span>
                         <span className="text-xs font-medium text-slate-400">
-                          {event.start_time?.slice(0, 5)}h{event.end_time ? ` - ${event.end_time.slice(0, 5)}h` : ''}
+                          {event.start_time?.slice(0, 5)}{t('common.hourSuffix')}{event.end_time ? ` - ${event.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
                         </span>
                       </div>
                     )}
