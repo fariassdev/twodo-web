@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { getProfileById, updateProfile } from '../lib/queries';
+import { getProfileById, getProfiles, updateProfile } from '../lib/queries';
 import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import TopBar from './ui/TopBar';
@@ -12,6 +12,7 @@ export default function Profile() {
   // Active Profile State
   const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileOptions, setProfileOptions] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -19,13 +20,27 @@ export default function Profile() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   // Settings state (visual only for now)
 
   const [notifications, setNotifications] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadProfilesData() {
+      try {
+        const profiles = await getProfiles();
+        setProfileOptions(profiles);
+      } catch (err) {
+        console.error('Failed to load profiles:', err);
+      }
+    }
+
+    loadProfilesData();
+  }, []);
+
+  useEffect(() => {
+    async function loadProfileData() {
       setLoading(true);
       try {
         const data = await getProfileById(activeProfileId);
@@ -34,6 +49,13 @@ export default function Profile() {
           setName(data.name || '');
           setEmail(data.email || '');
           setBio(data.bio || '');
+          setAvatarUrl(data.avatar_url || '');
+        } else {
+          setProfile(null);
+          setName('');
+          setEmail('');
+          setBio('');
+          setAvatarUrl('');
         }
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -41,8 +63,19 @@ export default function Profile() {
         setLoading(false);
       }
     }
-    loadData();
+
+    loadProfileData();
   }, [activeProfileId]);
+
+  const switchProfiles = useMemo(() => {
+    const mainProfile = profileOptions.find((item) => item.id === MAIN_ID);
+    const partnerProfile = profileOptions.find((item) => item.id === PARTNER_ID);
+
+    return [
+      { id: MAIN_ID, name: mainProfile?.name || t('profile.primary') },
+      { id: PARTNER_ID, name: partnerProfile?.name || t('profile.partner') },
+    ];
+  }, [profileOptions, t]);
 
   function handleProfileSwitch(id: string) {
     if (id !== activeProfileId) {
@@ -55,13 +88,24 @@ export default function Profile() {
     if (!profile) return;
     setSaving(true);
     try {
-      await updateProfile(activeProfileId, {
+      const normalizedAvatarUrl = avatarUrl.trim();
+      const updated = await updateProfile(activeProfileId, {
         name,
         email,
         bio,
+        avatar_url: normalizedAvatarUrl || null,
       });
-      // Updating local state after save
-      setProfile((prev) => prev ? { ...prev, name, email, bio } : null);
+      setProfile(updated);
+      setName(updated.name || '');
+      setEmail(updated.email || '');
+      setBio(updated.bio || '');
+      setAvatarUrl(updated.avatar_url || '');
+      setProfileOptions((prev) => {
+        if (prev.some((item) => item.id === updated.id)) {
+          return prev.map((item) => (item.id === updated.id ? updated : item));
+        }
+        return [...prev, updated];
+      });
       alert(t('profile.alertSaved'));
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -96,18 +140,15 @@ export default function Profile() {
         {/* Profile Switcher */}
         <div className="flex justify-center -mt-2 mb-2">
           <div className="bg-primary/10 p-1 rounded-xl inline-flex text-sm font-bold">
-            <button 
-              onClick={() => handleProfileSwitch(MAIN_ID)}
-              className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === MAIN_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
-            >
-              {t('profile.primary')}
-            </button>
-            <button 
-              onClick={() => handleProfileSwitch(PARTNER_ID)}
-              className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === PARTNER_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
-            >
-              {t('profile.partner')}
-            </button>
+            {switchProfiles.map((switchProfile) => (
+              <button
+                key={switchProfile.id}
+                onClick={() => handleProfileSwitch(switchProfile.id)}
+                className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === switchProfile.id ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
+              >
+                {switchProfile.name}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -115,9 +156,9 @@ export default function Profile() {
         <div className="flex flex-col items-center">
           <div className="relative">
             <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-primary/20 flex items-center justify-center">
-              {profile?.avatar_url ? (
+              {avatarUrl ? (
                 <img 
-                  src={profile.avatar_url} 
+                  src={avatarUrl}
                   alt={name || t('profile.avatarFallbackAlt')} 
                   className="w-full h-full object-cover"
                 />
@@ -173,6 +214,21 @@ export default function Profile() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="avatarUrl" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.avatarUrlLabel')}</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">link</span>
+                <input
+                  id="avatarUrl"
+                  type="url"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  placeholder={t('profile.avatarUrlPlaceholder')}
                   className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
                 />
               </div>

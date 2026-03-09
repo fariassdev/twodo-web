@@ -115,6 +115,8 @@
     "personalInfo": "Personal Information",
     "displayName": "Display Name",
     "emailAddress": "Email Address",
+    "avatarUrlLabel": "Profile image URL",
+    "avatarUrlPlaceholder": "https://example.com/avatar.jpg",
     "appSettings": "App Settings",
     "language": "Language",
     "preferredLanguage": "Preferred app language",

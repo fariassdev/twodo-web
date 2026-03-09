@@ -25,6 +25,7 @@ export interface UpdateProfileInput {
   name?: string;
   email?: string;
   bio?: string;
+  avatar_url?: string | null;
 }
 
 export async function updateProfile(id: string, input: UpdateProfileInput): Promise<Profile> {
@@ -391,9 +392,38 @@ export interface EquityBalance {
   partnerPercentage: number;
   mainName: string;
   partnerName: string;
+  mainAvatarUrl: string | null;
+  partnerAvatarUrl: string | null;
+}
+
+interface HouseholdProfile {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+function getHouseholdProfiles(profiles: Profile[]): [HouseholdProfile, HouseholdProfile] {
+  const mainProfile = profiles.find((profile) => profile.id === MAIN_ID);
+  const partnerProfile = profiles.find((profile) => profile.id === PARTNER_ID);
+
+  return [
+    {
+      id: MAIN_ID,
+      name: mainProfile?.name || 'Main',
+      avatarUrl: mainProfile?.avatar_url || null,
+    },
+    {
+      id: PARTNER_ID,
+      name: partnerProfile?.name || 'Partner',
+      avatarUrl: partnerProfile?.avatar_url || null,
+    },
+  ];
 }
 
 export async function getEquityBalance(): Promise<EquityBalance> {
+  const profiles = await getProfiles();
+  const [mainProfile, partnerProfile] = getHouseholdProfiles(profiles);
+
   const { data, error } = await supabase
     .from('task_completions')
     .select('completed_by, points_earned');
@@ -404,9 +434,9 @@ export async function getEquityBalance(): Promise<EquityBalance> {
   let partnerPoints = 0;
 
   for (const c of completions) {
-    if (c.completed_by === MAIN_ID) {
+    if (c.completed_by === mainProfile.id) {
       mainPoints += c.points_earned;
-    } else {
+    } else if (c.completed_by === partnerProfile.id) {
       partnerPoints += c.points_earned;
     }
   }
@@ -415,8 +445,10 @@ export async function getEquityBalance(): Promise<EquityBalance> {
   return {
     mainPercentage: Math.round((mainPoints / total) * 100),
     partnerPercentage: Math.round((partnerPoints / total) * 100),
-    mainName: 'Main',
-    partnerName: 'Partner',
+    mainName: mainProfile.name,
+    partnerName: partnerProfile.name,
+    mainAvatarUrl: mainProfile.avatarUrl,
+    partnerAvatarUrl: partnerProfile.avatarUrl,
   };
 }
 
@@ -454,7 +486,9 @@ export async function getWeeklyPulse(): Promise<WeeklyPulse> {
 }
 
 export interface PointsBreakdown {
+  id: string;
   name: string;
+  avatarUrl: string | null;
   taskPoints: number;
   kudosPoints: number;
   totalPoints: number;
@@ -471,10 +505,8 @@ export async function getPointsBreakdown(): Promise<PointsBreakdown[]> {
     .select('to_profile, points');
   if (e2) throw e2;
 
-  const profiles = [
-    { id: MAIN_ID, name: 'Main' },
-    { id: PARTNER_ID, name: 'Partner' },
-  ];
+  const profileData = await getProfiles();
+  const profiles = getHouseholdProfiles(profileData);
 
   return profiles.map((p) => {
     const taskPoints = (completions ?? [])
@@ -484,7 +516,9 @@ export async function getPointsBreakdown(): Promise<PointsBreakdown[]> {
       .filter((k) => k.to_profile === p.id)
       .reduce((sum, k) => sum + k.points, 0);
     return {
+      id: p.id,
       name: p.name,
+      avatarUrl: p.avatarUrl,
       taskPoints,
       kudosPoints,
       totalPoints: taskPoints + kudosPoints,

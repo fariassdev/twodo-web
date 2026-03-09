@@ -67,7 +67,13 @@ export default function Metrics() {
                 <div className="mb-6">
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">{balance.mainName.charAt(0).toUpperCase()}</div>
+                      <div className="size-8 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                        {balance.mainAvatarUrl ? (
+                          <img src={balance.mainAvatarUrl} alt={balance.mainName} className="size-full object-cover" />
+                        ) : (
+                          balance.mainName.charAt(0).toUpperCase()
+                        )}
+                      </div>
                       <span className="text-sm font-medium">{t('metrics.tasksOf', { name: balance.mainName })}</span>
                     </div>
                     <span className="text-lg font-bold text-primary">{balance.mainPercentage}%</span>
@@ -80,7 +86,13 @@ export default function Metrics() {
                 <div>
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-slate-400">{balance.partnerName.charAt(0).toUpperCase()}</div>
+                      <div className="size-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-xs font-bold text-slate-400">
+                        {balance.partnerAvatarUrl ? (
+                          <img src={balance.partnerAvatarUrl} alt={balance.partnerName} className="size-full object-cover" />
+                        ) : (
+                          balance.partnerName.charAt(0).toUpperCase()
+                        )}
+                      </div>
                       <span className="text-sm font-medium">{t('metrics.tasksOf', { name: balance.partnerName })}</span>
                     </div>
                     <span className="text-lg font-bold text-slate-400">{balance.partnerPercentage}%</span>
@@ -132,9 +144,18 @@ export default function Metrics() {
                 const barWidth = (p.totalPoints / maxPoints) * 100;
                 const isFirst = i === 0;
                 return (
-                  <div key={p.name}>
+                  <div key={p.id}>
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-sm font-medium">{p.name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="size-7 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center text-[11px] font-bold text-primary">
+                          {p.avatarUrl ? (
+                            <img src={p.avatarUrl} alt={p.name} className="size-full object-cover" />
+                          ) : (
+                            p.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">{p.name}</span>
+                      </div>
                       <span className={`text-sm font-bold ${isFirst ? 'text-primary' : 'text-slate-400'}`}>{t('metrics.pointsShort', { value: p.totalPoints })}</span>
                     </div>
                     <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden flex">
