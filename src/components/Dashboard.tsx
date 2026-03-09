@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask } from '../lib/queries';
-import { CURRENT_USER_ID } from '../lib/supabase';
-import type { Task, LoveNote } from '../lib/types';
+import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask, getProfileById } from '../lib/queries';
+import { getActiveProfileId } from '../lib/supabase';
+import type { Task, LoveNote, Profile } from '../lib/types';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Task[]>([]);
   const [loveNote, setLoveNote] = useState<LoveNote | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -19,14 +20,16 @@ export default function Dashboard() {
 
   async function loadData() {
     try {
-      const [t, e, n] = await Promise.all([
+      const [t, e, n, p] = await Promise.all([
         getTodaysTasks(),
         getUpcomingEvents(),
         getLatestLoveNote(),
+        getProfileById(getActiveProfileId()),
       ]);
       setTasks(t);
       setEvents(e);
       setLoveNote(n);
+      setProfile(p);
     } catch (err) {
       console.error('Dashboard load error:', err);
     } finally {
@@ -92,7 +95,11 @@ export default function Dashboard() {
               onClick={() => navigate({ to: '/profile' })}
               className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary cursor-pointer hover:border-primary/80 transition-colors"
             >
-              <img alt="Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzYn9U1SkV6vaNTTMqDRHEPXwjoYhfu5IRtpwUQf99KhUleg55dJ4oio_qWVWDGxBqxBRxREm1ZcBlbNyx4v4xqDDr9xvRMCizBJHI36cAARAnkRsAicA0oDZ6UQZtxbrH-TWjlCCYcEjAbM5rHItsLtdsrN1xUP1Bgi0Ao1gPOQ7gkHtDMLeSIHDGQ53d9Oo2JG4_n-hpHcbnwQsctruL-1z0G39mJgjrBEuXu7amTofTRddeojEl1cE3HpcyD_i0vFxrR4eaY5c1"/>
+              {profile?.avatar_url ? (
+                <img alt="Profile" className="w-full h-full object-cover" src={profile.avatar_url}/>
+              ) : (
+                <span className="material-symbols-outlined text-primary">person</span>
+              )}
             </button>
           </div>
         </div>

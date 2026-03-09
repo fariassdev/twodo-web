@@ -73,20 +73,20 @@ export default function Metrics() {
                 <div className="mb-6">
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">B</div>
-                      <span className="text-sm font-medium">{balance.bubiName}'s Tasks</span>
+                      <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">M</div>
+                      <span className="text-sm font-medium">{balance.mainName}'s Tasks</span>
                     </div>
-                    <span className="text-lg font-bold text-primary">{balance.bubiPercentage}%</span>
+                    <span className="text-lg font-bold text-primary">{balance.mainPercentage}%</span>
                   </div>
                   <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${balance.bubiPercentage}%` }}></div>
+                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${balance.mainPercentage}%` }}></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-slate-400">S</div>
+                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-slate-400">P</div>
                       <span className="text-sm font-medium">{balance.partnerName}'s Tasks</span>
                     </div>
                     <span className="text-lg font-bold text-slate-400">{balance.partnerPercentage}%</span>
@@ -99,7 +99,7 @@ export default function Metrics() {
                 <div className="mt-6 flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
                   <span className="material-symbols-outlined text-primary text-sm">info</span>
                   <p className="text-xs text-primary/80 font-medium tracking-wide">
-                    {Math.abs(balance.bubiPercentage - balance.partnerPercentage) <= 10
+                    {Math.abs(balance.mainPercentage - balance.partnerPercentage) <= 10
                       ? 'Almost at a perfect balance! Great job today.'
                       : 'Keep working together to balance the tasks!'}
                   </p>

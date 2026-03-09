@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { getProfileById, updateProfile } from '../lib/queries';
-import { CURRENT_USER_ID } from '../lib/supabase';
+import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
 export default function Profile() {
   const navigate = useNavigate();
+  // Active Profile State
+  const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -21,8 +23,9 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       try {
-        const data = await getProfileById(CURRENT_USER_ID);
+        const data = await getProfileById(activeProfileId);
         if (data) {
           setProfile(data);
           setName(data.name || '');
@@ -36,13 +39,20 @@ export default function Profile() {
       }
     }
     loadData();
-  }, []);
+  }, [activeProfileId]);
+
+  function handleProfileSwitch(id: string) {
+    if (id !== activeProfileId) {
+      setActiveProfileId(id);
+      setLocalActiveProfileId(id);
+    }
+  }
 
   async function handleSave() {
     if (!profile) return;
     setSaving(true);
     try {
-      await updateProfile(CURRENT_USER_ID, {
+      await updateProfile(activeProfileId, {
         name,
         email,
         bio,
@@ -67,7 +77,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-background-dark text-slate-100 pb-24">
+    <div className="min-h-screen bg-background-dark text-slate-100 pb-40">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center mb-6">
         <button onClick={() => navigate({ to: '/' })} className="text-primary p-2 -ml-2 rounded-full hover:bg-primary/10 transition-colors">
@@ -77,6 +87,25 @@ export default function Profile() {
       </header>
 
       <main className="max-w-md mx-auto px-6 space-y-8">
+        
+        {/* Profile Switcher */}
+        <div className="flex justify-center -mt-2 mb-2">
+          <div className="bg-primary/10 p-1 rounded-xl inline-flex text-sm font-bold">
+            <button 
+              onClick={() => handleProfileSwitch(MAIN_ID)}
+              className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === MAIN_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
+            >
+              Primary
+            </button>
+            <button 
+              onClick={() => handleProfileSwitch(PARTNER_ID)}
+              className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === PARTNER_ID ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
+            >
+              Partner
+            </button>
+          </div>
+        </div>
+
         {/* Avatar Section */}
         <div className="flex flex-col items-center">
           <div className="relative">

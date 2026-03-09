@@ -1,4 +1,4 @@
-import { supabase, CURRENT_USER_ID } from './supabase';
+import { supabase, getActiveProfileId, MAIN_ID, PARTNER_ID } from './supabase';
 import type { Task, ShoppingItem, LoveNote, Profile } from './types';
 
 // ─── Profiles ───────────────────────────────────────────
@@ -139,8 +139,8 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
     .insert({
       ...input,
       status: 'pending',
-      created_by: CURRENT_USER_ID,
-      assigned_to: input.assigned_to || CURRENT_USER_ID,
+      created_by: getActiveProfileId(),
+      assigned_to: input.assigned_to || getActiveProfileId(),
     })
     .select()
     .single();
@@ -152,8 +152,8 @@ export async function createTasks(inputs: CreateTaskInput[]): Promise<Task[]> {
   const tasksToInsert = inputs.map(input => ({
     ...input,
     status: 'pending',
-    created_by: CURRENT_USER_ID,
-    assigned_to: input.assigned_to || CURRENT_USER_ID,
+    created_by: getActiveProfileId(),
+    assigned_to: input.assigned_to || getActiveProfileId(),
   }));
   
   const { data, error } = await supabase
@@ -250,7 +250,7 @@ export async function completeTask(taskId: string): Promise<void> {
     .from('tasks')
     .update({
       status: 'completed',
-      last_done_by: CURRENT_USER_ID,
+      last_done_by: getActiveProfileId(),
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId);
@@ -281,7 +281,7 @@ export async function completeTask(taskId: string): Promise<void> {
         .from('task_completions')
         .insert({
           task_id: taskId,
-          completed_by: CURRENT_USER_ID,
+          completed_by: getActiveProfileId(),
           points_earned: task.points,
         });
       if (completionError) throw completionError;
@@ -291,7 +291,7 @@ export async function completeTask(taskId: string): Promise<void> {
       .from('task_completions')
       .insert({
         task_id: taskId,
-        completed_by: CURRENT_USER_ID,
+        completed_by: getActiveProfileId(),
         points_earned: task.points,
       });
     if (completionError) throw completionError;
@@ -327,7 +327,7 @@ export async function addShoppingItem(name: string): Promise<ShoppingItem> {
       name,
       quantity: 1,
       is_purchased: false,
-      added_by: CURRENT_USER_ID,
+      added_by: getActiveProfileId(),
     })
     .select()
     .single();
@@ -387,9 +387,9 @@ export async function getLoveNoteForTask(taskId: string): Promise<LoveNote | nul
 
 // ─── Metrics ────────────────────────────────────────────
 export interface EquityBalance {
-  bubiPercentage: number;
+  mainPercentage: number;
   partnerPercentage: number;
-  bubiName: string;
+  mainName: string;
   partnerName: string;
 }
 
@@ -400,23 +400,23 @@ export async function getEquityBalance(): Promise<EquityBalance> {
   if (error) throw error;
 
   const completions = data ?? [];
-  let bubiPoints = 0;
+  let mainPoints = 0;
   let partnerPoints = 0;
 
   for (const c of completions) {
-    if (c.completed_by === CURRENT_USER_ID) {
-      bubiPoints += c.points_earned;
+    if (c.completed_by === MAIN_ID) {
+      mainPoints += c.points_earned;
     } else {
       partnerPoints += c.points_earned;
     }
   }
 
-  const total = bubiPoints + partnerPoints || 1;
+  const total = mainPoints + partnerPoints || 1;
   return {
-    bubiPercentage: Math.round((bubiPoints / total) * 100),
+    mainPercentage: Math.round((mainPoints / total) * 100),
     partnerPercentage: Math.round((partnerPoints / total) * 100),
-    bubiName: 'Bubi',
-    partnerName: 'Sofía',
+    mainName: 'Main',
+    partnerName: 'Partner',
   };
 }
 
@@ -472,8 +472,8 @@ export async function getPointsBreakdown(): Promise<PointsBreakdown[]> {
   if (e2) throw e2;
 
   const profiles = [
-    { id: CURRENT_USER_ID, name: 'Bubi' },
-    { id: CURRENT_USER_ID === 'a1111111-1111-1111-1111-111111111111' ? 'b2222222-2222-2222-2222-222222222222' : 'a1111111-1111-1111-1111-111111111111', name: 'Sofía' },
+    { id: MAIN_ID, name: 'Main' },
+    { id: PARTNER_ID, name: 'Partner' },
   ];
 
   return profiles.map((p) => {
