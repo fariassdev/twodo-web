@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "update-types": "npx supabase gen types typescript --project-id xhcbtgbaaddrlctzudcw > src/lib/database.types.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

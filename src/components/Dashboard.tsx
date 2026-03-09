@@ -4,6 +4,7 @@ import { CURRENT_USER_ID } from '../lib/supabase';
 import type { Task, LoveNote } from '../lib/types';
 
 interface DashboardProps {
+  key?: React.Key;
   onNavigate: (screen: string, taskId?: string) => void;
 }
 

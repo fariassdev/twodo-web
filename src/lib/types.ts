@@ -1,68 +1,18 @@
-export interface Profile {
-  id: string;
-  name: string;
-  avatar_url: string | null;
-  created_at: string;
-}
+import type { Database } from './database.types';
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  type: 'task' | 'event';
-  priority: 'critical' | 'flexible';
-  status: 'pending' | 'completed' | 'postponed';
-  date: string | null;
-  points: number;
-  is_recurring: boolean;
-  frequency: 'daily' | 'weekly' | 'monthly' | null;
-  assignment_type: 'strict_rotation' | 'team_work' | 'individual';
-  assigned_to: string | null;
-  last_done_by: string | null;
-  location: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-  // Joined fields
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+
+export type Task = Database['public']['Tables']['tasks']['Row'] & {
   assigned_profile?: Profile;
   last_done_by_profile?: Profile;
-}
+};
 
-export interface ShoppingItem {
-  id: string;
-  name: string;
-  quantity: number;
-  is_purchased: boolean;
-  added_by: string | null;
-  created_at: string;
-}
+export type ShoppingItem = Database['public']['Tables']['shopping_items']['Row'];
 
-export interface LoveNote {
-  id: string;
-  content: string;
-  from_profile: string;
-  to_profile: string;
-  task_id: string | null;
-  created_at: string;
-  // Joined
+export type LoveNote = Database['public']['Tables']['love_notes']['Row'] & {
   sender?: Profile;
-}
+};
 
-export interface Kudos {
-  id: string;
-  from_profile: string;
-  to_profile: string;
-  points: number;
-  message: string | null;
-  created_at: string;
-}
+export type Kudos = Database['public']['Tables']['kudos']['Row'];
 
-export interface TaskCompletion {
-  id: string;
-  task_id: string;
-  completed_by: string;
-  points_earned: number;
-  completed_at: string;
-}
+export type TaskCompletion = Database['public']['Tables']['task_completions']['Row'];

@@ -3,6 +3,7 @@ import { getTasksForMonth, getTasksForDate } from '../lib/queries';
 import type { Task } from '../lib/types';
 
 interface CalendarProps {
+  key?: React.Key;
   onNavigate: (screen: string, taskId?: string) => void;
 }
 
