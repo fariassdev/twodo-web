@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getTasksForMonth, getTasksForDate, getProfiles } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 
-interface CalendarProps {
-  key?: React.Key;
-  onNavigate: (screen: string, taskId?: string, dateStr?: string) => void;
-}
+import { useNavigate } from '@tanstack/react-router';
 
-export default function Calendar({ onNavigate }: CalendarProps) {
+export default function Calendar() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [monthTasks, setMonthTasks] = useState<Task[]>([]);
@@ -184,7 +182,7 @@ export default function Calendar({ onNavigate }: CalendarProps) {
       <div className="flex-1 bg-slate-900/40 rounded-t-xl p-4 shadow-2xl border-t border-slate-800 overflow-y-auto max-w-md mx-auto w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
-          <button onClick={() => onNavigate('create', undefined, selectedStr)} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
+          <button onClick={() => navigate({ to: '/create', search: { date: selectedStr } })} className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">+ Add Event</button>
         </div>
         <div className="space-y-3">
           {dayTasks.length === 0 && (
@@ -193,7 +191,7 @@ export default function Calendar({ onNavigate }: CalendarProps) {
           {dayTasks.map((task) => (
             <div
               key={task.id}
-              onClick={() => onNavigate('details', task.id)}
+              onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
               className="flex items-center gap-4 p-4 bg-slate-800/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer"
             >
               {/* Status Icon */}

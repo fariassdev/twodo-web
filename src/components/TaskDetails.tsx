@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById } from '../lib/queries';
 import type { Task, LoveNote, Profile } from '../lib/types';
 
-interface TaskDetailsProps {
-  taskId: string | null;
-  onNavigate: (screen: string, taskId?: string) => void;
-  onDataChange: (screen: string) => void;
-}
+import { useNavigate, useParams } from '@tanstack/react-router';
 
-export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDetailsProps) {
+export default function TaskDetails() {
+  const navigate = useNavigate();
+  const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [task, setTask] = useState<Task | null>(null);
   const [loveNote, setLoveNote] = useState<LoveNote | null>(null);
   const [assignedProfile, setAssignedProfile] = useState<Profile | null>(null);
@@ -46,7 +44,7 @@ export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDe
     setActing(true);
     try {
       await completeTask(task.id);
-      onDataChange('dashboard');
+      navigate({ to: '/' });
     } catch (err) {
       console.error('Complete error:', err);
       setActing(false);
@@ -58,7 +56,7 @@ export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDe
     setActing(true);
     try {
       await postponeTask(task.id);
-      onDataChange('dashboard');
+      navigate({ to: '/' });
     } catch (err) {
       console.error('Postpone error:', err);
       setActing(false);
@@ -100,7 +98,7 @@ export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDe
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-slate-400">Tarea no encontrada</p>
-        <button onClick={() => onNavigate('dashboard')} className="text-primary font-bold">Volver</button>
+        <button onClick={() => navigate({ to: '/' })} className="text-primary font-bold">Volver</button>
       </div>
     );
   }
@@ -108,7 +106,7 @@ export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDe
   return (
     <div className="flex flex-col min-h-screen pb-32">
       <header className="flex items-center px-4 py-4 justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-10 max-w-md mx-auto w-full">
-        <button onClick={() => onNavigate('dashboard')} className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+        <button onClick={() => navigate({ to: '/' })} className="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
           <span className="material-symbols-outlined text-slate-100">arrow_back</span>
         </button>
         <h2 className="text-lg font-bold flex-1 text-center">
@@ -193,7 +191,7 @@ export default function TaskDetails({ taskId, onNavigate, onDataChange }: TaskDe
                   Posponer
                 </button>
                 <button
-                  onClick={() => onNavigate('create')}
+                  onClick={() => navigate({ to: '/create' })}
                   className="flex-1 bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined">edit</span>

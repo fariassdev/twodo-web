@@ -3,12 +3,10 @@ import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask } fr
 import { CURRENT_USER_ID } from '../lib/supabase';
 import type { Task, LoveNote } from '../lib/types';
 
-interface DashboardProps {
-  key?: React.Key;
-  onNavigate: (screen: string, taskId?: string) => void;
-}
+import { useNavigate } from '@tanstack/react-router';
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
+export default function Dashboard() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Task[]>([]);
   const [loveNote, setLoveNote] = useState<LoveNote | null>(null);
@@ -126,7 +124,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               <div
                 key={task.id}
                 className="flex items-center gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10 shadow-sm cursor-pointer"
-                onClick={() => onNavigate('details', task.id)}
+                onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
               >
                 <div className="flex-shrink-0">
                   <input
@@ -186,7 +184,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[22px] font-bold tracking-tight text-slate-100">Planes conjuntos</h2>
-            <button className="text-primary font-bold text-sm" onClick={() => onNavigate('calendar')}>Ver calendario</button>
+            <button className="text-primary font-bold text-sm" onClick={() => navigate({ to: '/calendar' })}>Ver calendario</button>
           </div>
           <div className="space-y-4">
             {filteredEvents.length === 0 && (
@@ -198,7 +196,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 <div
                   key={event.id}
                   className="bg-primary/5 rounded-2xl border border-primary/10 shadow-md p-4 flex gap-4 cursor-pointer"
-                  onClick={() => onNavigate('details', event.id)}
+                  onClick={() => navigate({ to: '/task/$taskId', params: { taskId: event.id } })}
                 >
                   <div className="flex-shrink-0 w-16 h-16 bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary border border-primary/20">
                     <span className="text-xs font-bold uppercase">{month}</span>

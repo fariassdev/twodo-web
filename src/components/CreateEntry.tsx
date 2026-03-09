@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { createTask } from '../lib/queries';
 import type { CreateTaskInput } from '../lib/queries';
 
-interface CreateEntryProps {
-  onNavigate: (screen: string) => void;
-  onCreated: () => void;
-  initialDate?: string | null;
-}
+import { useNavigate, useSearch } from '@tanstack/react-router';
 
-export default function CreateEntry({ onNavigate, onCreated, initialDate }: CreateEntryProps) {
+export default function CreateEntry() {
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as { date?: string };
+  const initialDate = searchParams?.date;
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [points, setPoints] = useState(10);
@@ -38,7 +37,7 @@ export default function CreateEntry({ onNavigate, onCreated, initialDate }: Crea
         location: location.trim() || undefined,
       };
       await createTask(input);
-      onCreated();
+      navigate({ to: '/' });
     } catch (err) {
       console.error('Create task error:', err);
       setSaving(false);
@@ -48,7 +47,7 @@ export default function CreateEntry({ onNavigate, onCreated, initialDate }: Crea
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
       <div className="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-dark z-10 max-w-md mx-auto w-full">
-        <div onClick={() => onNavigate('dashboard')} className="text-slate-100 flex size-12 shrink-0 items-center justify-start cursor-pointer">
+        <div onClick={() => navigate({ to: '/' })} className="text-slate-100 flex size-12 shrink-0 items-center justify-start cursor-pointer">
           <span className="material-symbols-outlined">close</span>
         </div>
         <h2 className="text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">New Entry</h2>
