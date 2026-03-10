@@ -44,7 +44,7 @@ export default function TaskDetails() {
   const loading =
     taskQuery.isPending ||
     (Boolean(task) &&
-      (loveNoteQuery.isPending || assignedProfileQuery.isPending || lastDoneByProfileQuery.isPending));
+      (loveNoteQuery.isLoading || assignedProfileQuery.isLoading || lastDoneByProfileQuery.isLoading));
 
   const acting =
     completeTaskMutation.isPending ||

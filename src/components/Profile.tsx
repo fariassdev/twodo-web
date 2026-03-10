@@ -21,7 +21,7 @@ export default function Profile() {
 
   const profileOptions: Profile[] = profilesQuery.data ?? [];
   const profile = profileQuery.data ?? null;
-  const loading = profilesQuery.isPending || profileQuery.isPending;
+  const loading = profilesQuery.isPending || profileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
   // Form state
