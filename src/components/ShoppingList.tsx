@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   useAddShoppingItemMutation,
   useDeleteShoppingItemMutation,
@@ -18,6 +18,7 @@ export default function ShoppingList() {
   const isOnline = useOnlineStatus();
   const [newItem, setNewItem] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const shoppingItemsQuery = useShoppingItemsQuery();
   const addShoppingItemMutation = useAddShoppingItemMutation();
   const togglePurchasedMutation = useTogglePurchasedMutation();
@@ -37,6 +38,7 @@ export default function ShoppingList() {
     try {
       await addShoppingItemMutation.mutateAsync(name);
       setNewItem('');
+      inputRef.current?.focus();
     } catch (err) {
       console.error('Add item error:', err);
       setActionError(t('queryState.mutationError'));
@@ -109,6 +111,7 @@ export default function ShoppingList() {
           <label className="block text-sm font-medium text-primary mb-3" htmlFor="new-item">{t('shopping.addToList')}</label>
           <div className="relative">
             <input
+              ref={inputRef}
               className="w-full bg-primary/5 border-none rounded-xl h-16 px-6 text-xl placeholder:text-slate-600 focus:ring-2 focus:ring-primary focus:bg-primary/10 transition-all font-display"
               id="new-item"
               placeholder={t('shopping.newItemPlaceholder')}
