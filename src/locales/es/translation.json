@@ -99,6 +99,8 @@
     "assignmentType": "Tipo de asignación",
     "assignmentTeamTitle": "Ambos (Equipo)",
     "assignmentTeamDescription": "Tarea compartida para colaborar",
+    "assignmentAnyoneTitle": "Cualquiera",
+    "assignmentAnyoneDescription": "Ambos pueden hacerla, pero puntúa quien la completa",
     "assignmentIndividual": "Individual",
     "makeRotating": "Hacer rotativo",
     "rotatingDisabledHint": "Solo se puede hacer rotativa una tarea recurrente",
@@ -162,6 +164,7 @@
     "assignment": {
       "strictRotation": "Rotación estricta",
       "teamWork": "Trabajo en equipo",
+      "anyone": "Cualquiera",
       "individual": "Individual"
     },
     "notFound": "Tarea no encontrada",

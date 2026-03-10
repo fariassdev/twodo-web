@@ -264,7 +264,7 @@ export default function Calendar() {
 
               {/* Avatars */}
               <div className="shrink-0 flex -space-x-2">
-                {task.assignment_type === 'team_work' ? (
+                {task.assignment_type === 'team_work' || task.assignment_type === 'anyone' ? (
                   profiles.map(p => (
                     <img key={p.id} src={p.avatar_url || ''} className="w-7 h-7 rounded-full border-[1.5px] border-slate-800 bg-slate-700 object-cover" alt={p.name} />
                   ))

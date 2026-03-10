@@ -20,7 +20,7 @@ export default function CreateEntry() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [type, setType] = useState<'task' | 'event'>('task');
-  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'individual'>('team_work');
+  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'anyone' | 'individual'>('team_work');
   const [assignedTo, setAssignedTo] = useState<string>('');
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
@@ -41,9 +41,11 @@ export default function CreateEntry() {
     if (!title.trim()) return;
 
     try {
-      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' = assignmentCategory === 'team_work' 
-        ? 'team_work' 
-        : (isRotating ? 'strict_rotation' : 'individual');
+      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = assignmentCategory === 'team_work'
+        ? 'team_work'
+        : assignmentCategory === 'anyone'
+          ? 'anyone'
+          : (isRotating ? 'strict_rotation' : 'individual');
 
       const baseInput = {
         title: title.trim(),
@@ -54,7 +56,7 @@ export default function CreateEntry() {
         is_recurring: isRecurring,
         frequency: isRecurring ? frequency : null,
         assignment_type: finalAssignmentType,
-        assigned_to: assignmentCategory === 'team_work' ? undefined : assignedTo,
+        assigned_to: assignmentCategory === 'individual' ? assignedTo : undefined,
         location: location.trim() || undefined,
       };
 
@@ -78,7 +80,7 @@ export default function CreateEntry() {
           }
           inputs.push({
             ...baseInput,
-            assigned_to: assignmentCategory === 'team_work' ? undefined : currentAssignedTo,
+            assigned_to: assignmentCategory === 'individual' ? currentAssignedTo : undefined,
             date: instanceDate.toISOString().split('T')[0],
             recurrence_id: recurrenceId,
           });
@@ -252,6 +254,17 @@ export default function CreateEntry() {
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
               <input type="radio" className="hidden" checked={assignmentCategory === 'team_work'} onChange={() => { setAssignmentCategory('team_work'); setIsRotating(false); }} />
+            </label>
+
+            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'anyone' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
+              <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
+                {assignmentCategory === 'anyone' && <div className="w-3 h-3 rounded-full bg-primary" />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
+                <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
+              </div>
+              <input type="radio" className="hidden" checked={assignmentCategory === 'anyone'} onChange={() => { setAssignmentCategory('anyone'); setIsRotating(false); }} />
             </label>
 
             <div className={`flex flex-col gap-4 p-4 rounded-xl border transition-all ${assignmentCategory === 'individual' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>

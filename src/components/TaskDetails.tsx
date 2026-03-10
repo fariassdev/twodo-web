@@ -147,6 +147,7 @@ export default function TaskDetails() {
   const assignmentLabels: Record<string, string> = {
     strict_rotation: t('taskDetails.assignment.strictRotation'),
     team_work: t('taskDetails.assignment.teamWork'),
+    anyone: t('taskDetails.assignment.anyone'),
     individual: t('taskDetails.assignment.individual'),
   };
 
@@ -289,7 +290,13 @@ export default function TaskDetails() {
             )}
             <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
               <span className="material-symbols-outlined text-primary text-lg">
-                {task.assignment_type === 'team_work' ? 'groups' : task.assignment_type === 'individual' ? 'person' : 'sync_alt'}
+                {task.assignment_type === 'team_work'
+                  ? 'groups'
+                  : task.assignment_type === 'anyone'
+                    ? 'groups_2'
+                    : task.assignment_type === 'individual'
+                      ? 'person'
+                      : 'sync_alt'}
               </span>
               <span className="text-sm font-medium">{assignmentLabels[task.assignment_type]}</span>
             </div>

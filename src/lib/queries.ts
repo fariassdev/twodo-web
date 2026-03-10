@@ -113,11 +113,19 @@ export interface CreateTaskInput {
   is_recurring: boolean;
   frequency?: 'daily' | 'weekly' | 'monthly' | null;
   recurrence_id?: string | null;
-  assignment_type: 'strict_rotation' | 'team_work' | 'individual';
+  assignment_type: 'strict_rotation' | 'team_work' | 'individual' | 'anyone';
   assigned_to?: string | null;
   location?: string;
   start_time?: string;
   end_time?: string;
+}
+
+function resolveAssignedToForInsert(input: Pick<CreateTaskInput, 'assignment_type' | 'assigned_to'>): string | null {
+  if (input.assignment_type === 'team_work' || input.assignment_type === 'anyone') {
+    return null;
+  }
+
+  return input.assigned_to || getActiveProfileId();
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
@@ -127,7 +135,7 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
       ...input,
       status: 'pending',
       created_by: getActiveProfileId(),
-      assigned_to: input.assigned_to || getActiveProfileId(),
+      assigned_to: resolveAssignedToForInsert(input),
     })
     .select()
     .single();
@@ -140,7 +148,7 @@ export async function createTasks(inputs: CreateTaskInput[]): Promise<Task[]> {
     ...input,
     status: 'pending',
     created_by: getActiveProfileId(),
-    assigned_to: input.assigned_to || getActiveProfileId(),
+    assigned_to: resolveAssignedToForInsert(input),
   }));
   
   const { data, error } = await supabase
@@ -231,13 +239,14 @@ export async function completeTask(taskId: string): Promise<void> {
   // Get the task for points
   const task = await getTaskById(taskId);
   if (!task) throw new Error('Task not found');
+  const activeProfileId = getActiveProfileId();
 
   // Update task status
   const { error: updateError } = await supabase
     .from('tasks')
     .update({
       status: 'completed',
-      last_done_by: getActiveProfileId(),
+      last_done_by: activeProfileId,
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId);
@@ -268,7 +277,7 @@ export async function completeTask(taskId: string): Promise<void> {
         .from('task_completions')
         .insert({
           task_id: taskId,
-          completed_by: getActiveProfileId(),
+          completed_by: activeProfileId,
           points_earned: task.points,
         });
       if (completionError) throw completionError;
@@ -278,7 +287,7 @@ export async function completeTask(taskId: string): Promise<void> {
       .from('task_completions')
       .insert({
         task_id: taskId,
-        completed_by: getActiveProfileId(),
+        completed_by: activeProfileId,
         points_earned: task.points,
       });
     if (completionError) throw completionError;

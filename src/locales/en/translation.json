@@ -99,6 +99,8 @@
     "assignmentType": "Assignment Type",
     "assignmentTeamTitle": "Both (Team)",
     "assignmentTeamDescription": "Shared task to collaborate",
+    "assignmentAnyoneTitle": "Anyone",
+    "assignmentAnyoneDescription": "Both can do it, but only the completer gets points",
     "assignmentIndividual": "Individual",
     "makeRotating": "Make rotating",
     "rotatingDisabledHint": "Rotation is only available for recurring tasks",
@@ -162,6 +164,7 @@
     "assignment": {
       "strictRotation": "Strict rotation",
       "teamWork": "Team work",
+      "anyone": "Anyone",
       "individual": "Individual"
     },
     "notFound": "Task not found",

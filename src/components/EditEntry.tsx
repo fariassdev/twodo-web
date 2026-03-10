@@ -26,7 +26,7 @@ export default function EditEntry() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
   const [type, setType] = useState<'task' | 'event'>('task');
-  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'individual'>('team_work');
+  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'anyone' | 'individual'>('team_work');
   const [assignedTo, setAssignedTo] = useState<string>('');
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
@@ -67,6 +67,10 @@ export default function EditEntry() {
       if (task.assignment_type === 'team_work') {
         setAssignmentCategory('team_work');
         setIsRotating(false);
+      } else if (task.assignment_type === 'anyone') {
+        setAssignmentCategory('anyone');
+        setIsRotating(false);
+        setAssignedTo('');
       } else if (task.assignment_type === 'strict_rotation') {
         setAssignmentCategory('individual');
         setIsRotating(true);
@@ -97,9 +101,11 @@ export default function EditEntry() {
     setEditModalOpen(false);
 
     try {
-      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' = assignmentCategory === 'team_work' 
-        ? 'team_work' 
-        : (isRotating ? 'strict_rotation' : 'individual');
+      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = assignmentCategory === 'team_work'
+        ? 'team_work'
+        : assignmentCategory === 'anyone'
+          ? 'anyone'
+          : (isRotating ? 'strict_rotation' : 'individual');
 
       const input: UpdateTaskInput = {
         title: title.trim(),
@@ -111,7 +117,7 @@ export default function EditEntry() {
         is_recurring: isRecurring,
         frequency: isRecurring ? frequency : null,
         assignment_type: finalAssignmentType,
-        assigned_to: assignmentCategory === 'team_work' ? null : assignedTo,
+        assigned_to: assignmentCategory === 'individual' ? assignedTo : null,
         location: location.trim() || undefined,
       };
 
@@ -154,7 +160,7 @@ export default function EditEntry() {
               is_recurring: true,
               frequency,
               assignment_type: finalAssignmentType,
-              assigned_to: assignmentCategory === 'team_work' ? undefined : currentAssignedTo,
+              assigned_to: assignmentCategory === 'individual' ? currentAssignedTo : undefined,
               location: location.trim() || undefined,
               recurrence_id: originalTask.recurrence_id,
             });
@@ -355,6 +361,17 @@ export default function EditEntry() {
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
               <input type="radio" className="hidden" checked={assignmentCategory === 'team_work'} onChange={() => { setAssignmentCategory('team_work'); setIsRotating(false); }} />
+            </label>
+
+            <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'anyone' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
+              <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
+                {assignmentCategory === 'anyone' && <div className="w-3 h-3 rounded-full bg-primary" />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
+                <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
+              </div>
+              <input type="radio" className="hidden" checked={assignmentCategory === 'anyone'} onChange={() => { setAssignmentCategory('anyone'); setIsRotating(false); }} />
             </label>
 
             <div className={`flex flex-col gap-4 p-4 rounded-xl border transition-all ${assignmentCategory === 'individual' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
