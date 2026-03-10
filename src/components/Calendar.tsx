@@ -50,6 +50,9 @@ export default function Calendar() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const [calendarHeight, setCalendarHeight] = useState(480);
+
   const sheetPointerStartYRef = useRef<number | null>(null);
   const sheetPointerDeltaRef = useRef<number>(0);
   const sheetDragStartHeightRef = useRef<number>(0);
@@ -69,6 +72,17 @@ export default function Calendar() {
 
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!calendarRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCalendarHeight(entry.target.getBoundingClientRect().height);
+      }
+    });
+    observer.observe(calendarRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const year = currentDate.getFullYear();
@@ -236,15 +250,16 @@ export default function Calendar() {
   }
 
   const maxSheetHeight = Math.max(320, viewportHeight - 88);
+  const remainingSpace = viewportHeight - calendarHeight - 96; // 80px bottom nav + 16px gap
   const collapsedHeight = clamp(
-    Math.round(viewportHeight * 0.4),
-    280,
-    Math.max(280, maxSheetHeight - 140),
+    remainingSpace,
+    120,
+    maxSheetHeight
   );
   const expandedHeight = clamp(
-    Math.round(viewportHeight * 0.9),
-    collapsedHeight + 40,
-    maxSheetHeight,
+    Math.round(viewportHeight * 0.85),
+    collapsedHeight + 60,
+    maxSheetHeight
   );
   const currentSheetHeight =
     sheetDragHeight ?? (sheetMode === 'collapsed' ? collapsedHeight : expandedHeight);
@@ -324,9 +339,10 @@ export default function Calendar() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden">
-      <TopBar
-        title={t('calendar.title')}
+    <div className="flex h-[100dvh] flex-col overflow-hidden relative">
+      <div ref={calendarRef} className="shrink-0 flex flex-col">
+        <TopBar
+          title={t('calendar.title')}
         titleIcon="calendar_month"
         rightMenu={{
           ariaLabel: t('topBar.openMenu'),
@@ -397,6 +413,7 @@ export default function Calendar() {
             );
           })}
         </div>
+      </div>
       </div>
 
       <div className="fixed inset-x-0 bottom-20 z-20 pointer-events-none">
