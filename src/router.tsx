@@ -135,6 +135,7 @@ export const editEntryRoute = createRoute({
 
 interface CreateEntrySearch {
   date?: string;
+  type?: 'task' | 'event';
 }
 
 export const createEntryRoute = createRoute({
@@ -143,6 +144,10 @@ export const createEntryRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): CreateEntrySearch => {
     return {
       date: typeof search?.date === 'string' ? search.date : undefined,
+      type:
+        typeof search?.type === 'string' && (search.type === 'task' || search.type === 'event')
+          ? search.type
+          : undefined,
     }
   },
   component: () => (

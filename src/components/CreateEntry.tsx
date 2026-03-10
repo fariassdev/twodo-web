@@ -11,15 +11,16 @@ export default function CreateEntry() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const router = useRouter();
-  const searchParams = useSearch({ strict: false }) as { date?: string };
+  const searchParams = useSearch({ strict: false }) as { date?: string; type?: 'task' | 'event' };
   const initialDate = searchParams?.date;
+  const initialType = searchParams?.type === 'event' ? 'event' : 'task';
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [points, setPoints] = useState(10);
   const [priority, setPriority] = useState<'critical' | 'flexible'>('critical');
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [type, setType] = useState<'task' | 'event'>('task');
+  const [type, setType] = useState<'task' | 'event'>(initialType);
   const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'anyone' | 'individual'>('team_work');
   const [assignedTo, setAssignedTo] = useState<string>('');
   const [isRotating, setIsRotating] = useState(false);
