@@ -90,22 +90,7 @@ export async function getTasksForMonth(year: number, month: number, includeDelet
     .select('*')
     .gte('date', startDate)
     .lt('date', endDate)
-    .order('date', { ascending: true });
-
-  if (!includeDeleted) {
-    query = query.is('deleted_at', null);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function getTasksForDate(date: string, includeDeleted = false): Promise<Task[]> {
-  let query = supabase
-    .from('tasks')
-    .select('*')
-    .eq('date', date)
+    .order('date', { ascending: true })
     .order('start_time', { ascending: true });
 
   if (!includeDeleted) {
@@ -116,6 +101,7 @@ export async function getTasksForDate(date: string, includeDeleted = false): Pro
   if (error) throw error;
   return data ?? [];
 }
+
 
 export interface CreateTaskInput {
   title: string;

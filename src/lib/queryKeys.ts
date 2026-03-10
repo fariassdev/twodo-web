@@ -10,16 +10,14 @@ export const queryKeys = {
     upcoming: () => ['tasks', 'upcoming'] as const,
     month: (year: number, month: number, includeDeleted: boolean) =>
       ['tasks', 'month', year, month, includeDeleted ? 'withDeleted' : 'active'] as const,
-    date: (date: string, includeDeleted: boolean) =>
-      ['tasks', 'date', date, includeDeleted ? 'withDeleted' : 'active'] as const,
+
     detail: (taskId: string) => ['tasks', 'detail', taskId] as const,
   },
   calendar: {
     all: ['calendar'] as const,
     month: (year: number, month: number, includeDeleted: boolean) =>
       ['calendar', 'month', year, month, includeDeleted ? 'withDeleted' : 'active'] as const,
-    date: (date: string, includeDeleted: boolean) =>
-      ['calendar', 'date', date, includeDeleted ? 'withDeleted' : 'active'] as const,
+
   },
   taskDetail: {
     all: ['taskDetail'] as const,

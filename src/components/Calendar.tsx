@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   usePrefetchMonthTasks,
   useProfilesQuery,
-  useTasksForDateQuery,
   useTasksForMonthQuery,
 } from '../lib/queryHooks';
 import type { Profile } from '../lib/types';
@@ -36,18 +35,19 @@ export default function Calendar() {
 
   const profilesQuery = useProfilesQuery();
   const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
-  const dayTasksQuery = useTasksForDateQuery(selectedStr, showDeleted);
   const prefetchMonthTasks = usePrefetchMonthTasks();
 
   const monthTasks = monthTasksQuery.data ?? [];
-  const dayTasks = dayTasksQuery.data ?? [];
   const profiles: Profile[] = profilesQuery.data ?? [];
   const hasQueryError =
-    monthTasksQuery.isError || dayTasksQuery.isError || profilesQuery.isError;
+    monthTasksQuery.isError || profilesQuery.isError;
   const isStale =
-    monthTasksQuery.isStale || dayTasksQuery.isStale || profilesQuery.isStale;
+    monthTasksQuery.isStale || profilesQuery.isStale;
   const isFetching =
-    monthTasksQuery.isFetching || dayTasksQuery.isFetching || profilesQuery.isFetching;
+    monthTasksQuery.isFetching || profilesQuery.isFetching;
+
+  // Filter tasks for the selected day from the month tasks
+  const dayTasks = monthTasks.filter(t => t.date === selectedStr);
 
   useEffect(() => {
     void prefetchMonthTasks(year, month + 1, showDeleted);
@@ -129,7 +129,6 @@ export default function Calendar() {
         onRetry={() => {
           void Promise.all([
             monthTasksQuery.refetch(),
-            dayTasksQuery.refetch(),
             profilesQuery.refetch(),
           ]);
         }}

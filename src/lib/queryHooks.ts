@@ -22,7 +22,6 @@ import {
   getProfiles,
   getShoppingItems,
   getTaskById,
-  getTasksForDate,
   getTasksForMonth,
   getTodaysTasks,
   getUpcomingEvents,
@@ -62,8 +61,8 @@ function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undef
       predicate: (query) => {
         const [domain, area] = query.queryKey;
         return (
-          (domain === 'tasks' && (area === 'month' || area === 'date')) ||
-          (domain === 'calendar' && (area === 'month' || area === 'date'))
+          (domain === 'tasks' && area === 'month') ||
+          (domain === 'calendar' && area === 'month')
         );
       },
     })
@@ -173,13 +172,6 @@ export function useTasksForMonthQuery(year: number, month: number, includeDelete
   });
 }
 
-export function useTasksForDateQuery(date: string, includeDeleted: boolean) {
-  return useQuery<Task[]>({
-    queryKey: queryKeys.calendar.date(date, includeDeleted),
-    queryFn: () => getTasksForDate(date, includeDeleted),
-    placeholderData: keepPreviousData,
-  });
-}
 
 export function usePrefetchMonthTasks() {
   const queryClient = useQueryClient();
