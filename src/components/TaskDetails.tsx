@@ -10,15 +10,20 @@ import {
 } from '../lib/queryHooks';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import DataStatusBanner from './ui/DataStatusBanner';
+import QueryErrorState from './ui/QueryErrorState';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate, useParams } from '@tanstack/react-router';
 
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const taskQuery = useTaskByIdQuery(taskId);
   const task = taskQuery.data ?? null;
@@ -47,38 +52,57 @@ export default function TaskDetails() {
     deleteTaskMutation.isPending ||
     deleteTaskSeriesMutation.isPending;
 
+  const isStale =
+    taskQuery.isStale ||
+    loveNoteQuery.isStale ||
+    assignedProfileQuery.isStale ||
+    lastDoneByProfileQuery.isStale;
+
+  const isFetching =
+    taskQuery.isFetching ||
+    loveNoteQuery.isFetching ||
+    assignedProfileQuery.isFetching ||
+    lastDoneByProfileQuery.isFetching;
+
   async function handleComplete() {
     if (!task || acting) return;
+    setActionError(null);
     try {
       await completeTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Complete error:', err);
+      setActionError(t('queryState.mutationError'));
     }
   }
 
   async function handlePostpone() {
     if (!task || acting) return;
+    setActionError(null);
     try {
       await postponeTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Postpone error:', err);
+      setActionError(t('queryState.mutationError'));
     }
   }
 
   async function handleDeleteSingle() {
     if (!task) return;
+    setActionError(null);
     try {
       await deleteTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete error:', err);
+      setActionError(t('queryState.mutationError'));
     }
   }
 
   async function handleDeleteFollowing() {
     if (!task || !task.recurrence_id) return;
+    setActionError(null);
     try {
       await deleteTaskSeriesMutation.mutateAsync({
         recurrenceId: task.recurrence_id,
@@ -87,16 +111,19 @@ export default function TaskDetails() {
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete series error:', err);
+      setActionError(t('queryState.mutationError'));
     }
   }
 
   async function handleDeleteAll() {
     if (!task || !task.recurrence_id) return;
+    setActionError(null);
     try {
       await deleteTaskSeriesMutation.mutateAsync({ recurrenceId: task.recurrence_id });
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete all error:', err);
+      setActionError(t('queryState.mutationError'));
     }
   }
 
@@ -132,6 +159,10 @@ export default function TaskDetails() {
   }
 
   if (!task) {
+    if (taskQuery.isError) {
+      return <QueryErrorState onRetry={() => { void taskQuery.refetch(); }} />;
+    }
+
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-slate-400">{t('taskDetails.notFound')}</p>
@@ -195,8 +226,14 @@ export default function TaskDetails() {
                 }
 
                 if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-                  await deleteTaskMutation.mutateAsync(task.id);
-                  navigate({ to: '/' });
+                  setActionError(null);
+                  try {
+                    await deleteTaskMutation.mutateAsync(task.id);
+                    navigate({ to: '/' });
+                  } catch (error) {
+                    console.error('Delete error:', error);
+                    setActionError(t('queryState.mutationError'));
+                  }
                 }
               },
             },
@@ -205,7 +242,15 @@ export default function TaskDetails() {
       />
 
       <main className="flex-1 px-4 max-w-md mx-auto w-full">
+        <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
+
         <div className="pt-4 pb-6">
+          {actionError && (
+            <p className="mb-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
+              {actionError}
+            </p>
+          )}
+
           <div className="flex items-center gap-2 mb-2">
             {task.deleted_at ? (
               <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500">

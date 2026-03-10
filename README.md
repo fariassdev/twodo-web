@@ -49,3 +49,39 @@ The app uses TanStack Query v5 with persistent cache in IndexedDB.
 - Profile update invalidates profiles + metrics.
 - Shopping mutations keep optimistic local updates and settle with shopping invalidation.
 
+## Production-Ready Closure (Frontend)
+
+### Baseline (before this hardening pass)
+
+- `npm run lint`: pass (0 type errors)
+- `npm run build`: warning for oversized chunk (`dist/assets/index-*.js` > 500 kB)
+
+### Acceptance criteria
+
+- Critical routes have section-level error boundaries and retry UI.
+- Offline/stale data is visible to users through explicit status banners.
+- Client telemetry tracks:
+   - time spent per route
+   - request count per active route
+   - mutation errors per active route
+- Routing uses lazy loading to split route code.
+- Invalidation strategy uses narrower query keys where safe, while keeping broad invalidation for recurring-series operations.
+
+### Observability quick use
+
+- Telemetry is exposed in browser runtime as:
+   - `window.__coupleOrganizerTelemetry.snapshot()`
+- Snapshot includes:
+   - `requestsByRoute`
+   - `mutationErrorsByRoute`
+   - `screenDurationsMs`
+
+### Verification checklist
+
+1. Run `npm run lint` and confirm 0 errors.
+2. Run `npm run build` and compare chunk output vs baseline.
+3. Navigate all routes and verify stale/offline banners appear when expected.
+4. Test critical mutations (create, edit, complete, postpone, delete, shopping, profile) and verify visible error feedback on failures.
+5. Simulate offline/online in DevTools and confirm recovery from persisted cache.
+6. Compare network requests before/after using DevTools Network tab.
+

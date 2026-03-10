@@ -9,8 +9,19 @@ import {
   queryPersister,
   queryPersistenceMaxAge,
 } from './lib/queryClient';
+import {
+  attachReactQueryTelemetry,
+  exposeTelemetryOnWindow,
+  markAppBoot,
+} from './lib/telemetry';
 import './index.css';
 import './i18n';
+
+if (typeof window !== 'undefined') {
+  markAppBoot();
+  exposeTelemetryOnWindow();
+  attachReactQueryTelemetry(queryClient);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

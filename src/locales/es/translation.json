@@ -15,6 +15,23 @@
     "saving": "...",
     "hourSuffix": "h"
   },
+  "runtimeBoundary": {
+    "title": "Algo fallo en esta seccion",
+    "description": "No pudimos renderizar {{section}}. Puedes reintentar sin salir de la app.",
+    "retry": "Reintentar",
+    "defaultSection": "esta area"
+  },
+  "dataStatus": {
+    "offline": "Modo sin conexion: mostrando datos en cache.",
+    "stale": "Mostrando datos en cache mientras se sincroniza.",
+    "syncing": "Sincronizando datos recientes..."
+  },
+  "queryState": {
+    "loadErrorTitle": "No se pudo cargar esta seccion",
+    "loadErrorDescription": "Revisa tu conexion e intentalo de nuevo.",
+    "retry": "Reintentar",
+    "mutationError": "No pudimos guardar tu ultima accion. Intentalo de nuevo."
+  },
   "topBar": {
     "back": "Volver",
     "close": "Cerrar",

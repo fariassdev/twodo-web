@@ -17,8 +17,25 @@ export default defineConfig(({mode}) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify - file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+    },
+    build: {
+      chunkSizeWarningLimit: 500,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-router': ['@tanstack/react-router'],
+            'vendor-query': [
+              '@tanstack/react-query',
+              '@tanstack/react-query-persist-client',
+              '@tanstack/query-async-storage-persister',
+            ],
+            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            'vendor-supabase': ['@supabase/supabase-js', 'idb-keyval'],
+          },
+        },
+      },
     },
   };
 });

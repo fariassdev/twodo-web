@@ -8,12 +8,16 @@ import {
 import type { Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import DataStatusBanner from './ui/DataStatusBanner';
+import QueryErrorState from './ui/QueryErrorState';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate } from '@tanstack/react-router';
 
 export default function Calendar() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(() => {
     const saved = localStorage.getItem('calendarSelectedDate');
@@ -38,6 +42,12 @@ export default function Calendar() {
   const monthTasks = monthTasksQuery.data ?? [];
   const dayTasks = dayTasksQuery.data ?? [];
   const profiles: Profile[] = profilesQuery.data ?? [];
+  const hasQueryError =
+    monthTasksQuery.isError || dayTasksQuery.isError || profilesQuery.isError;
+  const isStale =
+    monthTasksQuery.isStale || dayTasksQuery.isStale || profilesQuery.isStale;
+  const isFetching =
+    monthTasksQuery.isFetching || dayTasksQuery.isFetching || profilesQuery.isFetching;
 
   useEffect(() => {
     void prefetchMonthTasks(year, month + 1, showDeleted);
@@ -113,6 +123,20 @@ export default function Calendar() {
     }).format(selectedDate);
   }
 
+  if (hasQueryError && monthTasks.length === 0 && dayTasks.length === 0) {
+    return (
+      <QueryErrorState
+        onRetry={() => {
+          void Promise.all([
+            monthTasksQuery.refetch(),
+            dayTasksQuery.refetch(),
+            profilesQuery.refetch(),
+          ]);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="pb-24 flex flex-col min-h-screen">
       <TopBar
@@ -142,6 +166,10 @@ export default function Calendar() {
         <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-800">
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
+      </div>
+
+      <div className="px-4 max-w-md mx-auto w-full">
+        <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
       </div>
 
       <div className="px-4 mb-6 max-w-md mx-auto w-full">

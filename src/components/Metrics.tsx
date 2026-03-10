@@ -7,9 +7,13 @@ import {
 } from '../lib/queryHooks';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import DataStatusBanner from './ui/DataStatusBanner';
+import QueryErrorState from './ui/QueryErrorState';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export default function Metrics() {
   const { t } = useTranslation();
+  const isOnline = useOnlineStatus();
 
   const profilesQuery = useProfilesQuery();
   const balanceQuery = useEquityBalanceQuery(profilesQuery.data);
@@ -24,12 +28,42 @@ export default function Metrics() {
     balanceQuery.isPending ||
     pulseQuery.isPending ||
     pointsQuery.isPending;
+  const hasQueryError =
+    profilesQuery.isError ||
+    balanceQuery.isError ||
+    pulseQuery.isError ||
+    pointsQuery.isError;
+  const isStale =
+    profilesQuery.isStale ||
+    balanceQuery.isStale ||
+    pulseQuery.isStale ||
+    pointsQuery.isStale;
+  const isFetching =
+    profilesQuery.isFetching ||
+    balanceQuery.isFetching ||
+    pulseQuery.isFetching ||
+    pointsQuery.isFetching;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
       </div>
+    );
+  }
+
+  if (hasQueryError && !balance && points.length === 0) {
+    return (
+      <QueryErrorState
+        onRetry={() => {
+          void Promise.all([
+            profilesQuery.refetch(),
+            balanceQuery.refetch(),
+            pulseQuery.refetch(),
+            pointsQuery.refetch(),
+          ]);
+        }}
+      />
     );
   }
 
@@ -42,6 +76,10 @@ export default function Metrics() {
       <TopBar title={t('metrics.title')} titleIcon="monitoring" />
 
       <main className="flex-1 overflow-y-auto custom-scrollbar max-w-md mx-auto w-full">
+        <div className="px-4 pt-2">
+          <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
+        </div>
+
         {/* House Harmony */}
         <section className="p-4 mt-2">
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-6">

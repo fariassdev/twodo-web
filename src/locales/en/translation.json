@@ -15,6 +15,23 @@
     "saving": "...",
     "hourSuffix": "h"
   },
+  "runtimeBoundary": {
+    "title": "Something went wrong in this section",
+    "description": "We couldn't render {{section}}. You can retry without leaving the app.",
+    "retry": "Try again",
+    "defaultSection": "this area"
+  },
+  "dataStatus": {
+    "offline": "Offline mode: showing cached data.",
+    "stale": "Showing cached data while updates sync.",
+    "syncing": "Syncing latest data..."
+  },
+  "queryState": {
+    "loadErrorTitle": "Couldn't load this section",
+    "loadErrorDescription": "Check your connection and try again.",
+    "retry": "Retry",
+    "mutationError": "We couldn't save your latest action. Please try again."
+  },
   "topBar": {
     "back": "Go back",
     "close": "Close",

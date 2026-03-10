@@ -42,8 +42,10 @@ import {
 import { queryKeys } from './queryKeys';
 import type { LoveNote, Profile, ShoppingItem, Task } from './types';
 
-const calendarRootKey = ['calendar'] as const;
-const taskDetailRootKey = ['taskDetail'] as const;
+type InvalidateTaskGraphOptions = {
+  taskId?: string;
+  scope?: 'single' | 'series';
+};
 
 function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undefined {
   const fromToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today())?.find((task) => task.id === taskId);
@@ -76,22 +78,51 @@ function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undef
   return undefined;
 }
 
-async function invalidateTaskGraph(queryClient: QueryClient, taskId?: string) {
+async function invalidateTaskGraph(
+  queryClient: QueryClient,
+  options: InvalidateTaskGraphOptions = {},
+) {
+  const { taskId, scope = 'single' } = options;
+
+  if (scope === 'series') {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.calendar.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.metrics.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.all }),
+    ]);
+
+    if (taskId) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
+      ]);
+    }
+
+    return;
+  }
+
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all }),
-    queryClient.invalidateQueries({ queryKey: calendarRootKey }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.all }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.upcoming() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.calendar.all }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.pointsBreakdown() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.latest() }),
   ]);
 
-  if (taskId) {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
-      queryClient.invalidateQueries({ queryKey: taskDetailRootKey }),
-    ]);
+  if (!taskId) {
+    return;
   }
+
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
+  ]);
 }
 
 export function useProfilesQuery() {
@@ -217,7 +248,10 @@ export function useCreateTaskMutation() {
     mutationFn: (input: CreateTaskInput) => createTask(input),
     onSuccess: async (createdTask) => {
       queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(createdTask.id), createdTask);
-      await invalidateTaskGraph(queryClient, createdTask.id);
+      await invalidateTaskGraph(queryClient, {
+        taskId: createdTask.id,
+        scope: 'single',
+      });
     },
   });
 }
@@ -231,7 +265,10 @@ export function useCreateTasksMutation() {
       for (const task of createdTasks) {
         queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(task.id), task);
       }
-      await invalidateTaskGraph(queryClient, createdTasks[0]?.id);
+      await invalidateTaskGraph(queryClient, {
+        taskId: createdTasks[0]?.id,
+        scope: createdTasks.length > 1 ? 'series' : 'single',
+      });
     },
   });
 }
@@ -243,7 +280,10 @@ export function useUpdateTaskMutation() {
     mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) => updateTask(taskId, input),
     onSuccess: async (updatedTask) => {
       queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(updatedTask.id), updatedTask);
-      await invalidateTaskGraph(queryClient, updatedTask.id);
+      await invalidateTaskGraph(queryClient, {
+        taskId: updatedTask.id,
+        scope: 'single',
+      });
     },
   });
 }
@@ -255,7 +295,10 @@ export function useDeleteTaskMutation() {
     mutationFn: (taskId: string) => deleteTask(taskId),
     onSuccess: async (_, taskId) => {
       queryClient.removeQueries({ queryKey: queryKeys.tasks.detail(taskId) });
-      await invalidateTaskGraph(queryClient, taskId);
+      await invalidateTaskGraph(queryClient, {
+        taskId,
+        scope: 'single',
+      });
     },
   });
 }
@@ -267,7 +310,7 @@ export function useDeleteTaskSeriesMutation() {
     mutationFn: ({ recurrenceId, fromDate }: { recurrenceId: string; fromDate?: string }) =>
       deleteTaskSeries(recurrenceId, fromDate),
     onSuccess: async () => {
-      await invalidateTaskGraph(queryClient);
+      await invalidateTaskGraph(queryClient, { scope: 'series' });
     },
   });
 }
@@ -279,7 +322,7 @@ export function useDeleteTasksAfterMutation() {
     mutationFn: ({ recurrenceId, date }: { recurrenceId: string; date: string }) =>
       deleteTasksAfter(recurrenceId, date),
     onSuccess: async () => {
-      await invalidateTaskGraph(queryClient);
+      await invalidateTaskGraph(queryClient, { scope: 'series' });
     },
   });
 }
@@ -320,7 +363,10 @@ export function useCompleteTaskMutation() {
       }
     },
     onSuccess: async (_, taskId) => {
-      await invalidateTaskGraph(queryClient, taskId);
+      await invalidateTaskGraph(queryClient, {
+        taskId,
+        scope: 'single',
+      });
     },
   });
 }
@@ -331,7 +377,10 @@ export function usePostponeTaskMutation() {
   return useMutation({
     mutationFn: (taskId: string) => postponeTask(taskId),
     onSuccess: async (_, taskId) => {
-      await invalidateTaskGraph(queryClient, taskId);
+      await invalidateTaskGraph(queryClient, {
+        taskId,
+        scope: 'single',
+      });
     },
   });
 }
@@ -353,8 +402,10 @@ export function useUpdateProfileMutation() {
       });
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.profiles.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.profiles.list() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.pointsBreakdown() }),
       ]);
     },
   });
@@ -372,7 +423,7 @@ export function useAddShoppingItemMutation() {
       ]);
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
     },
   });
 }
@@ -401,7 +452,7 @@ export function useTogglePurchasedMutation() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
     },
   });
 }
@@ -427,7 +478,7 @@ export function useUpdateQuantityMutation() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
     },
   });
 }
@@ -453,7 +504,7 @@ export function useDeleteShoppingItemMutation() {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
     },
   });
 }

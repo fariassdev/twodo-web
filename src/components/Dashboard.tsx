@@ -10,13 +10,18 @@ import { getActiveProfileId } from '../lib/supabase';
 import type { Task } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import DataStatusBanner from './ui/DataStatusBanner';
+import QueryErrorState from './ui/QueryErrorState';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate } from '@tanstack/react-router';
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const [search, setSearch] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const todaysTasksQuery = useTodaysTasksQuery();
   const upcomingEventsQuery = useUpcomingEventsQuery();
@@ -33,14 +38,40 @@ export default function Dashboard() {
     upcomingEventsQuery.isPending ||
     latestLoveNoteQuery.isPending ||
     profileQuery.isPending;
+  const hasQueryError =
+    todaysTasksQuery.isError ||
+    upcomingEventsQuery.isError ||
+    latestLoveNoteQuery.isError ||
+    profileQuery.isError;
+  const isStale =
+    todaysTasksQuery.isStale ||
+    upcomingEventsQuery.isStale ||
+    latestLoveNoteQuery.isStale ||
+    profileQuery.isStale;
+  const isFetching =
+    todaysTasksQuery.isFetching ||
+    upcomingEventsQuery.isFetching ||
+    latestLoveNoteQuery.isFetching ||
+    profileQuery.isFetching;
 
   async function handleComplete(e: React.MouseEvent, taskId: string) {
     e.stopPropagation();
+    setActionError(null);
     try {
       await completeTaskMutation.mutateAsync(taskId);
     } catch (err) {
       console.error('Complete error:', err);
+      setActionError(t('queryState.mutationError'));
     }
+  }
+
+  function retryQueries() {
+    void Promise.all([
+      todaysTasksQuery.refetch(),
+      upcomingEventsQuery.refetch(),
+      latestLoveNoteQuery.refetch(),
+      profileQuery.refetch(),
+    ]);
   }
 
   const pendingCount = tasks.length;
@@ -75,6 +106,10 @@ export default function Dashboard() {
     );
   }
 
+  if (hasQueryError && tasks.length === 0 && events.length === 0) {
+    return <QueryErrorState onRetry={retryQueries} />;
+  }
+
   return (
     <div className="pb-24">
       <TopBar
@@ -97,6 +132,13 @@ export default function Dashboard() {
       />
 
       <main className="max-w-md mx-auto px-4 pt-6">
+        <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
+        {actionError && (
+          <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
+            {actionError}
+          </p>
+        )}
+
         <div className="relative mb-8">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
           <input
