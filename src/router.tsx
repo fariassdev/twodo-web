@@ -9,7 +9,7 @@ import CreateEntry from './components/CreateEntry';
 import Metrics from './components/Metrics';
 import ShoppingList from './components/ShoppingList';
 import Profile from './components/Profile';
-import BottomNav from './components/BottomNav';
+import BottomNav from './components/ui/BottomNav';
 
 function RootComponent() {
   useLanguageChange();
