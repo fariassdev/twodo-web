@@ -13,9 +13,8 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate } from '@tanstack/react-router';
 
-type CalendarTab = 'task' | 'event';
 type SortOption = 'status' | 'name' | 'assignee';
-type StatusFilter = 'all' | 'pending' | 'postponed' | 'completed';
+type TypeFilter = 'all' | 'task' | 'event';
 
 const STATUS_ORDER: Record<'pending' | 'postponed' | 'completed', number> = {
   pending: 0,
@@ -36,12 +35,11 @@ export default function Calendar() {
     const saved = localStorage.getItem('calendarSelectedDate');
     return saved ? new Date(saved) : new Date();
   });
-  const [activeTab, setActiveTab] = useState<CalendarTab>(() => {
-    const saved = localStorage.getItem('calendarActiveTab');
-    return saved === 'event' ? 'event' : 'task';
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(() => {
+    const saved = localStorage.getItem('calendarTypeFilter');
+    return (saved === 'task' || saved === 'event') ? saved : 'all';
   });
   const [sortBy, setSortBy] = useState<SortOption>('status');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
   const [sheetMode, setSheetMode] = useState<'collapsed' | 'expanded'>('collapsed');
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
@@ -62,8 +60,8 @@ export default function Calendar() {
   }, [selectedDate]);
 
   useEffect(() => {
-    localStorage.setItem('calendarActiveTab', activeTab);
-  }, [activeTab]);
+    localStorage.setItem('calendarTypeFilter', typeFilter);
+  }, [typeFilter]);
 
   useEffect(() => {
     const onResize = () => {
@@ -118,13 +116,9 @@ export default function Calendar() {
   const dayEntries = useMemo(() => {
     const filtered = monthTasks
       .filter((task) => task.date === selectedStr)
-      .filter((task) => task.type === activeTab)
       .filter((task) => {
-        if (statusFilter === 'all') {
-          return true;
-        }
-
-        return task.status === statusFilter;
+        if (typeFilter === 'all') return true;
+        return task.type === typeFilter;
       })
       .filter((task) => {
         if (assigneeFilter === 'all') {
@@ -163,7 +157,7 @@ export default function Calendar() {
 
       return a.title.localeCompare(b.title, i18n.language, { sensitivity: 'base' });
     });
-  }, [activeTab, assigneeFilter, i18n.language, monthTasks, profileNameMap, selectedStr, sortBy, statusFilter]);
+  }, [typeFilter, assigneeFilter, i18n.language, monthTasks, profileNameMap, selectedStr, sortBy]);
 
   useEffect(() => {
     void prefetchMonthTasks(year, month + 1, showDeleted);
@@ -241,7 +235,7 @@ export default function Calendar() {
 
   function resetControls() {
     setSortBy('status');
-    setStatusFilter('all');
+    setTypeFilter('all');
     setAssigneeFilter('all');
   }
 
@@ -317,13 +311,11 @@ export default function Calendar() {
     resetSheetDragState();
   }
 
-  const hasActiveControls = sortBy !== 'status' || statusFilter !== 'all' || assigneeFilter !== 'all';
-  const addButtonLabel = activeTab === 'task' ? t('calendar.addTask') : t('calendar.addEvent');
+  const hasActiveControls = sortBy !== 'status' || typeFilter !== 'all' || assigneeFilter !== 'all';
+  const addButtonLabel = typeFilter === 'event' ? t('calendar.addEvent') : t('calendar.addTask');
   const emptyDayMessage = hasActiveControls
     ? t('calendar.emptyFiltered')
-    : activeTab === 'task'
-      ? t('calendar.emptyDayTask')
-      : t('calendar.emptyDayEvent');
+    : t('calendar.emptyDayTask');
 
   if (hasQueryError && monthTasks.length === 0 && dayEntries.length === 0) {
     return (
@@ -374,7 +366,7 @@ export default function Calendar() {
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
       </div>
 
-      <div className="px-4 mb-2 max-w-md mx-auto w-full">
+      <div className="px-4 max-w-md mx-auto w-full">
         <div className="grid grid-cols-7 mb-2">
           {weekdayLabels.map((d, i) => (
             <div key={i} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">{d}</div>
@@ -441,29 +433,10 @@ export default function Calendar() {
                 <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
                 <button
                   className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
-                  onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: activeTab } })}
+                  onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: typeFilter === 'event' ? 'event' : 'task' } })}
                   type="button"
                 >
                   {addButtonLabel}
-                </button>
-              </div>
-
-              <div className="mb-3 flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-                <button
-                  className={`flex h-full grow items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-bold transition-all ${activeTab === 'task' ? 'bg-background-dark text-primary shadow-sm' : 'text-primary/60 hover:text-primary'}`}
-                  onClick={() => setActiveTab('task')}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-base">check_circle</span>
-                  <span className="truncate">{t('entryForm.typeTask')}</span>
-                </button>
-                <button
-                  className={`flex h-full grow items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-bold transition-all ${activeTab === 'event' ? 'bg-background-dark text-primary shadow-sm' : 'text-primary/60 hover:text-primary'}`}
-                  onClick={() => setActiveTab('event')}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-base">calendar_today</span>
-                  <span className="truncate">{t('entryForm.typeEvent')}</span>
                 </button>
               </div>
 
@@ -482,16 +455,15 @@ export default function Calendar() {
                 </label>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterStatus')}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterType', 'Tipo')}</span>
                   <select
                     className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
-                    onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-                    value={statusFilter}
+                    onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
+                    value={typeFilter}
                   >
-                    <option value="all">{t('calendar.statusAll')}</option>
-                    <option value="pending">{t('taskDetails.status.pending')}</option>
-                    <option value="postponed">{t('taskDetails.status.postponed')}</option>
-                    <option value="completed">{t('taskDetails.status.completed')}</option>
+                    <option value="all">{t('calendar.typeAll', 'Todos')}</option>
+                    <option value="task">{t('entryForm.typeTask')}</option>
+                    <option value="event">{t('entryForm.typeEvent')}</option>
                   </select>
                 </label>
 
