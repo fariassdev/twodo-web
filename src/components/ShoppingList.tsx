@@ -1,37 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { getShoppingItems, addShoppingItem, togglePurchased, updateQuantity, deleteShoppingItem } from '../lib/queries';
+import React, { useState } from 'react';
+import {
+  useAddShoppingItemMutation,
+  useDeleteShoppingItemMutation,
+  useShoppingItemsQuery,
+  useTogglePurchasedMutation,
+  useUpdateQuantityMutation,
+} from '../lib/queryHooks';
 import type { ShoppingItem as ShoppingItemType } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 
 export default function ShoppingList() {
   const { t } = useTranslation();
-  const [items, setItems] = useState<ShoppingItemType[]>([]);
   const [newItem, setNewItem] = useState('');
-  const [loading, setLoading] = useState(true);
+  const shoppingItemsQuery = useShoppingItemsQuery();
+  const addShoppingItemMutation = useAddShoppingItemMutation();
+  const togglePurchasedMutation = useTogglePurchasedMutation();
+  const updateQuantityMutation = useUpdateQuantityMutation();
+  const deleteShoppingItemMutation = useDeleteShoppingItemMutation();
 
-  useEffect(() => {
-    loadItems();
-  }, []);
-
-  async function loadItems() {
-    try {
-      const data = await getShoppingItems();
-      setItems(data);
-    } catch (err) {
-      console.error('Load shopping items error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const items: ShoppingItemType[] = shoppingItemsQuery.data ?? [];
+  const loading = shoppingItemsQuery.isPending;
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     const name = newItem.trim();
     if (!name) return;
     try {
-      const item = await addShoppingItem(name);
-      setItems((prev) => [item, ...prev]);
+      await addShoppingItemMutation.mutateAsync(name);
       setNewItem('');
     } catch (err) {
       console.error('Add item error:', err);
@@ -39,17 +35,12 @@ export default function ShoppingList() {
   }
 
   async function handleToggle(item: ShoppingItemType) {
-    // Optimistic update
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, is_purchased: !i.is_purchased } : i))
-    );
     try {
-      await togglePurchased(item.id, item.is_purchased);
+      await togglePurchasedMutation.mutateAsync({
+        id: item.id,
+        currentValue: item.is_purchased,
+      });
     } catch (err) {
-      // Revert
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, is_purchased: item.is_purchased } : i))
-      );
       console.error('Toggle error:', err);
     }
   }
@@ -57,27 +48,17 @@ export default function ShoppingList() {
   async function handleQuantity(item: ShoppingItemType, delta: number) {
     const newQty = item.quantity + delta;
     if (newQty < 1) return;
-    // Optimistic
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, quantity: newQty } : i))
-    );
     try {
-      await updateQuantity(item.id, newQty);
+      await updateQuantityMutation.mutateAsync({ id: item.id, quantity: newQty });
     } catch (err) {
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, quantity: item.quantity } : i))
-      );
       console.error('Quantity error:', err);
     }
   }
 
   async function handleDelete(id: string) {
-    const prev = items;
-    setItems((items) => items.filter((i) => i.id !== id));
     try {
-      await deleteShoppingItem(id);
+      await deleteShoppingItemMutation.mutateAsync(id);
     } catch (err) {
-      setItems(prev);
       console.error('Delete error:', err);
     }
   }

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getTaskById, updateTask, createTasks, deleteTasksAfter, getProfiles } from '../lib/queries';
+import {
+  useCreateTasksMutation,
+  useDeleteTasksAfterMutation,
+  useProfilesQuery,
+  useTaskByIdQuery,
+  useUpdateTaskMutation,
+} from '../lib/queryHooks';
 import type { UpdateTaskInput, CreateTaskInput } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +19,6 @@ export default function EditEntry() {
   const router = useRouter();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   
-  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [points, setPoints] = useState(10);
@@ -26,13 +31,18 @@ export default function EditEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [saving, setSaving] = useState(false);
+  const profilesQuery = useProfilesQuery();
+  const taskQuery = useTaskByIdQuery(taskId);
+  const updateTaskMutation = useUpdateTaskMutation();
+  const deleteTasksAfterMutation = useDeleteTasksAfterMutation();
+  const createTasksMutation = useCreateTasksMutation();
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-
-  useEffect(() => {
-    getProfiles().then(setProfiles);
-  }, []);
+  const profiles: Profile[] = profilesQuery.data ?? [];
+  const saving =
+    updateTaskMutation.isPending ||
+    deleteTasksAfterMutation.isPending ||
+    createTasksMutation.isPending;
+  const loading = profilesQuery.isPending || taskQuery.isPending;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {
@@ -44,36 +54,32 @@ export default function EditEntry() {
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
-    if (taskId) {
-      getTaskById(taskId).then(task => {
-        if (task) {
-          setOriginalTask(task);
-          setTitle(task.title);
-          setDate(task.date || '');
-          setPoints(task.points || 0);
-          setPriority(task.priority);
-          setIsRecurring(task.is_recurring);
-          setFrequency(task.frequency);
-          setType(task.type);
-          if (task.assignment_type === 'team_work') {
-            setAssignmentCategory('team_work');
-            setIsRotating(false);
-          } else if (task.assignment_type === 'strict_rotation') {
-            setAssignmentCategory('individual');
-            setIsRotating(true);
-            setAssignedTo(task.assigned_to || '');
-          } else {
-            setAssignmentCategory('individual');
-            setIsRotating(false);
-            setAssignedTo(task.assigned_to || '');
-          }
-          setDescription(task.description || '');
-          setLocation(task.location || '');
-        }
-        setLoading(false);
-      });
+    const task = taskQuery.data;
+    if (task) {
+      setOriginalTask(task);
+      setTitle(task.title);
+      setDate(task.date || '');
+      setPoints(task.points || 0);
+      setPriority(task.priority);
+      setIsRecurring(task.is_recurring);
+      setFrequency(task.frequency);
+      setType(task.type);
+      if (task.assignment_type === 'team_work') {
+        setAssignmentCategory('team_work');
+        setIsRotating(false);
+      } else if (task.assignment_type === 'strict_rotation') {
+        setAssignmentCategory('individual');
+        setIsRotating(true);
+        setAssignedTo(task.assigned_to || '');
+      } else {
+        setAssignmentCategory('individual');
+        setIsRotating(false);
+        setAssignedTo(task.assigned_to || '');
+      }
+      setDescription(task.description || '');
+      setLocation(task.location || '');
     }
-  }, [taskId]);
+  }, [taskQuery.data]);
 
   async function handleSave() {
     if (!title.trim() || !taskId) return;
@@ -88,7 +94,6 @@ export default function EditEntry() {
 
   async function saveChanges(mode: 'single' | 'following') {
     if (!taskId || !originalTask) return;
-    setSaving(true);
     setEditModalOpen(false);
 
     try {
@@ -110,11 +115,14 @@ export default function EditEntry() {
         location: location.trim() || undefined,
       };
 
-      await updateTask(taskId, input);
+      await updateTaskMutation.mutateAsync({ taskId, input });
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
         // Delete any existing future tasks in this series
-        await deleteTasksAfter(originalTask.recurrence_id, originalTask.date);
+        await deleteTasksAfterMutation.mutateAsync({
+          recurrenceId: originalTask.recurrence_id,
+          date: originalTask.date,
+        });
 
         // If it's still recurring, generate the new future tasks based on the updated frequency
         if (isRecurring && frequency && date) {
@@ -167,7 +175,7 @@ export default function EditEntry() {
           }
 
           if (newTasks.length > 0) {
-            await createTasks(newTasks);
+            await createTasksMutation.mutateAsync(newTasks);
           }
         }
       }
@@ -175,7 +183,6 @@ export default function EditEntry() {
       navigate({ to: '/task/$taskId', params: { taskId } });
     } catch (err) {
       console.error('Update task error:', err);
-      setSaving(false);
     }
   }
 

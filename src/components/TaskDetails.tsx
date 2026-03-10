@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { getTaskById, completeTask, postponeTask, getLoveNoteForTask, getProfileById, deleteTask, deleteTaskSeries } from '../lib/queries';
-import type { Task, LoveNote, Profile } from '../lib/types';
+import React, { useState } from 'react';
+import {
+  useCompleteTaskMutation,
+  useDeleteTaskMutation,
+  useDeleteTaskSeriesMutation,
+  useLoveNoteForTaskQuery,
+  usePostponeTaskMutation,
+  useProfileQuery,
+  useTaskByIdQuery,
+} from '../lib/queryHooks';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 
@@ -10,97 +17,86 @@ export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  const [task, setTask] = useState<Task | null>(null);
-  const [loveNote, setLoveNote] = useState<LoveNote | null>(null);
-  const [assignedProfile, setAssignedProfile] = useState<Profile | null>(null);
-  const [lastDoneByProfile, setLastDoneByProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [acting, setActing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (taskId) loadTask(taskId);
-  }, [taskId]);
+  const taskQuery = useTaskByIdQuery(taskId);
+  const task = taskQuery.data ?? null;
 
-  async function loadTask(id: string) {
-    try {
-      const t = await getTaskById(id);
-      setTask(t);
-      if (t) {
-        const [note, assigned, lastDone] = await Promise.all([
-          getLoveNoteForTask(t.id),
-          t.assigned_to ? getProfileById(t.assigned_to) : Promise.resolve(null),
-          t.last_done_by ? getProfileById(t.last_done_by) : Promise.resolve(null),
-        ]);
-        setLoveNote(note);
-        setAssignedProfile(assigned);
-        setLastDoneByProfile(lastDone);
-      }
-    } catch (err) {
-      console.error('Load task error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
+  const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
+  const lastDoneByProfileQuery = useProfileQuery(task?.last_done_by ?? undefined);
+
+  const completeTaskMutation = useCompleteTaskMutation();
+  const postponeTaskMutation = usePostponeTaskMutation();
+  const deleteTaskMutation = useDeleteTaskMutation();
+  const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
+
+  const loveNote = loveNoteQuery.data ?? null;
+  const assignedProfile = assignedProfileQuery.data ?? null;
+  const lastDoneByProfile = lastDoneByProfileQuery.data ?? null;
+
+  const loading =
+    taskQuery.isPending ||
+    (Boolean(task) &&
+      (loveNoteQuery.isPending || assignedProfileQuery.isPending || lastDoneByProfileQuery.isPending));
+
+  const acting =
+    completeTaskMutation.isPending ||
+    postponeTaskMutation.isPending ||
+    deleteTaskMutation.isPending ||
+    deleteTaskSeriesMutation.isPending;
 
   async function handleComplete() {
     if (!task || acting) return;
-    setActing(true);
     try {
-      await completeTask(task.id);
+      await completeTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Complete error:', err);
-      setActing(false);
     }
   }
 
   async function handlePostpone() {
     if (!task || acting) return;
-    setActing(true);
     try {
-      await postponeTask(task.id);
+      await postponeTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Postpone error:', err);
-      setActing(false);
     }
   }
 
   async function handleDeleteSingle() {
     if (!task) return;
-    setActing(true);
     try {
-      await deleteTask(task.id);
+      await deleteTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete error:', err);
-      setActing(false);
     }
   }
 
   async function handleDeleteFollowing() {
     if (!task || !task.recurrence_id) return;
-    setActing(true);
     try {
-      await deleteTaskSeries(task.recurrence_id, task.date || undefined);
+      await deleteTaskSeriesMutation.mutateAsync({
+        recurrenceId: task.recurrence_id,
+        fromDate: task.date || undefined,
+      });
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete series error:', err);
-      setActing(false);
     }
   }
 
   async function handleDeleteAll() {
     if (!task || !task.recurrence_id) return;
-    setActing(true);
     try {
-      await deleteTaskSeries(task.recurrence_id);
+      await deleteTaskSeriesMutation.mutateAsync({ recurrenceId: task.recurrence_id });
       navigate({ to: '/' });
     } catch (err) {
       console.error('Delete all error:', err);
-      setActing(false);
     }
   }
 
@@ -199,8 +195,7 @@ export default function TaskDetails() {
                 }
 
                 if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-                  setActing(true);
-                  await deleteTask(task.id);
+                  await deleteTaskMutation.mutateAsync(task.id);
                   navigate({ to: '/' });
                 }
               },

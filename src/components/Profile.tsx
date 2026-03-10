@@ -1,7 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { getProfileById, getProfiles, updateProfile } from '../lib/queries';
+import {
+  useProfileQuery,
+  useProfilesQuery,
+  useUpdateProfileMutation,
+} from '../lib/queryHooks';
 import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import TopBar from './ui/TopBar';
@@ -11,10 +15,14 @@ export default function Profile() {
   const navigate = useNavigate();
   // Active Profile State
   const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileOptions, setProfileOptions] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const profilesQuery = useProfilesQuery();
+  const profileQuery = useProfileQuery(activeProfileId);
+  const updateProfileMutation = useUpdateProfileMutation();
+
+  const profileOptions: Profile[] = profilesQuery.data ?? [];
+  const profile = profileQuery.data ?? null;
+  const loading = profilesQuery.isPending || profileQuery.isPending;
+  const saving = updateProfileMutation.isPending;
 
   // Form state
   const [name, setName] = useState('');
@@ -27,45 +35,19 @@ export default function Profile() {
   const [notifications, setNotifications] = useState(true);
 
   useEffect(() => {
-    async function loadProfilesData() {
-      try {
-        const profiles = await getProfiles();
-        setProfileOptions(profiles);
-      } catch (err) {
-        console.error('Failed to load profiles:', err);
-      }
+    if (profile) {
+      setName(profile.name || '');
+      setEmail(profile.email || '');
+      setBio(profile.bio || '');
+      setAvatarUrl(profile.avatar_url || '');
+      return;
     }
 
-    loadProfilesData();
-  }, []);
-
-  useEffect(() => {
-    async function loadProfileData() {
-      setLoading(true);
-      try {
-        const data = await getProfileById(activeProfileId);
-        if (data) {
-          setProfile(data);
-          setName(data.name || '');
-          setEmail(data.email || '');
-          setBio(data.bio || '');
-          setAvatarUrl(data.avatar_url || '');
-        } else {
-          setProfile(null);
-          setName('');
-          setEmail('');
-          setBio('');
-          setAvatarUrl('');
-        }
-      } catch (err) {
-        console.error('Failed to load profile:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadProfileData();
-  }, [activeProfileId]);
+    setName('');
+    setEmail('');
+    setBio('');
+    setAvatarUrl('');
+  }, [profile]);
 
   const switchProfiles = useMemo(() => {
     const mainProfile = profileOptions.find((item) => item.id === MAIN_ID);
@@ -86,32 +68,26 @@ export default function Profile() {
 
   async function handleSave() {
     if (!profile) return;
-    setSaving(true);
     try {
       const normalizedAvatarUrl = avatarUrl.trim();
-      const updated = await updateProfile(activeProfileId, {
+      const updated = await updateProfileMutation.mutateAsync({
+        profileId: activeProfileId,
+        input: {
         name,
         email,
         bio,
         avatar_url: normalizedAvatarUrl || null,
+        },
       });
-      setProfile(updated);
+
       setName(updated.name || '');
       setEmail(updated.email || '');
       setBio(updated.bio || '');
       setAvatarUrl(updated.avatar_url || '');
-      setProfileOptions((prev) => {
-        if (prev.some((item) => item.id === updated.id)) {
-          return prev.map((item) => (item.id === updated.id ? updated : item));
-        }
-        return [...prev, updated];
-      });
       alert(t('profile.alertSaved'));
     } catch (error) {
       console.error('Error saving profile:', error);
       alert(t('profile.alertSaveError'));
-    } finally {
-      setSaving(false);
     }
   }
 

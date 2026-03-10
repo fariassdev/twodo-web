@@ -1,36 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { getEquityBalance, getWeeklyPulse, getPointsBreakdown } from '../lib/queries';
-import type { EquityBalance, WeeklyPulse, PointsBreakdown } from '../lib/queries';
+import React from 'react';
+import {
+  useEquityBalanceQuery,
+  usePointsBreakdownQuery,
+  useProfilesQuery,
+  useWeeklyPulseQuery,
+} from '../lib/queryHooks';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 
 export default function Metrics() {
   const { t } = useTranslation();
-  const [balance, setBalance] = useState<EquityBalance | null>(null);
-  const [pulse, setPulse] = useState<WeeklyPulse | null>(null);
-  const [points, setPoints] = useState<PointsBreakdown[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadMetrics();
-  }, []);
+  const profilesQuery = useProfilesQuery();
+  const balanceQuery = useEquityBalanceQuery(profilesQuery.data);
+  const pulseQuery = useWeeklyPulseQuery();
+  const pointsQuery = usePointsBreakdownQuery(profilesQuery.data);
 
-  async function loadMetrics() {
-    try {
-      const [b, p, pts] = await Promise.all([
-        getEquityBalance(),
-        getWeeklyPulse(),
-        getPointsBreakdown(),
-      ]);
-      setBalance(b);
-      setPulse(p);
-      setPoints(pts);
-    } catch (err) {
-      console.error('Metrics load error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const balance = balanceQuery.data ?? null;
+  const pulse = pulseQuery.data ?? null;
+  const points = pointsQuery.data ?? [];
+  const loading =
+    profilesQuery.isPending ||
+    balanceQuery.isPending ||
+    pulseQuery.isPending ||
+    pointsQuery.isPending;
 
   if (loading) {
     return (

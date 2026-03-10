@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { getTodaysTasks, getLatestLoveNote, getUpcomingEvents, completeTask, getProfileById } from '../lib/queries';
+import React, { useState } from 'react';
+import {
+  useCompleteTaskMutation,
+  useLatestLoveNoteQuery,
+  useProfileQuery,
+  useTodaysTasksQuery,
+  useUpcomingEventsQuery,
+} from '../lib/queryHooks';
 import { getActiveProfileId } from '../lib/supabase';
-import type { Task, LoveNote, Profile } from '../lib/types';
+import type { Task } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 
@@ -10,41 +16,28 @@ import { useNavigate } from '@tanstack/react-router';
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [events, setEvents] = useState<Task[]>([]);
-  const [loveNote, setLoveNote] = useState<LoveNote | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const todaysTasksQuery = useTodaysTasksQuery();
+  const upcomingEventsQuery = useUpcomingEventsQuery();
+  const latestLoveNoteQuery = useLatestLoveNoteQuery();
+  const profileQuery = useProfileQuery(getActiveProfileId());
+  const completeTaskMutation = useCompleteTaskMutation();
 
-  async function loadData() {
-    try {
-      const [t, e, n, p] = await Promise.all([
-        getTodaysTasks(),
-        getUpcomingEvents(),
-        getLatestLoveNote(),
-        getProfileById(getActiveProfileId()),
-      ]);
-      setTasks(t);
-      setEvents(e);
-      setLoveNote(n);
-      setProfile(p);
-    } catch (err) {
-      console.error('Dashboard load error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const tasks = todaysTasksQuery.data ?? [];
+  const events = upcomingEventsQuery.data ?? [];
+  const loveNote = latestLoveNoteQuery.data ?? null;
+  const profile = profileQuery.data ?? null;
+  const loading =
+    todaysTasksQuery.isPending ||
+    upcomingEventsQuery.isPending ||
+    latestLoveNoteQuery.isPending ||
+    profileQuery.isPending;
 
   async function handleComplete(e: React.MouseEvent, taskId: string) {
     e.stopPropagation();
     try {
-      await completeTask(taskId);
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      await completeTaskMutation.mutateAsync(taskId);
     } catch (err) {
       console.error('Complete error:', err);
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createTask, createTasks, getProfiles } from '../lib/queries';
+import { useCreateTasksMutation, useProfilesQuery } from '../lib/queryHooks';
 import type { CreateTaskInput } from '../lib/queries';
 import type { Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
@@ -25,12 +25,11 @@ export default function CreateEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const profilesQuery = useProfilesQuery();
+  const createTasksMutation = useCreateTasksMutation();
 
-  useEffect(() => {
-    getProfiles().then(setProfiles);
-  }, []);
+  const profiles: Profile[] = profilesQuery.data ?? [];
+  const saving = createTasksMutation.isPending;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo) {
@@ -40,7 +39,7 @@ export default function CreateEntry() {
 
   async function handleSave() {
     if (!title.trim()) return;
-    setSaving(true);
+
     try {
       const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' = assignmentCategory === 'team_work' 
         ? 'team_work' 
@@ -97,7 +96,7 @@ export default function CreateEntry() {
         });
       }
 
-      const createdTasks = await createTasks(inputs);
+      const createdTasks = await createTasksMutation.mutateAsync(inputs);
       const firstTask = createdTasks[0];
       if (firstTask) {
         navigate({ to: '/task/$taskId', params: { taskId: firstTask.id } });
@@ -106,7 +105,6 @@ export default function CreateEntry() {
       }
     } catch (err) {
       console.error('Create task error:', err);
-      setSaving(false);
     }
   }
 

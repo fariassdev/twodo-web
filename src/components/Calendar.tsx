@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getTasksForMonth, getTasksForDate, getProfiles } from '../lib/queries';
-import type { Task, Profile } from '../lib/types';
+import {
+  usePrefetchMonthTasks,
+  useProfilesQuery,
+  useTasksForDateQuery,
+  useTasksForMonthQuery,
+} from '../lib/queryHooks';
+import type { Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 
@@ -14,10 +19,6 @@ export default function Calendar() {
     const saved = localStorage.getItem('calendarSelectedDate');
     return saved ? new Date(saved) : new Date();
   });
-  const [monthTasks, setMonthTasks] = useState<Task[]>([]);
-  const [dayTasks, setDayTasks] = useState<Task[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -25,42 +26,23 @@ export default function Calendar() {
     localStorage.setItem('calendarSelectedDate', selectedDate.toISOString());
   }, [selectedDate]);
 
-  useEffect(() => {
-    getProfiles().then(setProfiles).catch(console.error);
-  }, []);
-
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+
+  const profilesQuery = useProfilesQuery();
+  const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
+  const dayTasksQuery = useTasksForDateQuery(selectedStr, showDeleted);
+  const prefetchMonthTasks = usePrefetchMonthTasks();
+
+  const monthTasks = monthTasksQuery.data ?? [];
+  const dayTasks = dayTasksQuery.data ?? [];
+  const profiles: Profile[] = profilesQuery.data ?? [];
 
   useEffect(() => {
-    loadMonth();
-  }, [year, month, showDeleted]);
-
-  useEffect(() => {
-    loadDay();
-  }, [selectedDate, showDeleted]);
-
-  async function loadMonth() {
-    setLoading(true);
-    try {
-      const tasks = await getTasksForMonth(year, month, showDeleted);
-      setMonthTasks(tasks);
-    } catch (err) {
-      console.error('Load month error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadDay() {
-    try {
-      const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-      const tasks = await getTasksForDate(dateStr, showDeleted);
-      setDayTasks(tasks);
-    } catch (err) {
-      console.error('Load day error:', err);
-    }
-  }
+    void prefetchMonthTasks(year, month + 1, showDeleted);
+    void prefetchMonthTasks(year, month - 1, showDeleted);
+  }, [year, month, showDeleted, prefetchMonthTasks]);
 
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -116,7 +98,6 @@ export default function Calendar() {
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
   const monthName = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(year, month, 1));
   const weekdayLabels = Array.from({ length: 7 }, (_, i) => {

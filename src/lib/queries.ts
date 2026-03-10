@@ -420,8 +420,8 @@ function getHouseholdProfiles(profiles: Profile[]): [HouseholdProfile, Household
   ];
 }
 
-export async function getEquityBalance(): Promise<EquityBalance> {
-  const profiles = await getProfiles();
+export async function getEquityBalance(profilesInput?: Profile[]): Promise<EquityBalance> {
+  const profiles = profilesInput ?? await getProfiles();
   const [mainProfile, partnerProfile] = getHouseholdProfiles(profiles);
 
   const { data, error } = await supabase
@@ -494,7 +494,7 @@ export interface PointsBreakdown {
   totalPoints: number;
 }
 
-export async function getPointsBreakdown(): Promise<PointsBreakdown[]> {
+export async function getPointsBreakdown(profilesInput?: Profile[]): Promise<PointsBreakdown[]> {
   const { data: completions, error: e1 } = await supabase
     .from('task_completions')
     .select('completed_by, points_earned');
@@ -505,7 +505,7 @@ export async function getPointsBreakdown(): Promise<PointsBreakdown[]> {
     .select('to_profile, points');
   if (e2) throw e2;
 
-  const profileData = await getProfiles();
+  const profileData = profilesInput ?? await getProfiles();
   const profiles = getHouseholdProfiles(profileData);
 
   return profiles.map((p) => {
