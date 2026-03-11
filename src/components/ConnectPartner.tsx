@@ -335,6 +335,14 @@ export default function ConnectPartner() {
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
           <h1 className="text-lg font-bold text-slate-100">{t('partner.title')}</h1>
+          {/* sign out icon on right side */}
+          <button
+            onClick={handleSignOut}
+            className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
+            aria-label={t('auth.signOut')}
+          >
+            <span className="material-symbols-outlined text-xl">logout</span>
+          </button>
         </div>
 
         {/* Hero */}
@@ -472,6 +480,14 @@ export default function ConnectPartner() {
         </div>
 
         {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
+
+        {/* sign out button for convenience */}
+        <button
+          onClick={handleSignOut}
+          className="mt-6 h-11 w-full rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {t('auth.signOut')}
+        </button>
       </div>
     );
   }
@@ -490,6 +506,13 @@ export default function ConnectPartner() {
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
           <h1 className="text-lg font-bold text-slate-100">{t('partner.joinTitle')}</h1>
+          <button
+            onClick={handleSignOut}
+            className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
+            aria-label={t('auth.signOut')}
+          >
+            <span className="material-symbols-outlined text-xl">logout</span>
+          </button>
         </div>
 
         {isLoading && (
@@ -549,6 +572,14 @@ export default function ConnectPartner() {
             </button>
 
             {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
+
+            {/* sign out while waiting to join */}
+            <button
+              onClick={handleSignOut}
+              className="mt-6 h-11 w-full rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {t('auth.signOut')}
+            </button>
           </div>
         )}
       </div>
