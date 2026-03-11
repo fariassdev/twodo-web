@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  useAuthContextQuery,
+  useCurrentProfileId,
   useSignOutMutation,
   useProfileQuery,
   useProfilesQuery,
@@ -14,16 +14,15 @@ import TopBar from './ui/TopBar';
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const authContextQuery = useAuthContextQuery();
-  const currentProfileId = authContextQuery.data?.profile?.id;
+  const currentProfileId = useCurrentProfileId();
   const profilesQuery = useProfilesQuery();
-  const profileQuery = useProfileQuery(currentProfileId);
+  const profileQuery = useProfileQuery(currentProfileId ?? undefined);
   const updateProfileMutation = useUpdateProfileMutation();
   const signOutMutation = useSignOutMutation();
 
   const profileOptions: Profile[] = profilesQuery.data ?? [];
   const profile = profileQuery.data ?? null;
-  const loading = authContextQuery.isPending || profilesQuery.isPending || profileQuery.isLoading;
+  const loading = !currentProfileId || profilesQuery.isPending || profileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
   // Form state

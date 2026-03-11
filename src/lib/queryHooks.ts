@@ -4,8 +4,9 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
+  type QueryKey,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   addShoppingItem,
   completeTask,
@@ -15,8 +16,8 @@ import {
   deleteTask,
   deleteTaskSeries,
   deleteTasksAfter,
-  getEquityBalance,
   getAuthContext,
+  getEquityBalance,
   getLatestLoveNote,
   getLoveNoteForTask,
   getPointsBreakdown,
@@ -49,15 +50,17 @@ import {
 } from './supabase';
 import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
 
-type InvalidateTaskGraphOptions = {
-  taskId?: string;
-  scope?: 'single' | 'series';
-};
-
 type AuthCredentials = {
   email: string;
   password: string;
 };
+
+type LinkedScope = {
+  householdId: string;
+  profileId: string;
+};
+
+type TaskMutationType = 'complete' | 'postpone' | 'single' | 'series';
 
 const signedOutContext: AuthContext = {
   status: 'signed_out',
@@ -66,6 +69,31 @@ const signedOutContext: AuthContext = {
   household: null,
   role: null,
 };
+
+function disabledKey(...segments: string[]) {
+  return ['disabled', ...segments] as const;
+}
+
+function isAuthContextKey(queryKey: QueryKey): boolean {
+  return Array.isArray(queryKey) && queryKey[0] === 'auth' && queryKey[1] === 'context';
+}
+
+function getAuthContextFromCache(queryClient: QueryClient): AuthContext {
+  return queryClient.getQueryData<AuthContext>(queryKeys.auth.context()) ?? signedOutContext;
+}
+
+function getLinkedScopeOrThrow(queryClient: QueryClient): LinkedScope {
+  const context = getAuthContextFromCache(queryClient);
+
+  if (context.status !== 'linked' || !context.household?.id || !context.profile?.id) {
+    throw new Error('AUTH_CONTEXT_NOT_READY');
+  }
+
+  return {
+    householdId: context.household.id,
+    profileId: context.profile.id,
+  };
+}
 
 function clearPrivateDomainQueries(queryClient: QueryClient) {
   queryClient.removeQueries({ queryKey: queryKeys.profiles.all });
@@ -77,12 +105,136 @@ function clearPrivateDomainQueries(queryClient: QueryClient) {
   queryClient.removeQueries({ queryKey: queryKeys.loveNotes.all });
 }
 
-function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undefined {
-  const fromToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today())?.find((task) => task.id === taskId);
+function isDomainForHousehold(queryKey: QueryKey, domain: string, householdId: string): boolean {
+  return Array.isArray(queryKey) && queryKey[0] === domain && queryKey.some((part) => part === householdId);
+}
+
+function toYearMonth(date: string | null | undefined): { year: number; month: number } | null {
+  if (!date) return null;
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return {
+    year: parsed.getFullYear(),
+    month: parsed.getMonth(),
+  };
+}
+
+async function invalidateMonthBuckets(
+  queryClient: QueryClient,
+  householdId: string,
+  date: string | null | undefined,
+) {
+  const bucket = toYearMonth(date);
+  if (!bucket) return;
+
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.tasks.month(bucket.year, bucket.month, false, householdId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.tasks.month(bucket.year, bucket.month, true, householdId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.calendar.month(bucket.year, bucket.month, false, householdId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.calendar.month(bucket.year, bucket.month, true, householdId),
+    }),
+  ]);
+}
+
+async function invalidateTaskMutationGraph(
+  queryClient: QueryClient,
+  params: {
+    householdId: string;
+    type: TaskMutationType;
+    taskId?: string;
+    taskDate?: string | null;
+  },
+) {
+  const { householdId, type, taskId, taskDate } = params;
+
+  if (type === 'series') {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        predicate: (query) => isDomainForHousehold(query.queryKey, 'tasks', householdId),
+      }),
+      queryClient.invalidateQueries({
+        predicate: (query) => isDomainForHousehold(query.queryKey, 'calendar', householdId),
+      }),
+      queryClient.invalidateQueries({
+        predicate: (query) => isDomainForHousehold(query.queryKey, 'taskDetail', householdId),
+      }),
+      queryClient.invalidateQueries({
+        predicate: (query) => isDomainForHousehold(query.queryKey, 'loveNotes', householdId),
+      }),
+      queryClient.invalidateQueries({
+        predicate: (query) => isDomainForHousehold(query.queryKey, 'metrics', householdId),
+      }),
+    ]);
+
+    if (taskId) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId, householdId) }),
+      ]);
+    }
+
+    return;
+  }
+
+  if (type === 'single') {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.upcoming(householdId) }),
+    ]);
+  }
+
+  if (type === 'complete' || type === 'postpone') {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) });
+  }
+
+  if (taskId) {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId, householdId) }),
+    ]);
+  }
+
+  await invalidateMonthBuckets(queryClient, householdId, taskDate);
+
+  if (type === 'complete') {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.metrics.weeklyPulse(householdId),
+        refetchType: 'inactive',
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.metrics.equity(householdId),
+        refetchType: 'inactive',
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.metrics.pointsBreakdown(householdId),
+        refetchType: 'inactive',
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.loveNotes.latest(householdId),
+        refetchType: 'inactive',
+      }),
+    ]);
+  }
+}
+
+function findTaskInCache(queryClient: QueryClient, householdId: string, taskId: string): Task | undefined {
+  const fromToday = queryClient
+    .getQueryData<Task[]>(queryKeys.tasks.today(householdId))
+    ?.find((task) => task.id === taskId);
   if (fromToday) return fromToday;
 
   const fromUpcoming = queryClient
-    .getQueryData<Task[]>(queryKeys.tasks.upcoming())
+    .getQueryData<Task[]>(queryKeys.tasks.upcoming(householdId))
     ?.find((task) => task.id === taskId);
   if (fromUpcoming) return fromUpcoming;
 
@@ -90,11 +242,16 @@ function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undef
     .getQueryCache()
     .findAll({
       predicate: (query) => {
-        const [domain, area] = query.queryKey;
-        return (
-          (domain === 'tasks' && area === 'month') ||
-          (domain === 'calendar' && area === 'month')
-        );
+        const queryKey = query.queryKey;
+        if (!Array.isArray(queryKey)) return false;
+
+        const isTaskMonthForHousehold =
+          queryKey[0] === 'tasks' && queryKey[1] === 'month' && queryKey[5] === householdId;
+
+        const isCalendarMonthForHousehold =
+          queryKey[0] === 'calendar' && queryKey[1] === 'month' && queryKey[5] === householdId;
+
+        return isTaskMonthForHousehold || isCalendarMonthForHousehold;
       },
     })
     .map((query) => query.state.data)
@@ -108,51 +265,38 @@ function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undef
   return undefined;
 }
 
-async function invalidateTaskGraph(
-  queryClient: QueryClient,
-  options: InvalidateTaskGraphOptions = {},
-) {
-  const { taskId, scope = 'single' } = options;
+export function useAuthContextSnapshot(): AuthContext {
+  const queryClient = useQueryClient();
 
-  if (scope === 'series') {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.calendar.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.metrics.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.all }),
-    ]);
+  return useSyncExternalStore(
+    (onStoreChange) =>
+      queryClient.getQueryCache().subscribe((event) => {
+        if (event?.query && isAuthContextKey(event.query.queryKey)) {
+          onStoreChange();
+        }
+      }),
+    () => getAuthContextFromCache(queryClient),
+    () => signedOutContext,
+  );
+}
 
-    if (taskId) {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
-      ]);
-    }
+export function useAuthScope() {
+  const context = useAuthContextSnapshot();
 
-    return;
-  }
+  return {
+    status: context.status,
+    householdId: context.household?.id ?? null,
+    profileId: context.profile?.id ?? null,
+    profile: context.profile,
+  };
+}
 
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today() }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.upcoming() }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.calendar.all }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse() }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity() }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.metrics.pointsBreakdown() }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.latest() }),
-  ]);
+export function useCurrentHouseholdId(): string | null {
+  return useAuthScope().householdId;
+}
 
-  if (!taskId) {
-    return;
-  }
-
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
-  ]);
+export function useCurrentProfileId(): string | null {
+  return useAuthScope().profileId;
 }
 
 export function useAuthContextQuery() {
@@ -173,7 +317,8 @@ export function useAuthContextQuery() {
   return useQuery<AuthContext>({
     queryKey: queryKeys.auth.context(),
     queryFn: getAuthContext,
-    refetchOnMount: 'always',
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
   });
 }
 
@@ -216,111 +361,175 @@ export function useSignOutMutation() {
 }
 
 export function useProfilesQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<Profile[]>({
-    queryKey: queryKeys.profiles.list(),
-    queryFn: getProfiles,
+    queryKey: householdId ? queryKeys.profiles.list(householdId) : disabledKey('profiles', 'list'),
+    queryFn: () => getProfiles(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useProfileQuery(profileId: string | undefined) {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<Profile | null>({
-    queryKey: profileId ? queryKeys.profiles.detail(profileId) : ['profiles', 'detail', 'unknown'],
-    queryFn: () => getProfileById(profileId as string),
-    enabled: Boolean(profileId),
+    queryKey:
+      profileId && householdId
+        ? queryKeys.profiles.detail(profileId, householdId)
+        : ['profiles', 'detail', 'disabled', profileId ?? 'none'],
+    queryFn: () => getProfileById(profileId as string, householdId as string),
+    enabled: Boolean(profileId && householdId),
   });
 }
 
 export function useTodaysTasksQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<Task[]>({
-    queryKey: queryKeys.tasks.today(),
-    queryFn: getTodaysTasks,
+    queryKey: householdId ? queryKeys.tasks.today(householdId) : disabledKey('tasks', 'today'),
+    queryFn: () => getTodaysTasks(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useUpcomingEventsQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<Task[]>({
-    queryKey: queryKeys.tasks.upcoming(),
-    queryFn: getUpcomingEvents,
+    queryKey: householdId ? queryKeys.tasks.upcoming(householdId) : disabledKey('tasks', 'upcoming'),
+    queryFn: () => getUpcomingEvents(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useTaskByIdQuery(taskId: string | undefined) {
   const queryClient = useQueryClient();
+  const householdId = useCurrentHouseholdId();
 
   return useQuery<Task | null>({
-    queryKey: taskId ? queryKeys.tasks.detail(taskId) : ['tasks', 'detail', 'unknown'],
-    queryFn: () => getTaskById(taskId as string),
-    enabled: Boolean(taskId),
-    initialData: taskId ? findTaskInCache(queryClient, taskId) ?? undefined : undefined,
+    queryKey:
+      taskId && householdId
+        ? queryKeys.tasks.detail(taskId, householdId)
+        : ['tasks', 'detail', 'disabled', taskId ?? 'none'],
+    queryFn: () => getTaskById(taskId as string, householdId as string),
+    enabled: Boolean(taskId && householdId),
+    initialData:
+      taskId && householdId
+        ? findTaskInCache(queryClient, householdId, taskId) ?? undefined
+        : undefined,
   });
 }
 
 export function useTasksForMonthQuery(year: number, month: number, includeDeleted: boolean) {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<Task[]>({
-    queryKey: queryKeys.calendar.month(year, month, includeDeleted),
-    queryFn: () => getTasksForMonth(year, month, includeDeleted),
+    queryKey:
+      householdId
+        ? queryKeys.calendar.month(year, month, includeDeleted, householdId)
+        : ['calendar', 'month', 'disabled', year, month, includeDeleted],
+    queryFn: () => getTasksForMonth(year, month, includeDeleted, householdId as string),
+    enabled: Boolean(householdId),
     placeholderData: keepPreviousData,
   });
 }
 
-
 export function usePrefetchMonthTasks() {
   const queryClient = useQueryClient();
-  return (year: number, month: number, includeDeleted: boolean) =>
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.calendar.month(year, month, includeDeleted),
-      queryFn: () => getTasksForMonth(year, month, includeDeleted),
-    });
+  const householdId = useCurrentHouseholdId();
+
+  return useCallback(
+    (year: number, month: number, includeDeleted: boolean) => {
+      if (!householdId) return Promise.resolve(undefined);
+
+      return queryClient.prefetchQuery({
+        queryKey: queryKeys.calendar.month(year, month, includeDeleted, householdId),
+        queryFn: () => getTasksForMonth(year, month, includeDeleted, householdId),
+      });
+    },
+    [householdId, queryClient],
+  );
 }
 
 export function useLatestLoveNoteQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<LoveNote | null>({
-    queryKey: queryKeys.loveNotes.latest(),
-    queryFn: getLatestLoveNote,
+    queryKey: householdId ? queryKeys.loveNotes.latest(householdId) : disabledKey('loveNotes', 'latest'),
+    queryFn: () => getLatestLoveNote(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useLoveNoteForTaskQuery(taskId: string | undefined) {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<LoveNote | null>({
-    queryKey: taskId ? queryKeys.loveNotes.byTask(taskId) : ['loveNotes', 'task', 'unknown'],
-    queryFn: () => getLoveNoteForTask(taskId as string),
-    enabled: Boolean(taskId),
+    queryKey:
+      taskId && householdId
+        ? queryKeys.loveNotes.byTask(taskId, householdId)
+        : ['loveNotes', 'task', 'disabled', taskId ?? 'none'],
+    queryFn: () => getLoveNoteForTask(taskId as string, householdId as string),
+    enabled: Boolean(taskId && householdId),
   });
 }
 
 export function useWeeklyPulseQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<WeeklyPulse>({
-    queryKey: queryKeys.metrics.weeklyPulse(),
-    queryFn: getWeeklyPulse,
+    queryKey: householdId ? queryKeys.metrics.weeklyPulse(householdId) : disabledKey('metrics', 'weeklyPulse'),
+    queryFn: () => getWeeklyPulse(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useEquityBalanceQuery(profiles: Profile[] | undefined) {
+  const householdId = useCurrentHouseholdId();
+
+  const sortedProfiles = useMemo(
+    () => (profiles ? [...profiles].sort((a, b) => a.id.localeCompare(b.id)) : undefined),
+    [profiles],
+  );
+
+  const profileIds = useMemo(() => sortedProfiles?.map((profile) => profile.id) ?? [], [sortedProfiles]);
+
   return useQuery<EquityBalance>({
-    queryKey: [
-      ...queryKeys.metrics.equity(),
-      ...(profiles?.map((profile) => profile.id) ?? []),
-    ],
-    queryFn: () => getEquityBalance(profiles),
-    enabled: Boolean(profiles),
+    queryKey: householdId
+      ? [...queryKeys.metrics.equity(householdId), ...profileIds]
+      : ['metrics', 'equity', 'disabled'],
+    queryFn: () => getEquityBalance(householdId as string, sortedProfiles),
+    enabled: Boolean(householdId),
   });
 }
 
 export function usePointsBreakdownQuery(profiles: Profile[] | undefined) {
+  const householdId = useCurrentHouseholdId();
+
+  const sortedProfiles = useMemo(
+    () => (profiles ? [...profiles].sort((a, b) => a.id.localeCompare(b.id)) : undefined),
+    [profiles],
+  );
+
+  const profileIds = useMemo(() => sortedProfiles?.map((profile) => profile.id) ?? [], [sortedProfiles]);
+
   return useQuery<PointsBreakdown[]>({
-    queryKey: [
-      ...queryKeys.metrics.pointsBreakdown(),
-      ...(profiles?.map((profile) => profile.id) ?? []),
-    ],
-    queryFn: () => getPointsBreakdown(profiles),
-    enabled: Boolean(profiles),
+    queryKey: householdId
+      ? [...queryKeys.metrics.pointsBreakdown(householdId), ...profileIds]
+      : ['metrics', 'pointsBreakdown', 'disabled'],
+    queryFn: () => getPointsBreakdown(householdId as string, sortedProfiles),
+    enabled: Boolean(householdId),
   });
 }
 
 export function useShoppingItemsQuery() {
+  const householdId = useCurrentHouseholdId();
+
   return useQuery<ShoppingItem[]>({
-    queryKey: queryKeys.shopping.list(),
-    queryFn: getShoppingItems,
+    queryKey: householdId ? queryKeys.shopping.list(householdId) : disabledKey('shopping', 'list'),
+    queryFn: () => getShoppingItems(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 
@@ -328,12 +537,17 @@ export function useCreateTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateTaskInput) => createTask(input),
+    mutationFn: (input: CreateTaskInput) => createTask(input, getLinkedScopeOrThrow(queryClient)),
     onSuccess: async (createdTask) => {
-      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(createdTask.id), createdTask);
-      await invalidateTaskGraph(queryClient, {
+      const householdId = createdTask.household_id;
+      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(createdTask.id, householdId), createdTask);
+      queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(createdTask.id, householdId), createdTask);
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId,
+        type: 'single',
         taskId: createdTask.id,
-        scope: 'single',
+        taskDate: createdTask.date,
       });
     },
   });
@@ -343,14 +557,21 @@ export function useCreateTasksMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (inputs: CreateTaskInput[]) => createTasks(inputs),
+    mutationFn: (inputs: CreateTaskInput[]) => createTasks(inputs, getLinkedScopeOrThrow(queryClient)),
     onSuccess: async (createdTasks) => {
+      const householdId = createdTasks[0]?.household_id;
+      if (!householdId) return;
+
       for (const task of createdTasks) {
-        queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(task.id), task);
+        queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(task.id, householdId), task);
+        queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(task.id, householdId), task);
       }
-      await invalidateTaskGraph(queryClient, {
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId,
+        type: createdTasks.length > 1 ? 'series' : 'single',
         taskId: createdTasks[0]?.id,
-        scope: createdTasks.length > 1 ? 'series' : 'single',
+        taskDate: createdTasks[0]?.date,
       });
     },
   });
@@ -360,13 +581,33 @@ export function useUpdateTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) => updateTask(taskId, input),
-    onSuccess: async (updatedTask) => {
-      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(updatedTask.id), updatedTask);
-      await invalidateTaskGraph(queryClient, {
+    mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return updateTask(taskId, input, householdId);
+    },
+    onMutate: ({ taskId }) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      const previousTask = findTaskInCache(queryClient, householdId, taskId);
+      return {
+        householdId,
+        previousTaskDate: previousTask?.date ?? null,
+      };
+    },
+    onSuccess: async (updatedTask, _variables, context) => {
+      const householdId = updatedTask.household_id;
+      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(updatedTask.id, householdId), updatedTask);
+      queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(updatedTask.id, householdId), updatedTask);
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId,
+        type: 'single',
         taskId: updatedTask.id,
-        scope: 'single',
+        taskDate: updatedTask.date,
       });
+
+      if (context?.previousTaskDate && context.previousTaskDate !== updatedTask.date) {
+        await invalidateMonthBuckets(queryClient, householdId, context.previousTaskDate);
+      }
     },
   });
 }
@@ -375,12 +616,67 @@ export function useDeleteTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (taskId: string) => deleteTask(taskId),
-    onSuccess: async (_, taskId) => {
-      queryClient.removeQueries({ queryKey: queryKeys.tasks.detail(taskId) });
-      await invalidateTaskGraph(queryClient, {
+    mutationFn: (taskId: string) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return deleteTask(taskId, householdId);
+    },
+    onMutate: async (taskId) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today(householdId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.upcoming(householdId) });
+
+      const previousToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today(householdId));
+      const previousUpcoming = queryClient.getQueryData<Task[]>(queryKeys.tasks.upcoming(householdId));
+      const previousDetail = queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId));
+      const previousTaskDetail = queryClient.getQueryData<Task | null>(
+        queryKeys.taskDetail.byId(taskId, householdId),
+      );
+
+      const cachedTask = previousDetail ?? previousTaskDetail ?? findTaskInCache(queryClient, householdId, taskId);
+
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.today(householdId), (current) =>
+        (current ?? []).filter((task) => task.id !== taskId),
+      );
+
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.upcoming(householdId), (current) =>
+        (current ?? []).filter((task) => task.id !== taskId),
+      );
+
+      queryClient.removeQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
+      queryClient.removeQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) });
+
+      return {
+        householdId,
+        taskDate: cachedTask?.date ?? null,
+        previousToday,
+        previousUpcoming,
+        previousDetail,
+        previousTaskDetail,
+      };
+    },
+    onError: (_error, taskId, context) => {
+      if (!context) return;
+
+      queryClient.setQueryData(queryKeys.tasks.today(context.householdId), context.previousToday);
+      queryClient.setQueryData(queryKeys.tasks.upcoming(context.householdId), context.previousUpcoming);
+      queryClient.setQueryData(
+        queryKeys.tasks.detail(taskId, context.householdId),
+        context.previousDetail,
+      );
+      queryClient.setQueryData(
+        queryKeys.taskDetail.byId(taskId, context.householdId),
+        context.previousTaskDetail,
+      );
+    },
+    onSuccess: async (_data, taskId, context) => {
+      if (!context) return;
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId: context.householdId,
+        type: 'single',
         taskId,
-        scope: 'single',
+        taskDate: context.taskDate,
       });
     },
   });
@@ -392,8 +688,16 @@ export function useDeleteTaskSeriesMutation() {
   return useMutation({
     mutationFn: ({ recurrenceId, fromDate }: { recurrenceId: string; fromDate?: string }) =>
       deleteTaskSeries(recurrenceId, fromDate),
-    onSuccess: async () => {
-      await invalidateTaskGraph(queryClient, { scope: 'series' });
+    onMutate: () => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return { householdId };
+    },
+    onSuccess: async (_data, _variables, context) => {
+      if (!context) return;
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId: context.householdId,
+        type: 'series',
+      });
     },
   });
 }
@@ -404,8 +708,16 @@ export function useDeleteTasksAfterMutation() {
   return useMutation({
     mutationFn: ({ recurrenceId, date }: { recurrenceId: string; date: string }) =>
       deleteTasksAfter(recurrenceId, date),
-    onSuccess: async () => {
-      await invalidateTaskGraph(queryClient, { scope: 'series' });
+    onMutate: () => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return { householdId };
+    },
+    onSuccess: async (_data, _variables, context) => {
+      if (!context) return;
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId: context.householdId,
+        type: 'series',
+      });
     },
   });
 }
@@ -414,19 +726,31 @@ export function useCompleteTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (taskId: string) => completeTask(taskId),
+    mutationFn: (taskId: string) => completeTask(taskId, getLinkedScopeOrThrow(queryClient)),
     onMutate: async (taskId) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today() });
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.detail(taskId) });
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
 
-      const previousToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today());
-      const previousDetail = queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId));
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today(householdId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) });
 
-      queryClient.setQueryData<Task[]>(queryKeys.tasks.today(), (current) =>
+      const previousToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today(householdId));
+      const previousDetail = queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId));
+      const previousTaskDetail = queryClient.getQueryData<Task | null>(
+        queryKeys.taskDetail.byId(taskId, householdId),
+      );
+
+      const taskDate =
+        previousDetail?.date ??
+        previousTaskDetail?.date ??
+        findTaskInCache(queryClient, householdId, taskId)?.date ??
+        null;
+
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.today(householdId), (current) =>
         (current ?? []).filter((task) => task.id !== taskId),
       );
 
-      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(taskId), (current) =>
+      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId), (current) =>
         current
           ? {
               ...current,
@@ -435,20 +759,38 @@ export function useCompleteTaskMutation() {
           : current,
       );
 
-      return { previousToday, previousDetail };
+      queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(taskId, householdId), (current) =>
+        current
+          ? {
+              ...current,
+              status: 'completed',
+            }
+          : current,
+      );
+
+      return { householdId, taskDate, previousToday, previousDetail, previousTaskDetail };
     },
     onError: (_error, taskId, context) => {
-      if (context?.previousToday) {
-        queryClient.setQueryData(queryKeys.tasks.today(), context.previousToday);
-      }
-      if (context?.previousDetail) {
-        queryClient.setQueryData(queryKeys.tasks.detail(taskId), context.previousDetail);
-      }
+      if (!context) return;
+
+      queryClient.setQueryData(queryKeys.tasks.today(context.householdId), context.previousToday);
+      queryClient.setQueryData(
+        queryKeys.tasks.detail(taskId, context.householdId),
+        context.previousDetail,
+      );
+      queryClient.setQueryData(
+        queryKeys.taskDetail.byId(taskId, context.householdId),
+        context.previousTaskDetail,
+      );
     },
-    onSuccess: async (_, taskId) => {
-      await invalidateTaskGraph(queryClient, {
+    onSuccess: async (_data, taskId, context) => {
+      if (!context) return;
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId: context.householdId,
+        type: 'complete',
         taskId,
-        scope: 'single',
+        taskDate: context.taskDate,
       });
     },
   });
@@ -458,11 +800,81 @@ export function usePostponeTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (taskId: string) => postponeTask(taskId),
-    onSuccess: async (_, taskId) => {
-      await invalidateTaskGraph(queryClient, {
+    mutationFn: (taskId: string) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return postponeTask(taskId, householdId);
+    },
+    onMutate: async (taskId) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today(householdId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) });
+
+      const previousToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today(householdId));
+      const previousDetail = queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId));
+      const previousTaskDetail = queryClient.getQueryData<Task | null>(
+        queryKeys.taskDetail.byId(taskId, householdId),
+      );
+
+      const taskDate =
+        previousDetail?.date ??
+        previousTaskDetail?.date ??
+        findTaskInCache(queryClient, householdId, taskId)?.date ??
+        null;
+
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.today(householdId), (current) =>
+        (current ?? []).map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: 'postponed',
+              }
+            : task,
+        ),
+      );
+
+      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId), (current) =>
+        current
+          ? {
+              ...current,
+              status: 'postponed',
+            }
+          : current,
+      );
+
+      queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(taskId, householdId), (current) =>
+        current
+          ? {
+              ...current,
+              status: 'postponed',
+            }
+          : current,
+      );
+
+      return { householdId, taskDate, previousToday, previousDetail, previousTaskDetail };
+    },
+    onError: (_error, taskId, context) => {
+      if (!context) return;
+
+      queryClient.setQueryData(queryKeys.tasks.today(context.householdId), context.previousToday);
+      queryClient.setQueryData(
+        queryKeys.tasks.detail(taskId, context.householdId),
+        context.previousDetail,
+      );
+      queryClient.setQueryData(
+        queryKeys.taskDetail.byId(taskId, context.householdId),
+        context.previousTaskDetail,
+      );
+    },
+    onSuccess: async (_data, taskId, context) => {
+      if (!context) return;
+
+      await invalidateTaskMutationGraph(queryClient, {
+        householdId: context.householdId,
+        type: 'postpone',
         taskId,
-        scope: 'single',
+        taskDate: context.taskDate,
       });
     },
   });
@@ -475,8 +887,10 @@ export function useUpdateProfileMutation() {
     mutationFn: ({ profileId, input }: { profileId: string; input: UpdateProfileInput }) =>
       updateProfile(profileId, input),
     onSuccess: async (profile) => {
-      queryClient.setQueryData(queryKeys.profiles.detail(profile.id), profile);
-      queryClient.setQueryData<Profile[]>(queryKeys.profiles.list(), (current) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+
+      queryClient.setQueryData(queryKeys.profiles.detail(profile.id, householdId), profile);
+      queryClient.setQueryData<Profile[]>(queryKeys.profiles.list(householdId), (current) => {
         if (!current) return [profile];
         if (current.some((item) => item.id === profile.id)) {
           return current.map((item) => (item.id === profile.id ? profile : item));
@@ -485,10 +899,10 @@ export function useUpdateProfileMutation() {
       });
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.profiles.list() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.pointsBreakdown() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.profiles.list(householdId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse(householdId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity(householdId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.metrics.pointsBreakdown(householdId) }),
       ]);
     },
   });
@@ -498,15 +912,12 @@ export function useAddShoppingItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) => addShoppingItem(name),
+    mutationFn: (name: string) => addShoppingItem(name, getLinkedScopeOrThrow(queryClient)),
     onSuccess: (item) => {
-      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(), (current) => [
+      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(item.household_id), (current) => [
         item,
         ...(current ?? []).filter((existing) => existing.id !== item.id),
       ]);
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
     },
   });
 }
@@ -515,27 +926,32 @@ export function useTogglePurchasedMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, currentValue }: { id: string; currentValue: boolean }) =>
-      togglePurchased(id, currentValue),
+    mutationFn: ({ id, currentValue }: { id: string; currentValue: boolean }) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return togglePurchased(id, currentValue, householdId);
+    },
     onMutate: async ({ id, currentValue }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list() });
-      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list());
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
 
-      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(), (current) =>
+      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
+      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
+
+      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId), (current) =>
         (current ?? []).map((item) =>
           item.id === id ? { ...item, is_purchased: !currentValue } : item,
         ),
       );
 
-      return { previous };
+      return { previous, householdId };
     },
     onError: (_error, _variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(queryKeys.shopping.list(), context.previous);
+        queryClient.setQueryData(queryKeys.shopping.list(context.householdId), context.previous);
       }
     },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
+    onSettled: async (_data, error, _variables, context) => {
+      if (!error || !context) return;
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
     },
   });
 }
@@ -544,24 +960,30 @@ export function useUpdateQuantityMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => updateQuantity(id, quantity),
+    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return updateQuantity(id, quantity, householdId);
+    },
     onMutate: async ({ id, quantity }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list() });
-      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list());
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
 
-      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(), (current) =>
+      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
+      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
+
+      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId), (current) =>
         (current ?? []).map((item) => (item.id === id ? { ...item, quantity } : item)),
       );
 
-      return { previous };
+      return { previous, householdId };
     },
     onError: (_error, _variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(queryKeys.shopping.list(), context.previous);
+        queryClient.setQueryData(queryKeys.shopping.list(context.householdId), context.previous);
       }
     },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
+    onSettled: async (_data, error, _variables, context) => {
+      if (!error || !context) return;
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
     },
   });
 }
@@ -570,24 +992,30 @@ export function useDeleteShoppingItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => deleteShoppingItem(id),
+    mutationFn: (id: string) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return deleteShoppingItem(id, householdId);
+    },
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list() });
-      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list());
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
 
-      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(), (current) =>
+      await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
+      const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
+
+      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId), (current) =>
         (current ?? []).filter((item) => item.id !== id),
       );
 
-      return { previous };
+      return { previous, householdId };
     },
     onError: (_error, _id, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(queryKeys.shopping.list(), context.previous);
+        queryClient.setQueryData(queryKeys.shopping.list(context.householdId), context.previous);
       }
     },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list() });
+    onSettled: async (_data, error, _variables, context) => {
+      if (!error || !context) return;
+      await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
     },
   });
 }

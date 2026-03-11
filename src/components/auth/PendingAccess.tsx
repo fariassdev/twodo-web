@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { useAuthContextQuery, useSignOutMutation } from '../../lib/queryHooks';
+import { useAuthScope, useSignOutMutation } from '../../lib/queryHooks';
 
 export default function PendingAccess() {
   const { t } = useTranslation();
-  const authContextQuery = useAuthContextQuery();
+  const { status } = useAuthScope();
   const signOutMutation = useSignOutMutation();
 
   const loading = signOutMutation.isPending;
-  const status = authContextQuery.data?.status;
   const pendingReason = status === 'pending_profile'
     ? t('auth.pending.reasonProfile')
     : t('auth.pending.reasonHousehold');

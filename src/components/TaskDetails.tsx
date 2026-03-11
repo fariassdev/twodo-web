@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthContextQuery,
+  useAuthScope,
   useCompleteTaskMutation,
   useDeleteTaskMutation,
   useDeleteTaskSeriesMutation,
@@ -9,6 +10,7 @@ import {
   useProfileQuery,
   useTaskByIdQuery,
 } from '../lib/queryHooks';
+import { queryKeys } from '../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
@@ -20,9 +22,10 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  const authContextQuery = useAuthContextQuery();
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -44,7 +47,6 @@ export default function TaskDetails() {
   const lastDoneByProfile = lastDoneByProfileQuery.data ?? null;
 
   const loading =
-    authContextQuery.isPending ||
     taskQuery.isPending ||
     (Boolean(task) &&
       (loveNoteQuery.isLoading || assignedProfileQuery.isLoading || lastDoneByProfileQuery.isLoading));
@@ -164,7 +166,14 @@ export default function TaskDetails() {
 
   if (!task) {
     if (taskQuery.isError) {
-      return <QueryErrorState onRetry={() => { void taskQuery.refetch(); }} />;
+      return (
+        <QueryErrorState
+          onRetry={() => {
+            if (!householdId) return;
+            void queryClient.refetchQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
+          }}
+        />
+      );
     }
 
     return (

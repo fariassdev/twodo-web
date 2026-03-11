@@ -133,32 +133,12 @@ export async function getAuthContext(): Promise<AuthContext> {
   };
 }
 
-interface LinkedAuthContext {
-  profile: Profile;
-  household: Household;
-}
-
-async function requireLinkedAuthContext(): Promise<LinkedAuthContext> {
-  const context = await getAuthContext();
-
-  if (context.status !== 'linked' || !context.profile || !context.household) {
-    throw new Error('AUTH_CONTEXT_NOT_READY');
-  }
-
-  return {
-    profile: context.profile,
-    household: context.household,
-  };
-}
-
 // Profiles
-export async function getProfiles(): Promise<Profile[]> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getProfiles(householdId: string): Promise<Profile[]> {
   const { data: memberships, error: membershipsError } = await supabase
     .from('household_members')
     .select('profile_id')
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (membershipsError) throw membershipsError;
 
@@ -175,13 +155,11 @@ export async function getProfiles(): Promise<Profile[]> {
   return data ?? [];
 }
 
-export async function getProfileById(id: string): Promise<Profile | null> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getProfileById(id: string, householdId: string): Promise<Profile | null> {
   const { data: membership, error: membershipError } = await supabase
     .from('household_members')
     .select('profile_id')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('profile_id', id)
     .maybeSingle();
 
@@ -225,14 +203,13 @@ export async function updateProfile(id: string, input: UpdateProfileInput): Prom
 }
 
 // Tasks
-export async function getTodaysTasks(): Promise<Task[]> {
-  const { household } = await requireLinkedAuthContext();
+export async function getTodaysTasks(householdId: string): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('date', today)
     .eq('type', 'task')
     .in('status', ['pending', 'postponed'])
@@ -243,14 +220,13 @@ export async function getTodaysTasks(): Promise<Task[]> {
   return data ?? [];
 }
 
-export async function getUpcomingEvents(): Promise<Task[]> {
-  const { household } = await requireLinkedAuthContext();
+export async function getUpcomingEvents(householdId: string): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('type', 'event')
     .gte('date', today)
     .neq('status', 'completed')
@@ -262,13 +238,11 @@ export async function getUpcomingEvents(): Promise<Task[]> {
   return data ?? [];
 }
 
-export async function getTaskById(id: string): Promise<Task | null> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getTaskById(id: string, householdId: string): Promise<Task | null> {
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('id', id)
     .maybeSingle();
 
@@ -284,8 +258,8 @@ export async function getTasksForMonth(
   year: number,
   month: number,
   includeDeleted = false,
+  householdId: string,
 ): Promise<Task[]> {
-  const { household } = await requireLinkedAuthContext();
   const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const endDate = month === 11
     ? `${year + 1}-01-01`
@@ -294,7 +268,7 @@ export async function getTasksForMonth(
   let query = supabase
     .from('tasks')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .gte('date', startDate)
     .lt('date', endDate)
     .order('date', { ascending: true })
@@ -337,17 +311,22 @@ function resolveAssignedToForInsert(
   return input.assigned_to || currentProfileId;
 }
 
-export async function createTask(input: CreateTaskInput): Promise<Task> {
-  const { profile, household } = await requireLinkedAuthContext();
+interface MutationScope {
+  householdId: string;
+  profileId: string;
+}
+
+export async function createTask(input: CreateTaskInput, scope: MutationScope): Promise<Task> {
+  const { householdId, profileId } = scope;
 
   const { data, error } = await supabase
     .from('tasks')
     .insert({
       ...input,
-      household_id: household.id,
+      household_id: householdId,
       status: 'pending',
-      created_by: profile.id,
-      assigned_to: resolveAssignedToForInsert(input, profile.id),
+      created_by: profileId,
+      assigned_to: resolveAssignedToForInsert(input, profileId),
     })
     .select()
     .single();
@@ -356,15 +335,15 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
   return data;
 }
 
-export async function createTasks(inputs: CreateTaskInput[]): Promise<Task[]> {
-  const { profile, household } = await requireLinkedAuthContext();
+export async function createTasks(inputs: CreateTaskInput[], scope: MutationScope): Promise<Task[]> {
+  const { householdId, profileId } = scope;
 
   const tasksToInsert = inputs.map((input) => ({
     ...input,
-    household_id: household.id,
+    household_id: householdId,
     status: 'pending',
-    created_by: profile.id,
-    assigned_to: resolveAssignedToForInsert(input, profile.id),
+    created_by: profileId,
+    assigned_to: resolveAssignedToForInsert(input, profileId),
   }));
 
   const { data, error } = await supabase
@@ -378,9 +357,7 @@ export async function createTasks(inputs: CreateTaskInput[]): Promise<Task[]> {
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
 
-export async function updateTask(taskId: string, input: UpdateTaskInput): Promise<Task> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function updateTask(taskId: string, input: UpdateTaskInput, householdId: string): Promise<Task> {
   const { data, error } = await supabase
     .from('tasks')
     .update({
@@ -388,7 +365,7 @@ export async function updateTask(taskId: string, input: UpdateTaskInput): Promis
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId)
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .select()
     .single();
 
@@ -396,14 +373,12 @@ export async function updateTask(taskId: string, input: UpdateTaskInput): Promis
   return data;
 }
 
-export async function deleteTask(taskId: string): Promise<void> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function deleteTask(taskId: string, householdId: string): Promise<void> {
   const { data: completions, error: completionsError } = await supabase
     .from('task_completions')
     .select('id')
     .eq('task_id', taskId)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (completionsError) throw completionsError;
 
@@ -412,7 +387,7 @@ export async function deleteTask(taskId: string): Promise<void> {
       .from('tasks')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', taskId)
-      .eq('household_id', household.id);
+      .eq('household_id', householdId);
 
     if (error) throw error;
   } else {
@@ -420,7 +395,7 @@ export async function deleteTask(taskId: string): Promise<void> {
       .from('tasks')
       .delete()
       .eq('id', taskId)
-      .eq('household_id', household.id);
+      .eq('household_id', householdId);
 
     if (error) throw error;
   }
@@ -430,16 +405,15 @@ export async function updateTaskSeries(
   recurrenceId: string,
   fromDate: string,
   input: UpdateTaskInput,
+  householdId: string,
 ): Promise<void> {
-  const { household } = await requireLinkedAuthContext();
-
   const { error } = await supabase
     .from('tasks')
     .update({
       ...input,
       updated_at: new Date().toISOString(),
     })
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('recurrence_id', recurrenceId)
     .gte('date', fromDate);
 
@@ -470,26 +444,26 @@ export async function deleteTasksAfter(
   if (error) throw error;
 }
 
-export async function completeTask(taskId: string): Promise<void> {
-  const { profile, household } = await requireLinkedAuthContext();
+export async function completeTask(taskId: string, scope: MutationScope): Promise<void> {
+  const { householdId, profileId } = scope;
 
-  const task = await getTaskById(taskId);
+  const task = await getTaskById(taskId, householdId);
   if (!task) throw new Error('Task not found');
 
   const { error: updateError } = await supabase
     .from('tasks')
     .update({
       status: 'completed',
-      last_done_by: profile.id,
+      last_done_by: profileId,
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (updateError) throw updateError;
 
   if (task.assignment_type === 'team_work') {
-    const members = await getProfiles();
+    const members = await getProfiles(householdId);
 
     if (members.length > 0) {
       const pointsPerMember = Math.floor(task.points / members.length);
@@ -501,7 +475,7 @@ export async function completeTask(taskId: string): Promise<void> {
 
         return {
           task_id: taskId,
-          household_id: household.id,
+          household_id: householdId,
           completed_by: member.id,
           points_earned: pointsPerMember + extraPoint,
         };
@@ -520,17 +494,15 @@ export async function completeTask(taskId: string): Promise<void> {
     .from('task_completions')
     .insert({
       task_id: taskId,
-      household_id: household.id,
-      completed_by: profile.id,
+      household_id: householdId,
+      completed_by: profileId,
       points_earned: task.points,
     });
 
   if (completionError) throw completionError;
 }
 
-export async function postponeTask(taskId: string): Promise<void> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function postponeTask(taskId: string, householdId: string): Promise<void> {
   const { error } = await supabase
     .from('tasks')
     .update({
@@ -538,19 +510,17 @@ export async function postponeTask(taskId: string): Promise<void> {
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (error) throw error;
 }
 
 // Shopping
-export async function getShoppingItems(): Promise<ShoppingItem[]> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getShoppingItems(householdId: string): Promise<ShoppingItem[]> {
   const { data, error } = await supabase
     .from('shopping_items')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .order('is_purchased', { ascending: true })
     .order('created_at', { ascending: false });
 
@@ -558,17 +528,17 @@ export async function getShoppingItems(): Promise<ShoppingItem[]> {
   return data ?? [];
 }
 
-export async function addShoppingItem(name: string): Promise<ShoppingItem> {
-  const { profile, household } = await requireLinkedAuthContext();
+export async function addShoppingItem(name: string, scope: MutationScope): Promise<ShoppingItem> {
+  const { householdId, profileId } = scope;
 
   const { data, error } = await supabase
     .from('shopping_items')
     .insert({
-      household_id: household.id,
+      household_id: householdId,
       name,
       quantity: 1,
       is_purchased: false,
-      added_by: profile.id,
+      added_by: profileId,
     })
     .select()
     .single();
@@ -577,52 +547,44 @@ export async function addShoppingItem(name: string): Promise<ShoppingItem> {
   return data;
 }
 
-export async function togglePurchased(id: string, currentValue: boolean): Promise<void> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function togglePurchased(id: string, currentValue: boolean, householdId: string): Promise<void> {
   const { error } = await supabase
     .from('shopping_items')
     .update({ is_purchased: !currentValue })
     .eq('id', id)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (error) throw error;
 }
 
-export async function updateQuantity(id: string, quantity: number): Promise<void> {
+export async function updateQuantity(id: string, quantity: number, householdId: string): Promise<void> {
   if (quantity < 1) return;
-
-  const { household } = await requireLinkedAuthContext();
 
   const { error } = await supabase
     .from('shopping_items')
     .update({ quantity })
     .eq('id', id)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (error) throw error;
 }
 
-export async function deleteShoppingItem(id: string): Promise<void> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function deleteShoppingItem(id: string, householdId: string): Promise<void> {
   const { error } = await supabase
     .from('shopping_items')
     .delete()
     .eq('id', id)
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (error) throw error;
 }
 
 // Love notes
-export async function getLatestLoveNote(): Promise<(LoveNote & { sender?: Profile }) | null> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getLatestLoveNote(householdId: string): Promise<(LoveNote & { sender?: Profile }) | null> {
   const { data, error } = await supabase
     .from('love_notes')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .is('task_id', null)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -636,13 +598,11 @@ export async function getLatestLoveNote(): Promise<(LoveNote & { sender?: Profil
   return data;
 }
 
-export async function getLoveNoteForTask(taskId: string): Promise<LoveNote | null> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getLoveNoteForTask(taskId: string, householdId: string): Promise<LoveNote | null> {
   const { data, error } = await supabase
     .from('love_notes')
     .select('*')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .eq('task_id', taskId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -669,17 +629,15 @@ export interface EquityBalance {
   members: EquityMemberBalance[];
 }
 
-export async function getEquityBalance(profilesInput?: Profile[]): Promise<EquityBalance> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getEquityBalance(householdId: string, profilesInput?: Profile[]): Promise<EquityBalance> {
   const { data, error } = await supabase
     .from('task_completions')
     .select('completed_by, points_earned')
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (error) throw error;
 
-  const members = profilesInput ?? await getProfiles();
+  const members = profilesInput ?? await getProfiles(householdId);
   const memberPointsMap = new Map<string, number>(members.map((member) => [member.id, 0]));
 
   for (const completion of data ?? []) {
@@ -709,9 +667,7 @@ export interface WeeklyPulse {
   changeFromLastWeek: number;
 }
 
-export async function getWeeklyPulse(): Promise<WeeklyPulse> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getWeeklyPulse(householdId: string): Promise<WeeklyPulse> {
   const now = new Date();
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
@@ -723,7 +679,7 @@ export async function getWeeklyPulse(): Promise<WeeklyPulse> {
   const { data: thisWeek, error: thisWeekError } = await supabase
     .from('task_completions')
     .select('id')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .gte('completed_at', startOfWeek.toISOString());
 
   if (thisWeekError) throw thisWeekError;
@@ -731,7 +687,7 @@ export async function getWeeklyPulse(): Promise<WeeklyPulse> {
   const { data: lastWeek, error: lastWeekError } = await supabase
     .from('task_completions')
     .select('id')
-    .eq('household_id', household.id)
+    .eq('household_id', householdId)
     .gte('completed_at', startOfLastWeek.toISOString())
     .lt('completed_at', startOfWeek.toISOString());
 
@@ -752,24 +708,22 @@ export interface PointsBreakdown {
   totalPoints: number;
 }
 
-export async function getPointsBreakdown(profilesInput?: Profile[]): Promise<PointsBreakdown[]> {
-  const { household } = await requireLinkedAuthContext();
-
+export async function getPointsBreakdown(householdId: string, profilesInput?: Profile[]): Promise<PointsBreakdown[]> {
   const { data: completions, error: completionsError } = await supabase
     .from('task_completions')
     .select('completed_by, points_earned')
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (completionsError) throw completionsError;
 
   const { data: kudosData, error: kudosError } = await supabase
     .from('kudos')
     .select('to_profile, points')
-    .eq('household_id', household.id);
+    .eq('household_id', householdId);
 
   if (kudosError) throw kudosError;
 
-  const profiles = profilesInput ?? await getProfiles();
+  const profiles = profilesInput ?? await getProfiles(householdId);
 
   return profiles.map((profile) => {
     const taskPoints = (completions ?? [])

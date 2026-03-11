@@ -31,11 +31,11 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       networkMode: 'offlineFirst',
-      staleTime: 1000 * 60,
+      staleTime: 1000 * 60 * 2,
       gcTime: 1000 * 60 * 60 * 12,
       retry: (failureCount, error) => failureCount < 3 && isRetriableError(error),
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       refetchOnReconnect: true,
     },
     mutations: {
@@ -51,22 +51,22 @@ queryClient.setQueryDefaults(queryKeys.profiles.all, {
 });
 
 queryClient.setQueryDefaults(queryKeys.tasks.all, {
-  staleTime: 1000 * 30,
+  staleTime: 1000 * 60,
   gcTime: 1000 * 60 * 60 * 6,
 });
 
 queryClient.setQueryDefaults(calendarRootKey, {
-  staleTime: 1000 * 60,
+  staleTime: 1000 * 60 * 3,
   gcTime: 1000 * 60 * 60 * 3,
 });
 
 queryClient.setQueryDefaults(queryKeys.metrics.all, {
-  staleTime: 1000 * 60 * 5,
+  staleTime: 1000 * 60 * 10,
   gcTime: 1000 * 60 * 60,
 });
 
 queryClient.setQueryDefaults(queryKeys.shopping.all, {
-  staleTime: 1000 * 20,
+  staleTime: 1000 * 60,
   gcTime: 1000 * 60 * 30,
 });
 
@@ -89,7 +89,7 @@ const asyncStorage = {
 };
 
 export const queryPersister = createAsyncStoragePersister({
-  key: 'couple-organizer-query-cache-v1',
+  key: 'couple-organizer-query-cache-v2',
   storage: asyncStorage,
   throttleTime: 1000,
 });

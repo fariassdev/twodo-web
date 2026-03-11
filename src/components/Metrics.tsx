@@ -1,11 +1,13 @@
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthContextQuery,
+  useAuthScope,
   useEquityBalanceQuery,
   usePointsBreakdownQuery,
   useProfilesQuery,
   useWeeklyPulseQuery,
 } from '../lib/queryHooks';
+import { queryKeys } from '../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
@@ -14,9 +16,10 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export default function Metrics() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
 
-  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const balanceQuery = useEquityBalanceQuery(profilesQuery.data);
   const pulseQuery = useWeeklyPulseQuery();
@@ -26,7 +29,6 @@ export default function Metrics() {
   const pulse = pulseQuery.data ?? null;
   const points = pointsQuery.data ?? [];
   const loading =
-    authContextQuery.isPending ||
     profilesQuery.isPending ||
     balanceQuery.isPending ||
     pulseQuery.isPending ||
@@ -59,11 +61,13 @@ export default function Metrics() {
     return (
       <QueryErrorState
         onRetry={() => {
+          if (!householdId) return;
+
           void Promise.all([
-            profilesQuery.refetch(),
-            balanceQuery.refetch(),
-            pulseQuery.refetch(),
-            pointsQuery.refetch(),
+            queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
+            queryClient.refetchQueries({ queryKey: queryKeys.metrics.equity(householdId) }),
+            queryClient.refetchQueries({ queryKey: queryKeys.metrics.weeklyPulse(householdId) }),
+            queryClient.refetchQueries({ queryKey: queryKeys.metrics.pointsBreakdown(householdId) }),
           ]);
         }}
       />

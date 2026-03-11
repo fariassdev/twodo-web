@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  useAuthContextQuery,
   useCreateTasksMutation,
   useDeleteTasksAfterMutation,
   useProfilesQuery,
@@ -32,7 +31,6 @@ export default function EditEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const taskQuery = useTaskByIdQuery(taskId);
   const updateTaskMutation = useUpdateTaskMutation();
@@ -44,7 +42,7 @@ export default function EditEntry() {
     updateTaskMutation.isPending ||
     deleteTasksAfterMutation.isPending ||
     createTasksMutation.isPending;
-  const loading = authContextQuery.isPending || profilesQuery.isPending || taskQuery.isPending;
+  const loading = profilesQuery.isPending || taskQuery.isPending;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {

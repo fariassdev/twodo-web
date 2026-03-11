@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthContextQuery,
+  useAuthScope,
   useAddShoppingItemMutation,
   useDeleteShoppingItemMutation,
   useShoppingItemsQuery,
   useTogglePurchasedMutation,
   useUpdateQuantityMutation,
 } from '../lib/queryHooks';
+import { queryKeys } from '../lib/queryKeys';
 import type { ShoppingItem as ShoppingItemType } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
@@ -16,8 +18,9 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export default function ShoppingList() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
-  const authContextQuery = useAuthContextQuery();
   const [newItem, setNewItem] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +31,7 @@ export default function ShoppingList() {
   const deleteShoppingItemMutation = useDeleteShoppingItemMutation();
 
   const items: ShoppingItemType[] = shoppingItemsQuery.data ?? [];
-  const loading = authContextQuery.isPending || shoppingItemsQuery.isPending;
+  const loading = shoppingItemsQuery.isPending;
   const isStale = shoppingItemsQuery.isStale;
   const isFetching = shoppingItemsQuery.isFetching;
 
@@ -94,7 +97,14 @@ export default function ShoppingList() {
   }
 
   if (shoppingItemsQuery.isError && items.length === 0) {
-    return <QueryErrorState onRetry={() => { void shoppingItemsQuery.refetch(); }} />;
+    return (
+      <QueryErrorState
+        onRetry={() => {
+          if (!householdId) return;
+          void queryClient.refetchQueries({ queryKey: queryKeys.shopping.list(householdId) });
+        }}
+      />
+    );
   }
 
   return (

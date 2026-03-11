@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthContextQuery,
+  useAuthScope,
   useCompleteTaskMutation,
   useLatestLoveNoteQuery,
-  useProfileQuery,
   useTodaysTasksQuery,
   useUpcomingEventsQuery,
 } from '../lib/queryHooks';
+import { queryKeys } from '../lib/queryKeys';
 import type { Task } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
@@ -19,42 +20,36 @@ import { useNavigate } from '@tanstack/react-router';
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isOnline = useOnlineStatus();
   const [search, setSearch] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const authContextQuery = useAuthContextQuery();
+  const { profile, householdId } = useAuthScope();
   const todaysTasksQuery = useTodaysTasksQuery();
   const upcomingEventsQuery = useUpcomingEventsQuery();
   const latestLoveNoteQuery = useLatestLoveNoteQuery();
-  const profileQuery = useProfileQuery(authContextQuery.data?.profile?.id);
   const completeTaskMutation = useCompleteTaskMutation();
 
   const tasks = todaysTasksQuery.data ?? [];
   const events = upcomingEventsQuery.data ?? [];
   const loveNote = latestLoveNoteQuery.data ?? null;
-  const profile = profileQuery.data ?? null;
   const loading =
-    authContextQuery.isPending ||
     todaysTasksQuery.isPending ||
     upcomingEventsQuery.isPending ||
-    latestLoveNoteQuery.isPending ||
-    profileQuery.isPending;
+    latestLoveNoteQuery.isPending;
   const hasQueryError =
     todaysTasksQuery.isError ||
     upcomingEventsQuery.isError ||
-    latestLoveNoteQuery.isError ||
-    profileQuery.isError;
+    latestLoveNoteQuery.isError;
   const isStale =
     todaysTasksQuery.isStale ||
     upcomingEventsQuery.isStale ||
-    latestLoveNoteQuery.isStale ||
-    profileQuery.isStale;
+    latestLoveNoteQuery.isStale;
   const isFetching =
     todaysTasksQuery.isFetching ||
     upcomingEventsQuery.isFetching ||
-    latestLoveNoteQuery.isFetching ||
-    profileQuery.isFetching;
+    latestLoveNoteQuery.isFetching;
 
   async function handleComplete(e: React.MouseEvent, taskId: string) {
     e.stopPropagation();
@@ -68,11 +63,12 @@ export default function Dashboard() {
   }
 
   function retryQueries() {
+    if (!householdId) return;
+
     void Promise.all([
-      todaysTasksQuery.refetch(),
-      upcomingEventsQuery.refetch(),
-      latestLoveNoteQuery.refetch(),
-      profileQuery.refetch(),
+      queryClient.refetchQueries({ queryKey: queryKeys.tasks.today(householdId) }),
+      queryClient.refetchQueries({ queryKey: queryKeys.tasks.upcoming(householdId) }),
+      queryClient.refetchQueries({ queryKey: queryKeys.loveNotes.latest(householdId) }),
     ]);
   }
 

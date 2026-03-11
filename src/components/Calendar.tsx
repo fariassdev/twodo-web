@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthContextQuery,
+  useAuthScope,
   usePrefetchMonthTasks,
   useProfilesQuery,
   useTasksForMonthQuery,
 } from '../lib/queryHooks';
+import { queryKeys } from '../lib/queryKeys';
 import type { Profile, Task } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
@@ -30,6 +32,8 @@ function clamp(value: number, min: number, max: number) {
 export default function Calendar() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -88,7 +92,6 @@ export default function Calendar() {
   const month = currentDate.getMonth();
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
-  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
   const prefetchMonthTasks = usePrefetchMonthTasks();
@@ -319,21 +322,17 @@ export default function Calendar() {
     ? t('calendar.emptyFiltered')
     : t('calendar.emptyDayTask');
 
-  if (authContextQuery.isPending) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
   if (hasQueryError && monthTasks.length === 0 && dayEntries.length === 0) {
     return (
       <QueryErrorState
         onRetry={() => {
+          if (!householdId) return;
+
           void Promise.all([
-            monthTasksQuery.refetch(),
-            profilesQuery.refetch(),
+            queryClient.refetchQueries({
+              queryKey: queryKeys.calendar.month(year, month, showDeleted, householdId),
+            }),
+            queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
           ]);
         }}
       />

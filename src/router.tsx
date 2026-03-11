@@ -25,6 +25,8 @@ const Login = React.lazy(() => import('./components/auth/Login'));
 const Register = React.lazy(() => import('./components/auth/Register'));
 const PendingAccess = React.lazy(() => import('./components/auth/PendingAccess'));
 
+const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
+
 function RouteLoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -43,18 +45,31 @@ function RouteShell({ children, sectionName }: { children: React.ReactNode; sect
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const authContextQuery = useAuthContextQuery();
   useLanguageChange();
   useScreenTelemetry(pathname);
 
   return (
-    <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
-      <Outlet />
-    </div>
+    <AuthQueryContext.Provider value={authContextQuery}>
+      <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
+        <Outlet />
+      </div>
+    </AuthQueryContext.Provider>
   );
 }
 
+function useGateAuthQuery() {
+  const authContextQuery = React.useContext(AuthQueryContext);
+
+  if (!authContextQuery) {
+    throw new Error('Auth query context is not available in route gate');
+  }
+
+  return authContextQuery;
+}
+
 function PublicOnlyOutlet() {
-  const authContextQuery = useAuthContextQuery();
+  const authContextQuery = useGateAuthQuery();
 
   if (authContextQuery.isPending) {
     return <RouteLoadingFallback />;
@@ -74,7 +89,7 @@ function PublicOnlyOutlet() {
 }
 
 function SessionRequiredOutlet() {
-  const authContextQuery = useAuthContextQuery();
+  const authContextQuery = useGateAuthQuery();
 
   if (authContextQuery.isPending) {
     return <RouteLoadingFallback />;
@@ -94,7 +109,7 @@ function SessionRequiredOutlet() {
 }
 
 function LinkedAppOutlet() {
-  const authContextQuery = useAuthContextQuery();
+  const authContextQuery = useGateAuthQuery();
 
   if (authContextQuery.isPending) {
     return <RouteLoadingFallback />;
