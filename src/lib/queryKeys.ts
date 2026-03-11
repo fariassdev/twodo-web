@@ -46,4 +46,8 @@ export const queryKeys = {
     byTask: (taskId: string, householdId: string) =>
       ['loveNotes', 'task', taskId, householdId] as const,
   },
+  invites: {
+    all: ['invites'] as const,
+    info: (code: string) => ['invites', 'info', code] as const,
+  },
 } as const;

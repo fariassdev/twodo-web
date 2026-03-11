@@ -34,6 +34,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      household_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          household_id: string
+          id: string
+          invite_code: string
+          invited_email: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          household_id: string
+          id?: string
+          invite_code: string
+          invited_email?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          invite_code?: string
+          invited_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_invites_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_members: {
         Row: {
           created_at: string
@@ -432,6 +490,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_household_invite: {
+        Args: { p_invite_code: string }
+        Returns: Json
+      }
+      create_household_and_invite: { Args: never; Returns: Json }
       current_profile_id: { Args: never; Returns: string }
       delete_task_series_rpc: {
         Args: { p_from_date?: string; p_recurrence_id: string }
@@ -441,6 +504,7 @@ export type Database = {
         Args: { p_date: string; p_recurrence_id: string }
         Returns: undefined
       }
+      get_invite_info: { Args: { p_invite_code: string }; Returns: Json }
       is_household_member: {
         Args: { p_household_id: string }
         Returns: boolean

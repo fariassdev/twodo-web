@@ -1,7 +1,10 @@
 import { supabase } from './supabase';
 import type {
+  AcceptInviteResult,
   AuthContext,
   Household,
+  HouseholdInviteResult,
+  InviteInfo,
   LoveNote,
   Profile,
   ShoppingItem,
@@ -743,4 +746,46 @@ export async function getPointsBreakdown(householdId: string, profilesInput?: Pr
       totalPoints: taskPoints + kudosPoints,
     };
   });
+}
+
+// Invites
+export async function createHouseholdAndInvite(): Promise<HouseholdInviteResult> {
+  const { data, error } = await supabase.rpc('create_household_and_invite');
+  if (error) throw error;
+  return data as unknown as HouseholdInviteResult;
+}
+
+export async function acceptHouseholdInvite(inviteCode: string): Promise<AcceptInviteResult> {
+  const { data, error } = await supabase.rpc('accept_household_invite', {
+    p_invite_code: inviteCode,
+  });
+  if (error) throw error;
+  return data as unknown as AcceptInviteResult;
+}
+
+export async function getInviteInfo(inviteCode: string): Promise<InviteInfo> {
+  const { data, error } = await supabase.rpc('get_invite_info', {
+    p_invite_code: inviteCode,
+  });
+  if (error) throw error;
+  return data as unknown as InviteInfo;
+}
+
+export async function sendEmailInvite(params: {
+  inviteCode: string;
+  email: string;
+  senderName: string;
+}): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Not authenticated');
+
+  const response = await supabase.functions.invoke('send-invite-email', {
+    body: {
+      invite_code: params.inviteCode,
+      email: params.email,
+      sender_name: params.senderName,
+    },
+  });
+
+  if (response.error) throw response.error;
 }

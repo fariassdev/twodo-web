@@ -35,6 +35,10 @@ import {
   updateProfile,
   updateQuantity,
   updateTask,
+  createHouseholdAndInvite,
+  acceptHouseholdInvite,
+  getInviteInfo,
+  sendEmailInvite,
   type CreateTaskInput,
   type EquityBalance,
   type PointsBreakdown,
@@ -53,7 +57,7 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
-import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
+import type { AuthContext, LoveNote, Profile, ShoppingItem, Task, InviteInfo } from './types';
 
 type AuthCredentials = {
   email: string;
@@ -1148,5 +1152,44 @@ export function useDeleteShoppingItemMutation() {
       if (!error || !context) return;
       await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
     },
+  });
+}
+
+// Invite hooks
+
+export function useCreateHouseholdAndInviteMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => createHouseholdAndInvite(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
+}
+
+export function useAcceptHouseholdInviteMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (inviteCode: string) => acceptHouseholdInvite(inviteCode),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
+}
+
+export function useInviteInfoQuery(inviteCode: string | null) {
+  return useQuery<InviteInfo>({
+    queryKey: inviteCode ? queryKeys.invites.info(inviteCode) : ['invites', 'info', 'disabled'],
+    queryFn: () => getInviteInfo(inviteCode as string),
+    enabled: Boolean(inviteCode),
+  });
+}
+
+export function useSendEmailInviteMutation() {
+  return useMutation({
+    mutationFn: (params: { inviteCode: string; email: string; senderName: string }) =>
+      sendEmailInvite(params),
   });
 }
