@@ -299,6 +299,8 @@
     "sendInvitation": "Send Invitation",
     "emailSentSuccess": "Invitation sent!",
     "prepareInvite": "Preparing your private invite...",
+    "retryLoadInvite": "Retry",
+    "loadInviteError": "Couldn't load your invite. Please try again.",
     "inviteLinkLabel": "Invite link",
     "copyLink": "Copy",
     "codeLabel": "Invite code",

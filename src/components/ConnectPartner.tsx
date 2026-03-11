@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import {
   useAuthScope,
   useCreateHouseholdAndInviteMutation,
+  useGetOrCreateHouseholdInviteMutation,
   useAcceptHouseholdInviteMutation,
   useInviteInfoQuery,
   useSendEmailInviteMutation,
@@ -20,8 +21,9 @@ export default function ConnectPartner() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { profile, householdId } = useAuthScope();
+  const { profile, profileId, householdId } = useAuthScope();
   const signOutMutation = useSignOutMutation();
+  const existingInviteLoadKeyRef = useRef<string | null>(null);
 
   const [view, setView] = useState<View>('initial');
   const [inviteData, setInviteData] = useState<HouseholdInviteResult | null>(null);
@@ -34,6 +36,7 @@ export default function ConnectPartner() {
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useCreateHouseholdAndInviteMutation();
+  const getOrCreateInviteMutation = useGetOrCreateHouseholdInviteMutation();
   const acceptMutation = useAcceptHouseholdInviteMutation();
   const sendEmailMutation = useSendEmailInviteMutation();
   const inviteInfoQuery = useInviteInfoQuery(pendingCode);
@@ -41,11 +44,33 @@ export default function ConnectPartner() {
   // Check for stored invite code from /join route
   useEffect(() => {
     const stored = sessionStorage.getItem('pendingInviteCode');
-    if (stored) {
-      setPendingCode(stored);
+    const normalized = stored?.trim().toUpperCase();
+    if (normalized) {
+      setPendingCode(normalized);
       setView('join-confirm');
     }
   }, []);
+
+  useEffect(() => {
+    if (pendingCode) return;
+    if (!householdId || !profileId) return;
+    if (inviteData) return;
+
+    const loadKey = `${householdId}:${profileId}`;
+    if (existingInviteLoadKeyRef.current === loadKey) return;
+    existingInviteLoadKeyRef.current = loadKey;
+
+    void (async () => {
+      setError(null);
+      try {
+        const result = await getOrCreateInviteMutation.mutateAsync({ householdId, profileId });
+        setInviteData(result);
+        setView('invite-created');
+      } catch {
+        setError(t('partner.loadInviteError'));
+      }
+    })();
+  }, [getOrCreateInviteMutation, householdId, profileId, pendingCode, inviteData, t]);
 
   useEffect(() => {
     const householdToWatch = inviteData?.household_id ?? householdId;
@@ -145,6 +170,18 @@ export default function ConnectPartner() {
     setView('join-confirm');
   }
 
+  async function handleRetryLoadInvite() {
+    if (!householdId || !profileId) return;
+    setError(null);
+    try {
+      const result = await getOrCreateInviteMutation.mutateAsync({ householdId, profileId });
+      setInviteData(result);
+      setView('invite-created');
+    } catch {
+      setError(t('partner.loadInviteError'));
+    }
+  }
+
   async function handleSignOut() {
     try { await signOutMutation.mutateAsync(); } catch { /* retry available */ }
   }
@@ -186,30 +223,49 @@ export default function ConnectPartner() {
           </p>
         </div>
 
-        {/* Create household CTA */}
-        <button
-          onClick={handleCreateHousehold}
-          disabled={createMutation.isPending}
-          className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 mb-6"
-        >
-          {createMutation.isPending ? t('auth.loading') : t('partner.createCta')}
-        </button>
+        {householdId ? (
+          <div className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-5 mb-6">
+            <div className="flex items-center justify-center h-16">
+              {getOrCreateInviteMutation.isPending ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+              ) : (
+                <button
+                  onClick={handleRetryLoadInvite}
+                  className="h-11 px-5 rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  {t('partner.retryLoadInvite')}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 text-center">{t('partner.prepareInvite')}</p>
+          </div>
+        ) : (
+          <button
+            onClick={handleCreateHousehold}
+            disabled={createMutation.isPending}
+            className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 mb-6"
+          >
+            {createMutation.isPending ? t('auth.loading') : t('partner.createCta')}
+          </button>
+        )}
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-xs text-slate-500 uppercase">{t('partner.or')}</span>
-          <div className="flex-1 h-px bg-slate-700" />
-        </div>
+        {!householdId && (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-slate-700" />
+              <span className="text-xs text-slate-500 uppercase">{t('partner.or')}</span>
+              <div className="flex-1 h-px bg-slate-700" />
+            </div>
 
-        {/* Enter code manually */}
-        <p className="text-sm text-slate-400 text-center mb-2">{t('partner.haveLink')}</p>
-        <button
-          onClick={() => setView('enter-code')}
-          className="text-sm font-semibold text-primary text-center hover:underline"
-        >
-          {t('partner.enterCode')}
-        </button>
+            <p className="text-sm text-slate-400 text-center mb-2">{t('partner.haveLink')}</p>
+            <button
+              onClick={() => setView('enter-code')}
+              className="text-sm font-semibold text-primary text-center hover:underline"
+            >
+              {t('partner.enterCode')}
+            </button>
+          </>
+        )}
 
         {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
       </div>

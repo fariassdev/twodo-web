@@ -36,6 +36,7 @@ import {
   updateQuantity,
   updateTask,
   createHouseholdAndInvite,
+  getOrCreateHouseholdInvite,
   acceptHouseholdInvite,
   getInviteInfo,
   sendEmailInvite,
@@ -1160,6 +1161,13 @@ export function useDeleteShoppingItemMutation() {
 export function useCreateHouseholdAndInviteMutation() {
   return useMutation({
     mutationFn: () => createHouseholdAndInvite(),
+  });
+}
+
+export function useGetOrCreateHouseholdInviteMutation() {
+  return useMutation({
+    mutationFn: ({ householdId, profileId }: { householdId: string; profileId: string }) =>
+      getOrCreateHouseholdInvite(householdId, profileId),
   });
 }
 

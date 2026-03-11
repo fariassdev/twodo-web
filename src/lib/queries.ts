@@ -771,15 +771,86 @@ export async function getPointsBreakdown(householdId: string, profilesInput?: Pr
 }
 
 // Invites
+function normalizeInviteCode(code: string): string {
+  return code.trim().toUpperCase();
+}
+
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i += 1) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 export async function createHouseholdAndInvite(): Promise<HouseholdInviteResult> {
   const { data, error } = await supabase.rpc('create_household_and_invite');
   if (error) throw error;
   return data as unknown as HouseholdInviteResult;
 }
 
+export async function getOrCreateHouseholdInvite(
+  householdId: string,
+  profileId: string,
+): Promise<HouseholdInviteResult> {
+  const nowIso = new Date().toISOString();
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('household_invites')
+    .select('household_id, invite_code, expires_at')
+    .eq('household_id', householdId)
+    .eq('created_by', profileId)
+    .is('accepted_by', null)
+    .gt('expires_at', nowIso)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (existingError) throw existingError;
+
+  const existing = existingRows?.[0];
+  if (existing) {
+    return {
+      household_id: existing.household_id,
+      invite_code: existing.invite_code,
+      expires_at: existing.expires_at,
+    };
+  }
+
+  const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const inviteCode = generateInviteCode();
+    const { data: inserted, error: insertError } = await supabase
+      .from('household_invites')
+      .insert({
+        household_id: householdId,
+        created_by: profileId,
+        invite_code: inviteCode,
+        expires_at: expiresAt,
+      })
+      .select('household_id, invite_code, expires_at')
+      .single();
+
+    if (!insertError && inserted) {
+      return {
+        household_id: inserted.household_id,
+        invite_code: inserted.invite_code,
+        expires_at: inserted.expires_at,
+      };
+    }
+
+    if (!insertError || insertError.code !== '23505') {
+      throw insertError;
+    }
+  }
+
+  throw new Error('Could not generate a unique invite code');
+}
+
 export async function acceptHouseholdInvite(inviteCode: string): Promise<AcceptInviteResult> {
   const { data, error } = await supabase.rpc('accept_household_invite', {
-    p_invite_code: inviteCode,
+    p_invite_code: normalizeInviteCode(inviteCode),
   });
   if (error) throw error;
   return data as unknown as AcceptInviteResult;
@@ -787,7 +858,7 @@ export async function acceptHouseholdInvite(inviteCode: string): Promise<AcceptI
 
 export async function getInviteInfo(inviteCode: string): Promise<InviteInfo> {
   const { data, error } = await supabase.rpc('get_invite_info', {
-    p_invite_code: inviteCode,
+    p_invite_code: normalizeInviteCode(inviteCode),
   });
   if (error) throw error;
   return data as unknown as InviteInfo;

@@ -218,7 +218,7 @@ function JoinRedirect() {
 
   React.useEffect(() => {
     if (code) {
-      sessionStorage.setItem('pendingInviteCode', code);
+      sessionStorage.setItem('pendingInviteCode', code.trim().toUpperCase());
     }
   }, [code]);
 

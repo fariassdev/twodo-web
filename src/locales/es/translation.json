@@ -299,6 +299,8 @@
     "sendInvitation": "Enviar invitación",
     "emailSentSuccess": "¡Invitación enviada!",
     "prepareInvite": "Preparando tu invitación privada...",
+    "retryLoadInvite": "Reintentar",
+    "loadInviteError": "No se pudo cargar tu invitación. Inténtalo de nuevo.",
     "inviteLinkLabel": "Enlace de invitación",
     "copyLink": "Copiar",
     "codeLabel": "Código de invitación",
