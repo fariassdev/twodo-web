@@ -1,10 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { useAuthScope, useSignOutMutation } from '../../lib/queryHooks';
+import ConnectPartner from '../ConnectPartner';
 
 export default function PendingAccess() {
   const { t } = useTranslation();
   const { status } = useAuthScope();
   const signOutMutation = useSignOutMutation();
+
+  // Delegate to ConnectPartner for pending_household status
+  if (status === 'pending_household') {
+    return <ConnectPartner />;
+  }
 
   const loading = signOutMutation.isPending;
   const pendingReason = status === 'pending_profile'

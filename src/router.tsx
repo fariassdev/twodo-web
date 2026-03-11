@@ -27,6 +27,7 @@ const ForgotPassword = React.lazy(() => import('./components/auth/ForgotPassword
 const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
 const VerifyEmail = React.lazy(() => import('./components/auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/auth/PendingAccess'));
+const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
 
@@ -207,6 +208,46 @@ export const verifyEmailRoute = createRoute({
   },
 });
 
+interface JoinSearch {
+  code?: string;
+}
+
+function JoinRedirect() {
+  const { code } = joinRoute.useSearch();
+  const authContextQuery = useGateAuthQuery();
+
+  React.useEffect(() => {
+    if (code) {
+      sessionStorage.setItem('pendingInviteCode', code.trim().toUpperCase());
+    }
+  }, [code]);
+
+  if (authContextQuery.isPending) {
+    return <RouteLoadingFallback />;
+  }
+
+  const status = authContextQuery.data?.status ?? 'signed_out';
+
+  if (status === 'signed_out') {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  if (status === 'pending_profile' || status === 'pending_household') {
+    return <Navigate to="/pending-access" replace />;
+  }
+
+  return <Navigate to="/" replace />;
+}
+
+export const joinRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/join',
+  validateSearch: (search: Record<string, unknown>): JoinSearch => ({
+    code: typeof search?.code === 'string' ? search.code : undefined,
+  }),
+  component: JoinRedirect,
+});
+
 export const sessionGateRoute = createRoute({
   id: 'sessionGate',
   getParentRoute: () => rootRoute,
@@ -338,6 +379,7 @@ const routeTree = rootRoute.addChildren([
   authGateRoute.addChildren([authIndexRoute, loginRoute, registerRoute, forgotPasswordRoute]),
   resetPasswordRoute,
   verifyEmailRoute,
+  joinRoute,
   sessionGateRoute.addChildren([pendingAccessRoute]),
   privateGateRoute.addChildren([
     mainLayoutRoute.addChildren([

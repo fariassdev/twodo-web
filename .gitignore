@@ -7,6 +7,9 @@ coverage/
 .env*
 !.env.example
 
+.vscode/
+.idea/
+
 # Supabase temporary files
 supabase/.temp
 supabase/.branches

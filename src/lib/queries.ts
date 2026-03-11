@@ -1,7 +1,10 @@
 import { supabase } from './supabase';
 import type {
+  AcceptInviteResult,
   AuthContext,
   Household,
+  HouseholdInviteResult,
+  InviteInfo,
   LoveNote,
   Profile,
   ShoppingItem,
@@ -76,6 +79,16 @@ async function getHouseholdById(householdId: string): Promise<Household | null> 
   return data;
 }
 
+async function getHouseholdMemberCount(householdId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('household_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('household_id', householdId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getAuthContext(): Promise<AuthContext> {
   const session = await getSession();
 
@@ -120,6 +133,18 @@ export async function getAuthContext(): Promise<AuthContext> {
       session,
       profile,
       household: null,
+      role: membership.role,
+    };
+  }
+
+  const memberCount = await getHouseholdMemberCount(household.id);
+
+  if (memberCount < 2) {
+    return {
+      status: 'pending_household',
+      session,
+      profile,
+      household,
       role: membership.role,
     };
   }
@@ -743,4 +768,144 @@ export async function getPointsBreakdown(householdId: string, profilesInput?: Pr
       totalPoints: taskPoints + kudosPoints,
     };
   });
+}
+
+// Invites
+function normalizeInviteCode(code: string): string {
+  return code.trim().toUpperCase();
+}
+
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i += 1) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+export async function createHouseholdAndInvite(): Promise<HouseholdInviteResult> {
+  const { data, error } = await supabase.rpc('create_household_and_invite');
+  if (error) throw error;
+  return data as unknown as HouseholdInviteResult;
+}
+
+export async function getOrCreateHouseholdInvite(
+  householdId: string,
+  profileId: string,
+): Promise<HouseholdInviteResult> {
+  const nowIso = new Date().toISOString();
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('household_invites')
+    .select('household_id, invite_code, expires_at')
+    .eq('household_id', householdId)
+    .eq('created_by', profileId)
+    .is('accepted_by', null)
+    .gt('expires_at', nowIso)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (existingError) throw existingError;
+
+  const existing = existingRows?.[0];
+  if (existing) {
+    return {
+      household_id: existing.household_id,
+      invite_code: existing.invite_code,
+      expires_at: existing.expires_at,
+    };
+  }
+
+  const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const inviteCode = generateInviteCode();
+    const { data: inserted, error: insertError } = await supabase
+      .from('household_invites')
+      .insert({
+        household_id: householdId,
+        created_by: profileId,
+        invite_code: inviteCode,
+        expires_at: expiresAt,
+      })
+      .select('household_id, invite_code, expires_at')
+      .single();
+
+    if (!insertError && inserted) {
+      return {
+        household_id: inserted.household_id,
+        invite_code: inserted.invite_code,
+        expires_at: inserted.expires_at,
+      };
+    }
+
+    if (!insertError || insertError.code !== '23505') {
+      throw insertError;
+    }
+  }
+
+  throw new Error('Could not generate a unique invite code');
+}
+
+export async function acceptHouseholdInvite(inviteCode: string): Promise<AcceptInviteResult> {
+  const { data, error } = await supabase.rpc('accept_household_invite', {
+    p_invite_code: normalizeInviteCode(inviteCode),
+  });
+  if (error) throw error;
+  return data as unknown as AcceptInviteResult;
+}
+
+export async function getInviteInfo(inviteCode: string): Promise<InviteInfo> {
+  const { data, error } = await supabase.rpc('get_invite_info', {
+    p_invite_code: normalizeInviteCode(inviteCode),
+  });
+  if (error) throw error;
+
+  const raw = (data ?? {}) as Record<string, unknown>;
+  const inviteCodeValue = typeof raw.invite_code === 'string' ? raw.invite_code : undefined;
+  const foundValue =
+    typeof raw.found === 'boolean'
+      ? raw.found
+      : Boolean(inviteCodeValue);
+
+  return {
+    found: foundValue,
+    invite_code: inviteCodeValue,
+    creator_name: typeof raw.creator_name === 'string' ? raw.creator_name : undefined,
+    creator_avatar:
+      typeof raw.creator_avatar === 'string' || raw.creator_avatar === null
+        ? (raw.creator_avatar as string | null)
+        : typeof raw.creator_avatar_url === 'string' || raw.creator_avatar_url === null
+          ? (raw.creator_avatar_url as string | null)
+          : undefined,
+    creator_avatar_url:
+      typeof raw.creator_avatar_url === 'string' || raw.creator_avatar_url === null
+        ? (raw.creator_avatar_url as string | null)
+        : undefined,
+    is_expired: typeof raw.is_expired === 'boolean' ? raw.is_expired : undefined,
+    is_accepted: typeof raw.is_accepted === 'boolean' ? raw.is_accepted : undefined,
+    member_count: typeof raw.member_count === 'number' ? raw.member_count : undefined,
+    expires_at: typeof raw.expires_at === 'string' ? raw.expires_at : undefined,
+    household_id: typeof raw.household_id === 'string' ? raw.household_id : undefined,
+  };
+}
+
+export async function sendEmailInvite(params: {
+  inviteCode: string;
+  email: string;
+  senderName: string;
+}): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Not authenticated');
+
+  const response = await supabase.functions.invoke('send-invite-email', {
+    body: {
+      invite_code: params.inviteCode,
+      email: params.email,
+      sender_name: params.senderName,
+    },
+  });
+
+  if (response.error) throw response.error;
 }

@@ -35,6 +35,11 @@ import {
   updateProfile,
   updateQuantity,
   updateTask,
+  createHouseholdAndInvite,
+  getOrCreateHouseholdInvite,
+  acceptHouseholdInvite,
+  getInviteInfo,
+  sendEmailInvite,
   type CreateTaskInput,
   type EquityBalance,
   type PointsBreakdown,
@@ -53,7 +58,7 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
-import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
+import type { AuthContext, LoveNote, Profile, ShoppingItem, Task, InviteInfo } from './types';
 
 type AuthCredentials = {
   email: string;
@@ -1148,5 +1153,47 @@ export function useDeleteShoppingItemMutation() {
       if (!error || !context) return;
       await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
     },
+  });
+}
+
+// Invite hooks
+
+export function useCreateHouseholdAndInviteMutation() {
+  return useMutation({
+    mutationFn: () => createHouseholdAndInvite(),
+  });
+}
+
+export function useGetOrCreateHouseholdInviteMutation() {
+  return useMutation({
+    mutationFn: ({ householdId, profileId }: { householdId: string; profileId: string }) =>
+      getOrCreateHouseholdInvite(householdId, profileId),
+  });
+}
+
+export function useAcceptHouseholdInviteMutation() {
+  return useMutation({
+    mutationFn: (inviteCode: string) => acceptHouseholdInvite(inviteCode),
+  });
+}
+
+export function useInviteInfoQuery(
+  inviteCode: string | null,
+  options?: { enabled?: boolean; refetchInterval?: number | false },
+) {
+  const enabled = (options?.enabled ?? true) && Boolean(inviteCode);
+
+  return useQuery<InviteInfo>({
+    queryKey: inviteCode ? queryKeys.invites.info(inviteCode) : ['invites', 'info', 'disabled'],
+    queryFn: () => getInviteInfo(inviteCode as string),
+    enabled,
+    refetchInterval: options?.refetchInterval,
+  });
+}
+
+export function useSendEmailInviteMutation() {
+  return useMutation({
+    mutationFn: (params: { inviteCode: string; email: string; senderName: string }) =>
+      sendEmailInvite(params),
   });
 }
