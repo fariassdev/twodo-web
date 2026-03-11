@@ -861,7 +861,34 @@ export async function getInviteInfo(inviteCode: string): Promise<InviteInfo> {
     p_invite_code: normalizeInviteCode(inviteCode),
   });
   if (error) throw error;
-  return data as unknown as InviteInfo;
+
+  const raw = (data ?? {}) as Record<string, unknown>;
+  const inviteCodeValue = typeof raw.invite_code === 'string' ? raw.invite_code : undefined;
+  const foundValue =
+    typeof raw.found === 'boolean'
+      ? raw.found
+      : Boolean(inviteCodeValue);
+
+  return {
+    found: foundValue,
+    invite_code: inviteCodeValue,
+    creator_name: typeof raw.creator_name === 'string' ? raw.creator_name : undefined,
+    creator_avatar:
+      typeof raw.creator_avatar === 'string' || raw.creator_avatar === null
+        ? (raw.creator_avatar as string | null)
+        : typeof raw.creator_avatar_url === 'string' || raw.creator_avatar_url === null
+          ? (raw.creator_avatar_url as string | null)
+          : undefined,
+    creator_avatar_url:
+      typeof raw.creator_avatar_url === 'string' || raw.creator_avatar_url === null
+        ? (raw.creator_avatar_url as string | null)
+        : undefined,
+    is_expired: typeof raw.is_expired === 'boolean' ? raw.is_expired : undefined,
+    is_accepted: typeof raw.is_accepted === 'boolean' ? raw.is_accepted : undefined,
+    member_count: typeof raw.member_count === 'number' ? raw.member_count : undefined,
+    expires_at: typeof raw.expires_at === 'string' ? raw.expires_at : undefined,
+    household_id: typeof raw.household_id === 'string' ? raw.household_id : undefined,
+  };
 }
 
 export async function sendEmailInvite(params: {

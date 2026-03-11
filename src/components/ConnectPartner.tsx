@@ -40,6 +40,13 @@ export default function ConnectPartner() {
   const acceptMutation = useAcceptHouseholdInviteMutation();
   const sendEmailMutation = useSendEmailInviteMutation();
   const inviteInfoQuery = useInviteInfoQuery(pendingCode);
+  const creatorInviteInfoPollingQuery = useInviteInfoQuery(
+    view === 'invite-created' && inviteData?.invite_code ? inviteData.invite_code : null,
+    {
+      enabled: view === 'invite-created' && Boolean(inviteData?.invite_code),
+      refetchInterval: 5000,
+    },
+  );
 
   // Check for stored invite code from /join route
   useEffect(() => {
@@ -99,6 +106,17 @@ export default function ConnectPartner() {
       void supabase.removeChannel(channel);
     };
   }, [householdId, inviteData?.household_id, profile?.id, view]);
+
+  useEffect(() => {
+    if (view !== 'invite-created') return;
+    const polledInfo = creatorInviteInfoPollingQuery.data;
+    if (!polledInfo) return;
+
+    const memberCount = polledInfo.member_count ?? 0;
+    if (memberCount >= 2 || polledInfo.is_accepted) {
+      setView('join-success');
+    }
+  }, [creatorInviteInfoPollingQuery.data, view]);
 
   async function handleCreateHousehold() {
     setError(null);
@@ -462,7 +480,8 @@ export default function ConnectPartner() {
   if (view === 'join-confirm') {
     const info = inviteInfoQuery.data;
     const isLoading = inviteInfoQuery.isPending;
-    const canJoin = info?.found && !info.is_expired && !info.is_accepted && (info.member_count ?? 0) < 2;
+    const inviteFound = Boolean(info?.found ?? info?.invite_code);
+    const canJoin = inviteFound && !info?.is_expired && !info?.is_accepted && (info?.member_count ?? 0) < 2;
 
     return (
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
@@ -479,7 +498,7 @@ export default function ConnectPartner() {
           </div>
         )}
 
-        {!isLoading && info && !info.found && (
+        {!isLoading && info && !inviteFound && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
             <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteNotFound')}</p>
@@ -487,7 +506,7 @@ export default function ConnectPartner() {
           </div>
         )}
 
-        {!isLoading && info?.found && info.is_expired && (
+        {!isLoading && inviteFound && info?.is_expired && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">schedule</span>
             <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteExpired')}</p>
@@ -495,14 +514,14 @@ export default function ConnectPartner() {
           </div>
         )}
 
-        {!isLoading && info?.found && !info.is_expired && info.is_accepted && (
+        {!isLoading && inviteFound && !info?.is_expired && info?.is_accepted && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">check_circle</span>
             <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteAlreadyUsed')}</p>
           </div>
         )}
 
-        {!isLoading && info?.found && (info.member_count ?? 0) >= 2 && !info.is_accepted && (
+        {!isLoading && inviteFound && (info?.member_count ?? 0) >= 2 && !info?.is_accepted && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">group</span>
             <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.householdFull')}</p>
@@ -512,13 +531,13 @@ export default function ConnectPartner() {
         {!isLoading && canJoin && (
           <div className="flex-1 flex flex-col items-center pt-10">
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
-              {info.creator_avatar ? (
+              {info?.creator_avatar ? (
                 <img src={info.creator_avatar} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
                 <span className="material-symbols-outlined text-primary text-4xl">person</span>
               )}
             </div>
-            <p className="text-xl font-bold text-slate-100 mb-2">{info.creator_name}</p>
+            <p className="text-xl font-bold text-slate-100 mb-2">{info?.creator_name}</p>
             <p className="text-sm text-slate-400 text-center mb-8">{t('partner.joinDescription')}</p>
 
             <button

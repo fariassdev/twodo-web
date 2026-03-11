@@ -1177,11 +1177,17 @@ export function useAcceptHouseholdInviteMutation() {
   });
 }
 
-export function useInviteInfoQuery(inviteCode: string | null) {
+export function useInviteInfoQuery(
+  inviteCode: string | null,
+  options?: { enabled?: boolean; refetchInterval?: number | false },
+) {
+  const enabled = (options?.enabled ?? true) && Boolean(inviteCode);
+
   return useQuery<InviteInfo>({
     queryKey: inviteCode ? queryKeys.invites.info(inviteCode) : ['invites', 'info', 'disabled'],
     queryFn: () => getInviteInfo(inviteCode as string),
-    enabled: Boolean(inviteCode),
+    enabled,
+    refetchInterval: options?.refetchInterval,
   });
 }
 

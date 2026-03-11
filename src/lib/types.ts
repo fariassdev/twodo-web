@@ -41,14 +41,16 @@ export interface HouseholdInviteResult {
 }
 
 export interface InviteInfo {
-  found: boolean;
+  found?: boolean;
   invite_code?: string;
   creator_name?: string;
   creator_avatar?: string | null;
+  creator_avatar_url?: string | null;
   is_expired?: boolean;
   is_accepted?: boolean;
   member_count?: number;
   expires_at?: string;
+  household_id?: string;
 }
 
 export interface AcceptInviteResult {
