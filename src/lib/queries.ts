@@ -79,6 +79,16 @@ async function getHouseholdById(householdId: string): Promise<Household | null> 
   return data;
 }
 
+async function getHouseholdMemberCount(householdId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('household_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('household_id', householdId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getAuthContext(): Promise<AuthContext> {
   const session = await getSession();
 
@@ -123,6 +133,18 @@ export async function getAuthContext(): Promise<AuthContext> {
       session,
       profile,
       household: null,
+      role: membership.role,
+    };
+  }
+
+  const memberCount = await getHouseholdMemberCount(household.id);
+
+  if (memberCount < 2) {
+    return {
+      status: 'pending_household',
+      session,
+      profile,
+      household,
       role: membership.role,
     };
   }

@@ -1158,24 +1158,14 @@ export function useDeleteShoppingItemMutation() {
 // Invite hooks
 
 export function useCreateHouseholdAndInviteMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: () => createHouseholdAndInvite(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
   });
 }
 
 export function useAcceptHouseholdInviteMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (inviteCode: string) => acceptHouseholdInvite(inviteCode),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
   });
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   useAuthScope,
@@ -11,13 +12,15 @@ import {
   useSignOutMutation,
 } from '../lib/queryHooks';
 import type { HouseholdInviteResult } from '../lib/types';
+import { supabase } from '../lib/supabase';
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
 
 export default function ConnectPartner() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { profile } = useAuthScope();
+  const queryClient = useQueryClient();
+  const { profile, householdId } = useAuthScope();
   const signOutMutation = useSignOutMutation();
 
   const [view, setView] = useState<View>('initial');
@@ -27,6 +30,7 @@ export default function ConnectPartner() {
   const [emailInput, setEmailInput] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [copiedState, setCopiedState] = useState<'none' | 'link' | 'code'>('none');
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useCreateHouseholdAndInviteMutation();
@@ -43,13 +47,41 @@ export default function ConnectPartner() {
     }
   }, []);
 
+  useEffect(() => {
+    const householdToWatch = inviteData?.household_id ?? householdId;
+    if (!householdToWatch || view !== 'invite-created') return;
+
+    const channel = supabase
+      .channel(`household-members:${householdToWatch}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'household_members',
+          filter: `household_id=eq.${householdToWatch}`,
+        },
+        (payload) => {
+          const insertedProfileId = (payload.new as { profile_id?: string })?.profile_id;
+          if (insertedProfileId && insertedProfileId !== profile?.id) {
+            setView('join-success');
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [householdId, inviteData?.household_id, profile?.id, view]);
+
   async function handleCreateHousehold() {
     setError(null);
     try {
       const result = await createMutation.mutateAsync();
       setInviteData(result);
       setView('invite-created');
-    } catch (err) {
+    } catch {
       setError(t('partner.createError'));
     }
   }
@@ -91,8 +123,20 @@ export default function ConnectPartner() {
       }
     } else {
       await navigator.clipboard.writeText(url);
-      setError(null);
+      setCopiedState('link');
     }
+  }
+
+  async function handleCopyLink() {
+    if (!inviteData) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/join?code=${inviteData.invite_code}`);
+    setCopiedState('link');
+  }
+
+  async function handleCopyCode() {
+    if (!inviteData) return;
+    await navigator.clipboard.writeText(inviteData.invite_code);
+    setCopiedState('code');
   }
 
   function handleEnterCode() {
@@ -105,9 +149,14 @@ export default function ConnectPartner() {
     try { await signOutMutation.mutateAsync(); } catch { /* retry available */ }
   }
 
+  async function handleGoDashboard() {
+    await queryClient.invalidateQueries({ queryKey: ['auth', 'context'] });
+    navigate({ to: '/' });
+  }
+
   const inviteUrl = inviteData ? `${window.location.origin}/join?code=${inviteData.invite_code}` : '';
 
-  // ─── Initial view (no household) ───
+  // ─── Initial view (manual choice: create or join) ───
   if (view === 'initial') {
     return (
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
@@ -172,7 +221,7 @@ export default function ConnectPartner() {
     return (
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => { setView('initial'); setError(null); }} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={() => { setView(inviteData ? 'invite-created' : 'initial'); setError(null); }} className="text-slate-400 hover:text-slate-200 transition-colors">
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
           <h1 className="text-lg font-bold text-slate-100">{t('partner.enterCodeTitle')}</h1>
@@ -256,6 +305,41 @@ export default function ConnectPartner() {
             {emailSent ? t('partner.emailSentSuccess') : sendEmailMutation.isPending ? t('auth.loading') : t('partner.sendInvitation')}
             {!emailSent && !sendEmailMutation.isPending && <span className="material-symbols-outlined text-lg">send</span>}
           </button>
+
+          <p className="mt-4 mb-1 text-xs text-slate-400">{t('partner.inviteLinkLabel')}</p>
+          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-background-dark/40 p-2">
+            <input
+              type="text"
+              readOnly
+              value={inviteUrl}
+              className="flex-1 bg-transparent text-xs text-slate-200 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="h-9 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/10"
+            >
+              {t('partner.copyLink')}
+            </button>
+          </div>
+
+          <p className="mt-3 mb-1 text-xs text-slate-400">{t('partner.codeLabel')}</p>
+          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-background-dark/40 px-3 py-2">
+            <p className="text-sm font-mono tracking-widest text-primary">{inviteData.invite_code}</p>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className="h-8 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/10"
+            >
+              {t('partner.copyCode')}
+            </button>
+          </div>
+
+          {copiedState !== 'none' && (
+            <p className="mt-2 text-xs text-primary">
+              {copiedState === 'link' ? t('partner.linkCopied') : t('partner.codeCopied')}
+            </p>
+          )}
         </div>
 
         {/* Divider */}
@@ -449,7 +533,7 @@ export default function ConnectPartner() {
 
         {/* Go to dashboard */}
         <button
-          onClick={() => navigate({ to: '/' })}
+          onClick={handleGoDashboard}
           className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] flex items-center justify-center gap-2"
         >
           {t('partner.goToDashboard')}
