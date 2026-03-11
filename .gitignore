@@ -10,3 +10,5 @@ coverage/
 # Supabase temporary files
 supabase/.temp
 supabase/.branches
+supabase/snippets
+supabase/seed.sql

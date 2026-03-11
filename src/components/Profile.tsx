@@ -1,27 +1,29 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
+  useAuthContextQuery,
+  useSignOutMutation,
   useProfileQuery,
   useProfilesQuery,
   useUpdateProfileMutation,
 } from '../lib/queryHooks';
-import { getActiveProfileId, setActiveProfileId, MAIN_ID, PARTNER_ID } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import TopBar from './ui/TopBar';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  // Active Profile State
-  const [activeProfileId, setLocalActiveProfileId] = useState(getActiveProfileId());
+  const authContextQuery = useAuthContextQuery();
+  const currentProfileId = authContextQuery.data?.profile?.id;
   const profilesQuery = useProfilesQuery();
-  const profileQuery = useProfileQuery(activeProfileId);
+  const profileQuery = useProfileQuery(currentProfileId);
   const updateProfileMutation = useUpdateProfileMutation();
+  const signOutMutation = useSignOutMutation();
 
   const profileOptions: Profile[] = profilesQuery.data ?? [];
   const profile = profileQuery.data ?? null;
-  const loading = profilesQuery.isPending || profileQuery.isLoading;
+  const loading = authContextQuery.isPending || profilesQuery.isPending || profileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
   // Form state
@@ -33,6 +35,7 @@ export default function Profile() {
   // Settings state (visual only for now)
 
   const [notifications, setNotifications] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -49,29 +52,21 @@ export default function Profile() {
     setAvatarUrl('');
   }, [profile]);
 
-  const switchProfiles = useMemo(() => {
-    const mainProfile = profileOptions.find((item) => item.id === MAIN_ID);
-    const partnerProfile = profileOptions.find((item) => item.id === PARTNER_ID);
-
-    return [
-      { id: MAIN_ID, name: mainProfile?.name || t('profile.primary') },
-      { id: PARTNER_ID, name: partnerProfile?.name || t('profile.partner') },
-    ];
-  }, [profileOptions, t]);
-
-  function handleProfileSwitch(id: string) {
-    if (id !== activeProfileId) {
-      setActiveProfileId(id);
-      setLocalActiveProfileId(id);
+  async function handleSignOut() {
+    setAuthError(null);
+    try {
+      await signOutMutation.mutateAsync();
+    } catch {
+      setAuthError(t('auth.signOutError'));
     }
   }
 
   async function handleSave() {
-    if (!profile) return;
+    if (!profile || !currentProfileId) return;
     try {
       const normalizedAvatarUrl = avatarUrl.trim();
       const updated = await updateProfileMutation.mutateAsync({
-        profileId: activeProfileId,
+        profileId: currentProfileId,
         input: {
         name,
         email,
@@ -112,18 +107,24 @@ export default function Profile() {
       />
 
       <main className="max-w-md mx-auto px-6 pt-6 space-y-8">
-        
-        {/* Profile Switcher */}
-        <div className="flex justify-center -mt-2 mb-2">
-          <div className="bg-primary/10 p-1 rounded-xl inline-flex text-sm font-bold">
-            {switchProfiles.map((switchProfile) => (
-              <button
-                key={switchProfile.id}
-                onClick={() => handleProfileSwitch(switchProfile.id)}
-                className={`px-5 py-2 rounded-lg transition-colors ${activeProfileId === switchProfile.id ? 'bg-primary text-background-dark shadow-sm' : 'text-primary/70 hover:text-primary'}`}
+        {authError && (
+          <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
+            {authError}
+          </p>
+        )}
+
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-primary/80">
+            {t('profile.householdMembers')}
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {profileOptions.map((member) => (
+              <span
+                key={member.id}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${member.id === currentProfileId ? 'bg-primary text-background-dark' : 'bg-slate-800 text-slate-200'}`}
               >
-                {switchProfile.name}
-              </button>
+                {member.name}
+              </span>
             ))}
           </div>
         </div>
@@ -279,6 +280,15 @@ export default function Profile() {
                 <span>{t('profile.saveChanges')}</span>
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signOutMutation.isPending}
+            className="mt-3 w-full rounded-2xl border border-primary/30 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {signOutMutation.isPending ? t('auth.loading') : t('auth.signOut')}
           </button>
         </div>
       </main>

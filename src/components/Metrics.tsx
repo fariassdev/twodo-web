@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  useAuthContextQuery,
   useEquityBalanceQuery,
   usePointsBreakdownQuery,
   useProfilesQuery,
@@ -15,6 +16,7 @@ export default function Metrics() {
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
 
+  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const balanceQuery = useEquityBalanceQuery(profilesQuery.data);
   const pulseQuery = useWeeklyPulseQuery();
@@ -24,6 +26,7 @@ export default function Metrics() {
   const pulse = pulseQuery.data ?? null;
   const points = pointsQuery.data ?? [];
   const loading =
+    authContextQuery.isPending ||
     profilesQuery.isPending ||
     balanceQuery.isPending ||
     pulseQuery.isPending ||
@@ -95,48 +98,43 @@ export default function Metrics() {
 
             {balance && (
               <>
-                <div className="mb-6">
-                  <div className="flex justify-between items-end mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                        {balance.mainAvatarUrl ? (
-                          <img src={balance.mainAvatarUrl} alt={balance.mainName} className="size-full object-cover" />
-                        ) : (
-                          balance.mainName.charAt(0).toUpperCase()
-                        )}
+                <div className="space-y-5">
+                  {balance.members.map((member, index) => {
+                    const highlighted = index === 0;
+                    return (
+                      <div key={member.id}>
+                        <div className="flex justify-between items-end mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold ${highlighted ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-slate-400'}`}>
+                              {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="size-full object-cover" />
+                              ) : (
+                                member.name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <span className="text-sm font-medium">{t('metrics.tasksOf', { name: member.name })}</span>
+                          </div>
+                          <span className={`text-lg font-bold ${highlighted ? 'text-primary' : 'text-slate-300'}`}>
+                            {member.percentage}%
+                          </span>
+                        </div>
+                        <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${highlighted ? 'bg-primary' : 'bg-slate-500'}`}
+                            style={{ width: `${member.percentage}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">{t('metrics.tasksOf', { name: balance.mainName })}</span>
-                    </div>
-                    <span className="text-lg font-bold text-primary">{balance.mainPercentage}%</span>
-                  </div>
-                  <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${balance.mainPercentage}%` }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="size-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-xs font-bold text-slate-400">
-                        {balance.partnerAvatarUrl ? (
-                          <img src={balance.partnerAvatarUrl} alt={balance.partnerName} className="size-full object-cover" />
-                        ) : (
-                          balance.partnerName.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <span className="text-sm font-medium">{t('metrics.tasksOf', { name: balance.partnerName })}</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-400">{balance.partnerPercentage}%</span>
-                  </div>
-                  <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-slate-500 rounded-full transition-all duration-500" style={{ width: `${balance.partnerPercentage}%` }}></div>
-                  </div>
+                    );
+                  })}
                 </div>
 
                 <div className="mt-6 flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
                   <span className="material-symbols-outlined text-primary text-sm">info</span>
                   <p className="text-xs text-primary/80 font-medium tracking-wide">
-                    {Math.abs(balance.mainPercentage - balance.partnerPercentage) <= 10
+                    {balance.members.length <= 1
+                      ? t('metrics.balanceKeepGoing')
+                      : Math.abs((balance.members[0]?.percentage ?? 0) - (balance.members[1]?.percentage ?? 0)) <= 10
                       ? t('metrics.balanceGood')
                       : t('metrics.balanceKeepGoing')}
                   </p>

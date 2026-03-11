@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -11,22 +11,31 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Hardcoded profile IDs (no auth yet)
-export const MAIN_ID = 'a1111111-1111-1111-1111-111111111111';
-export const PARTNER_ID = 'b2222222-2222-2222-2222-222222222222';
-
-export function getActiveProfileId(): string {
-  const stored = localStorage.getItem('activeProfileId');
-  if (stored === MAIN_ID || stored === PARTNER_ID) {
-    return stored;
-  }
-  // Default to MAIN_ID
-  localStorage.setItem('activeProfileId', MAIN_ID);
-  return MAIN_ID;
+export async function signInWithPassword(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
 }
 
-export function setActiveProfileId(id: string) {
-  if (id === MAIN_ID || id === PARTNER_ID) {
-    localStorage.setItem('activeProfileId', id);
-  }
+export async function signUpWithPassword(email: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getSession(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return data.session;
+}
+
+export function onAuthStateChange(
+  callback: (event: AuthChangeEvent, session: Session | null) => void,
+) {
+  return supabase.auth.onAuthStateChange(callback);
 }

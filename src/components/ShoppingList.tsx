@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
+  useAuthContextQuery,
   useAddShoppingItemMutation,
   useDeleteShoppingItemMutation,
   useShoppingItemsQuery,
@@ -16,6 +17,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 export default function ShoppingList() {
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
+  const authContextQuery = useAuthContextQuery();
   const [newItem, setNewItem] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,7 +28,7 @@ export default function ShoppingList() {
   const deleteShoppingItemMutation = useDeleteShoppingItemMutation();
 
   const items: ShoppingItemType[] = shoppingItemsQuery.data ?? [];
-  const loading = shoppingItemsQuery.isPending;
+  const loading = authContextQuery.isPending || shoppingItemsQuery.isPending;
   const isStale = shoppingItemsQuery.isStale;
   const isFetching = shoppingItemsQuery.isFetching;
 

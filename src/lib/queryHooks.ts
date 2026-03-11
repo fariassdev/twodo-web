@@ -5,6 +5,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import {
   addShoppingItem,
   completeTask,
@@ -15,6 +16,7 @@ import {
   deleteTaskSeries,
   deleteTasksAfter,
   getEquityBalance,
+  getAuthContext,
   getLatestLoveNote,
   getLoveNoteForTask,
   getPointsBreakdown,
@@ -39,12 +41,41 @@ import {
   type WeeklyPulse,
 } from './queries';
 import { queryKeys } from './queryKeys';
-import type { LoveNote, Profile, ShoppingItem, Task } from './types';
+import {
+  onAuthStateChange,
+  signInWithPassword,
+  signOut,
+  signUpWithPassword,
+} from './supabase';
+import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
 
 type InvalidateTaskGraphOptions = {
   taskId?: string;
   scope?: 'single' | 'series';
 };
+
+type AuthCredentials = {
+  email: string;
+  password: string;
+};
+
+const signedOutContext: AuthContext = {
+  status: 'signed_out',
+  session: null,
+  profile: null,
+  household: null,
+  role: null,
+};
+
+function clearPrivateDomainQueries(queryClient: QueryClient) {
+  queryClient.removeQueries({ queryKey: queryKeys.profiles.all });
+  queryClient.removeQueries({ queryKey: queryKeys.tasks.all });
+  queryClient.removeQueries({ queryKey: queryKeys.calendar.all });
+  queryClient.removeQueries({ queryKey: queryKeys.taskDetail.all });
+  queryClient.removeQueries({ queryKey: queryKeys.metrics.all });
+  queryClient.removeQueries({ queryKey: queryKeys.shopping.all });
+  queryClient.removeQueries({ queryKey: queryKeys.loveNotes.all });
+}
 
 function findTaskInCache(queryClient: QueryClient, taskId: string): Task | undefined {
   const fromToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today())?.find((task) => task.id === taskId);
@@ -122,6 +153,66 @@ async function invalidateTaskGraph(
     queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId) }),
   ]);
+}
+
+export function useAuthContextQuery() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = onAuthStateChange(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
+
+  return useQuery<AuthContext>({
+    queryKey: queryKeys.auth.context(),
+    queryFn: getAuthContext,
+    refetchOnMount: 'always',
+  });
+}
+
+export function useSignInMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ email, password }: AuthCredentials) => signInWithPassword(email, password),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
+}
+
+export function useSignUpMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ email, password }: AuthCredentials) => signUpWithPassword(email, password),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
+}
+
+export function useSignOutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => signOut(),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.auth.context() });
+      queryClient.setQueryData<AuthContext>(queryKeys.auth.context(), signedOutContext);
+      clearPrivateDomainQueries(queryClient);
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
 }
 
 export function useProfilesQuery() {

@@ -1,41 +1,49 @@
 export const queryKeys = {
+  auth: {
+    all: ['auth'] as const,
+    context: () => ['auth', 'context'] as const,
+  },
   profiles: {
     all: ['profiles'] as const,
-    list: () => ['profiles', 'list'] as const,
-    detail: (profileId: string) => ['profiles', 'detail', profileId] as const,
+    list: (householdId = 'unknown-household') => ['profiles', 'list', householdId] as const,
+    detail: (profileId: string, householdId = 'unknown-household') =>
+      ['profiles', 'detail', profileId, householdId] as const,
   },
   tasks: {
     all: ['tasks'] as const,
-    today: () => ['tasks', 'today'] as const,
-    upcoming: () => ['tasks', 'upcoming'] as const,
+    today: (householdId = 'unknown-household') => ['tasks', 'today', householdId] as const,
+    upcoming: (householdId = 'unknown-household') => ['tasks', 'upcoming', householdId] as const,
     month: (year: number, month: number, includeDeleted: boolean) =>
       ['tasks', 'month', year, month, includeDeleted ? 'withDeleted' : 'active'] as const,
 
-    detail: (taskId: string) => ['tasks', 'detail', taskId] as const,
+    detail: (taskId: string, householdId = 'unknown-household') =>
+      ['tasks', 'detail', taskId, householdId] as const,
   },
   calendar: {
     all: ['calendar'] as const,
-    month: (year: number, month: number, includeDeleted: boolean) =>
-      ['calendar', 'month', year, month, includeDeleted ? 'withDeleted' : 'active'] as const,
+    month: (year: number, month: number, includeDeleted: boolean, householdId = 'unknown-household') =>
+      ['calendar', 'month', year, month, includeDeleted ? 'withDeleted' : 'active', householdId] as const,
 
   },
   taskDetail: {
     all: ['taskDetail'] as const,
-    byId: (taskId: string) => ['taskDetail', taskId] as const,
+    byId: (taskId: string, householdId = 'unknown-household') =>
+      ['taskDetail', taskId, householdId] as const,
   },
   metrics: {
     all: ['metrics'] as const,
-    equity: () => ['metrics', 'equity'] as const,
-    weeklyPulse: () => ['metrics', 'weeklyPulse'] as const,
-    pointsBreakdown: () => ['metrics', 'pointsBreakdown'] as const,
+    equity: (householdId = 'unknown-household') => ['metrics', 'equity', householdId] as const,
+    weeklyPulse: (householdId = 'unknown-household') => ['metrics', 'weeklyPulse', householdId] as const,
+    pointsBreakdown: (householdId = 'unknown-household') => ['metrics', 'pointsBreakdown', householdId] as const,
   },
   shopping: {
     all: ['shopping'] as const,
-    list: () => ['shopping', 'list'] as const,
+    list: (householdId = 'unknown-household') => ['shopping', 'list', householdId] as const,
   },
   loveNotes: {
     all: ['loveNotes'] as const,
-    latest: () => ['loveNotes', 'latest'] as const,
-    byTask: (taskId: string) => ['loveNotes', 'task', taskId] as const,
+    latest: (householdId = 'unknown-household') => ['loveNotes', 'latest', householdId] as const,
+    byTask: (taskId: string, householdId = 'unknown-household') =>
+      ['loveNotes', 'task', taskId, householdId] as const,
   },
 } as const;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  useAuthContextQuery,
   useCompleteTaskMutation,
   useDeleteTaskMutation,
   useDeleteTaskSeriesMutation,
@@ -21,6 +22,7 @@ export default function TaskDetails() {
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
+  const authContextQuery = useAuthContextQuery();
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export default function TaskDetails() {
   const lastDoneByProfile = lastDoneByProfileQuery.data ?? null;
 
   const loading =
+    authContextQuery.isPending ||
     taskQuery.isPending ||
     (Boolean(task) &&
       (loveNoteQuery.isLoading || assignedProfileQuery.isLoading || lastDoneByProfileQuery.isLoading));

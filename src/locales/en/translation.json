@@ -40,6 +40,46 @@
     "closeMenu": "Close actions menu",
     "openProfile": "Open profile"
   },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat password",
+    "loading": "Working...",
+    "signOut": "Sign out",
+    "signOutError": "We couldn't sign you out. Please try again.",
+    "validation": {
+      "requiredFields": "Please fill in all required fields.",
+      "invalidEmail": "Please enter a valid email.",
+      "passwordMinLength": "Password must have at least 8 characters.",
+      "passwordMismatch": "Passwords do not match."
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue with your household organizer.",
+      "cta": "Sign in",
+      "error": "Invalid credentials or account unavailable.",
+      "noAccount": "Don't have an account?",
+      "goRegister": "Create one"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Use your existing profile email to link access.",
+      "cta": "Create account",
+      "error": "We couldn't create your account. Try another email.",
+      "hasAccount": "Already have an account?",
+      "goLogin": "Sign in"
+    },
+    "pending": {
+      "title": "Account pending activation",
+      "description": "Your account is valid but still needs to be linked to a household before accessing private routes.",
+      "reasonProfile": "No existing profile matched your email yet.",
+      "reasonHousehold": "Your profile exists but has no household membership assigned.",
+      "signOut": "Sign out and try another account"
+    }
+  },
   "calendar": {
     "title": "Our Calendar",
     "hideDeleted": "Hide deleted",
@@ -159,6 +199,7 @@
     "langEs": "ES",
     "jointNotifications": "Joint Notifications",
     "syncAlerts": "Sync alerts with your partner",
+    "householdMembers": "Household members",
     "saveChanges": "Save Changes",
     "alertSaved": "Profile saved successfully.",
     "alertSaveError": "An error occurred while saving the profile."

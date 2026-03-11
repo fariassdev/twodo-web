@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCreateTasksMutation, useProfilesQuery } from '../lib/queryHooks';
+import { useAuthContextQuery, useCreateTasksMutation, useProfilesQuery } from '../lib/queryHooks';
 import type { CreateTaskInput } from '../lib/queries';
 import type { Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
@@ -26,11 +26,12 @@ export default function CreateEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const createTasksMutation = useCreateTasksMutation();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const saving = createTasksMutation.isPending;
+  const saving = authContextQuery.isPending || createTasksMutation.isPending;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  useAuthContextQuery,
   usePrefetchMonthTasks,
   useProfilesQuery,
   useTasksForMonthQuery,
@@ -87,6 +88,7 @@ export default function Calendar() {
   const month = currentDate.getMonth();
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
+  const authContextQuery = useAuthContextQuery();
   const profilesQuery = useProfilesQuery();
   const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
   const prefetchMonthTasks = usePrefetchMonthTasks();
@@ -316,6 +318,14 @@ export default function Calendar() {
   const emptyDayMessage = hasActiveControls
     ? t('calendar.emptyFiltered')
     : t('calendar.emptyDayTask');
+
+  if (authContextQuery.isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   if (hasQueryError && monthTasks.length === 0 && dayEntries.length === 0) {
     return (

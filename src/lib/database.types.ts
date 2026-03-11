@@ -7,17 +7,92 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      household_members: {
+        Row: {
+          created_at: string
+          household_id: string
+          profile_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          profile_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          profile_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       kudos: {
         Row: {
           created_at: string
           from_profile: string
+          household_id: string
           id: string
           message: string | null
           points: number
@@ -26,6 +101,7 @@ export type Database = {
         Insert: {
           created_at?: string
           from_profile: string
+          household_id: string
           id?: string
           message?: string | null
           points?: number
@@ -34,6 +110,7 @@ export type Database = {
         Update: {
           created_at?: string
           from_profile?: string
+          household_id?: string
           id?: string
           message?: string | null
           points?: number
@@ -45,6 +122,13 @@ export type Database = {
             columns: ["from_profile"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kudos_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
           {
@@ -61,6 +145,7 @@ export type Database = {
           content: string
           created_at: string
           from_profile: string
+          household_id: string
           id: string
           task_id: string | null
           to_profile: string
@@ -69,6 +154,7 @@ export type Database = {
           content: string
           created_at?: string
           from_profile: string
+          household_id: string
           id?: string
           task_id?: string | null
           to_profile: string
@@ -77,6 +163,7 @@ export type Database = {
           content?: string
           created_at?: string
           from_profile?: string
+          household_id?: string
           id?: string
           task_id?: string | null
           to_profile?: string
@@ -87,6 +174,13 @@ export type Database = {
             columns: ["from_profile"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "love_notes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
           {
@@ -107,6 +201,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_user_id: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -115,6 +210,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -123,6 +219,7 @@ export type Database = {
           name: string
         }
         Update: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -136,6 +233,7 @@ export type Database = {
         Row: {
           added_by: string | null
           created_at: string
+          household_id: string
           id: string
           is_purchased: boolean
           name: string
@@ -144,6 +242,7 @@ export type Database = {
         Insert: {
           added_by?: string | null
           created_at?: string
+          household_id: string
           id?: string
           is_purchased?: boolean
           name: string
@@ -152,6 +251,7 @@ export type Database = {
         Update: {
           added_by?: string | null
           created_at?: string
+          household_id?: string
           id?: string
           is_purchased?: boolean
           name?: string
@@ -165,12 +265,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shopping_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
         ]
       }
       task_completions: {
         Row: {
           completed_at: string
           completed_by: string
+          household_id: string
           id: string
           points_earned: number
           task_id: string
@@ -178,6 +286,7 @@ export type Database = {
         Insert: {
           completed_at?: string
           completed_by: string
+          household_id: string
           id?: string
           points_earned?: number
           task_id: string
@@ -185,6 +294,7 @@ export type Database = {
         Update: {
           completed_at?: string
           completed_by?: string
+          household_id?: string
           id?: string
           points_earned?: number
           task_id?: string
@@ -195,6 +305,13 @@ export type Database = {
             columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_completions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
           {
@@ -217,6 +334,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           frequency: string | null
+          household_id: string
           id: string
           is_recurring: boolean
           last_done_by: string | null
@@ -240,6 +358,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           frequency?: string | null
+          household_id: string
           id?: string
           is_recurring?: boolean
           last_done_by?: string | null
@@ -263,6 +382,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           frequency?: string | null
+          household_id?: string
           id?: string
           is_recurring?: boolean
           last_done_by?: string | null
@@ -292,6 +412,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tasks_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_last_done_by_fkey"
             columns: ["last_done_by"]
             isOneToOne: false
@@ -305,6 +432,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_profile_id: { Args: never; Returns: string }
       delete_task_series_rpc: {
         Args: { p_from_date?: string; p_recurrence_id: string }
         Returns: undefined
@@ -312,6 +440,15 @@ export type Database = {
       delete_tasks_after_rpc: {
         Args: { p_date: string; p_recurrence_id: string }
         Returns: undefined
+      }
+      is_household_member: {
+        Args: { p_household_id: string }
+        Returns: boolean
+      }
+      link_profile_to_auth_user: { Args: never; Returns: string }
+      profile_in_household: {
+        Args: { p_household_id: string; p_profile_id: string }
+        Returns: boolean
       }
     }
     Enums: {
@@ -441,7 +578,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

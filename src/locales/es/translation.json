@@ -40,6 +40,46 @@
     "closeMenu": "Cerrar menu de acciones",
     "openProfile": "Abrir perfil"
   },
+  "auth": {
+    "email": "Correo",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "password": "Contrasena",
+    "passwordPlaceholder": "Al menos 8 caracteres",
+    "confirmPassword": "Confirmar contrasena",
+    "confirmPasswordPlaceholder": "Repite la contrasena",
+    "loading": "Procesando...",
+    "signOut": "Cerrar sesion",
+    "signOutError": "No pudimos cerrar sesion. Intentalo de nuevo.",
+    "validation": {
+      "requiredFields": "Completa todos los campos obligatorios.",
+      "invalidEmail": "Introduce un correo valido.",
+      "passwordMinLength": "La contrasena debe tener al menos 8 caracteres.",
+      "passwordMismatch": "Las contrasenas no coinciden."
+    },
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesion para continuar en tu organizador del hogar.",
+      "cta": "Iniciar sesion",
+      "error": "Credenciales invalidas o cuenta no disponible.",
+      "noAccount": "No tienes cuenta?",
+      "goRegister": "Crear cuenta"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "subtitle": "Usa el email de tu perfil existente para vincular acceso.",
+      "cta": "Crear cuenta",
+      "error": "No pudimos crear tu cuenta. Prueba con otro correo.",
+      "hasAccount": "Ya tienes cuenta?",
+      "goLogin": "Iniciar sesion"
+    },
+    "pending": {
+      "title": "Cuenta pendiente de activacion",
+      "description": "Tu cuenta es valida, pero aun necesita vincularse a un hogar para acceder a rutas privadas.",
+      "reasonProfile": "Todavia no existe un perfil que coincida con tu email.",
+      "reasonHousehold": "Tu perfil existe, pero no tiene hogar asignado.",
+      "signOut": "Cerrar sesion y probar otra cuenta"
+    }
+  },
   "calendar": {
     "title": "Nuestro calendario",
     "hideDeleted": "Ocultar eliminadas",
@@ -159,6 +199,7 @@
     "langEs": "ES",
     "jointNotifications": "Notificaciones conjuntas",
     "syncAlerts": "Sincroniza alertas con tu pareja",
+    "householdMembers": "Miembros del hogar",
     "saveChanges": "Guardar cambios",
     "alertSaved": "Perfil guardado exitosamente.",
     "alertSaveError": "Ocurrió un error al guardar el perfil."

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
+  useAuthContextQuery,
   useCompleteTaskMutation,
   useLatestLoveNoteQuery,
   useProfileQuery,
   useTodaysTasksQuery,
   useUpcomingEventsQuery,
 } from '../lib/queryHooks';
-import { getActiveProfileId } from '../lib/supabase';
 import type { Task } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
@@ -23,10 +23,11 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const authContextQuery = useAuthContextQuery();
   const todaysTasksQuery = useTodaysTasksQuery();
   const upcomingEventsQuery = useUpcomingEventsQuery();
   const latestLoveNoteQuery = useLatestLoveNoteQuery();
-  const profileQuery = useProfileQuery(getActiveProfileId());
+  const profileQuery = useProfileQuery(authContextQuery.data?.profile?.id);
   const completeTaskMutation = useCompleteTaskMutation();
 
   const tasks = todaysTasksQuery.data ?? [];
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const loveNote = latestLoveNoteQuery.data ?? null;
   const profile = profileQuery.data ?? null;
   const loading =
+    authContextQuery.isPending ||
     todaysTasksQuery.isPending ||
     upcomingEventsQuery.isPending ||
     latestLoveNoteQuery.isPending ||
