@@ -6,6 +6,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   addShoppingItem,
@@ -47,6 +48,7 @@ import {
   signInWithPassword,
   signOut,
   signUpWithPassword,
+  supabase,
 } from './supabase';
 import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
 
@@ -263,6 +265,67 @@ function findTaskInCache(queryClient: QueryClient, householdId: string, taskId: 
   }
 
   return undefined;
+}
+
+function sortShoppingItems(items: ShoppingItem[]): ShoppingItem[] {
+  return [...items].sort((a, b) => {
+    if (a.is_purchased !== b.is_purchased) {
+      return Number(a.is_purchased) - Number(b.is_purchased);
+    }
+
+    const aCreatedAt = Date.parse(a.created_at);
+    const bCreatedAt = Date.parse(b.created_at);
+
+    if (!Number.isNaN(aCreatedAt) && !Number.isNaN(bCreatedAt)) {
+      return bCreatedAt - aCreatedAt;
+    }
+
+    return b.created_at.localeCompare(a.created_at);
+  });
+}
+
+function reconcileShoppingItemsFromRealtime(
+  current: ShoppingItem[] | undefined,
+  payload: RealtimePostgresChangesPayload<Record<string, unknown>>,
+): ShoppingItem[] {
+  const existing = current ?? [];
+
+  if (payload.eventType === 'INSERT') {
+    const insertedItem = payload.new as ShoppingItem;
+    if (!insertedItem?.id || existing.some((item) => item.id === insertedItem.id)) {
+      return sortShoppingItems(existing);
+    }
+
+    return sortShoppingItems([insertedItem, ...existing]);
+  }
+
+  if (payload.eventType === 'UPDATE') {
+    const updatedItem = payload.new as ShoppingItem;
+    if (!updatedItem?.id) {
+      return sortShoppingItems(existing);
+    }
+
+    const alreadyInCache = existing.some((item) => item.id === updatedItem.id);
+
+    if (!alreadyInCache) {
+      return sortShoppingItems([...existing, updatedItem]);
+    }
+
+    return sortShoppingItems(
+      existing.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item)),
+    );
+  }
+
+  if (payload.eventType === 'DELETE') {
+    const deletedId = (payload.old as Partial<ShoppingItem>)?.id;
+    if (!deletedId) {
+      return sortShoppingItems(existing);
+    }
+
+    return sortShoppingItems(existing.filter((item) => item.id !== deletedId));
+  }
+
+  return sortShoppingItems(existing);
 }
 
 export function useAuthContextSnapshot(): AuthContext {
@@ -524,7 +587,46 @@ export function usePointsBreakdownQuery(profiles: Profile[] | undefined) {
 }
 
 export function useShoppingItemsQuery() {
+  const queryClient = useQueryClient();
   const householdId = useCurrentHouseholdId();
+
+  useEffect(() => {
+    if (!householdId) return;
+
+    let hasReceivedSubscribed = false;
+
+    const shoppingChannel = supabase
+      .channel(`shopping-items:${householdId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shopping_items',
+          filter: `household_id=eq.${householdId}`,
+        },
+        (payload) => {
+          queryClient.setQueryData<ShoppingItem[]>(
+            queryKeys.shopping.list(householdId),
+            (current) => reconcileShoppingItemsFromRealtime(current, payload),
+          );
+        },
+      );
+
+    shoppingChannel.subscribe((status) => {
+      if (status !== 'SUBSCRIBED') return;
+
+      if (hasReceivedSubscribed) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(householdId) });
+      }
+
+      hasReceivedSubscribed = true;
+    });
+
+    return () => {
+      void supabase.removeChannel(shoppingChannel);
+    };
+  }, [householdId, queryClient]);
 
   return useQuery<ShoppingItem[]>({
     queryKey: householdId ? queryKeys.shopping.list(householdId) : disabledKey('shopping', 'list'),
@@ -914,10 +1016,10 @@ export function useAddShoppingItemMutation() {
   return useMutation({
     mutationFn: (name: string) => addShoppingItem(name, getLinkedScopeOrThrow(queryClient)),
     onSuccess: (item) => {
-      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(item.household_id), (current) => [
-        item,
-        ...(current ?? []).filter((existing) => existing.id !== item.id),
-      ]);
+      queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(item.household_id), (current) => {
+        const deduped = (current ?? []).filter((existing) => existing.id !== item.id);
+        return sortShoppingItems([item, ...deduped]);
+      });
     },
   });
 }
@@ -937,8 +1039,10 @@ export function useTogglePurchasedMutation() {
       const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
 
       queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId), (current) =>
-        (current ?? []).map((item) =>
-          item.id === id ? { ...item, is_purchased: !currentValue } : item,
+        sortShoppingItems(
+          (current ?? []).map((item) =>
+            item.id === id ? { ...item, is_purchased: !currentValue } : item,
+          ),
         ),
       );
 
@@ -971,7 +1075,7 @@ export function useUpdateQuantityMutation() {
       const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
 
       queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId), (current) =>
-        (current ?? []).map((item) => (item.id === id ? { ...item, quantity } : item)),
+        sortShoppingItems((current ?? []).map((item) => (item.id === id ? { ...item, quantity } : item))),
       );
 
       return { previous, householdId };
