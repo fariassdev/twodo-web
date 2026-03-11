@@ -23,6 +23,9 @@ const EditEntry = React.lazy(() => import('./components/EditEntry'));
 const CreateEntry = React.lazy(() => import('./components/CreateEntry'));
 const Login = React.lazy(() => import('./components/auth/Login'));
 const Register = React.lazy(() => import('./components/auth/Register'));
+const ForgotPassword = React.lazy(() => import('./components/auth/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
+const VerifyEmail = React.lazy(() => import('./components/auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/auth/PendingAccess'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
@@ -164,6 +167,46 @@ export const registerRoute = createRoute({
   ),
 });
 
+export const forgotPasswordRoute = createRoute({
+  getParentRoute: () => authGateRoute,
+  path: '/auth/forgot-password',
+  component: () => (
+    <RouteShell sectionName="forgot-password">
+      <ForgotPassword />
+    </RouteShell>
+  ),
+});
+
+export const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/reset-password',
+  component: () => (
+    <RouteShell sectionName="reset-password">
+      <ResetPassword />
+    </RouteShell>
+  ),
+});
+
+interface VerifyEmailSearch {
+  email?: string;
+}
+
+export const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/verify-email',
+  validateSearch: (search: Record<string, unknown>): VerifyEmailSearch => ({
+    email: typeof search?.email === 'string' ? search.email : undefined,
+  }),
+  component: () => {
+    const { email } = verifyEmailRoute.useSearch();
+    return (
+      <RouteShell sectionName="verify-email">
+        <VerifyEmail email={email} />
+      </RouteShell>
+    );
+  },
+});
+
 export const sessionGateRoute = createRoute({
   id: 'sessionGate',
   getParentRoute: () => rootRoute,
@@ -292,7 +335,9 @@ export const createEntryRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  authGateRoute.addChildren([authIndexRoute, loginRoute, registerRoute]),
+  authGateRoute.addChildren([authIndexRoute, loginRoute, registerRoute, forgotPasswordRoute]),
+  resetPasswordRoute,
+  verifyEmailRoute,
   sessionGateRoute.addChildren([pendingAccessRoute]),
   privateGateRoute.addChildren([
     mainLayoutRoute.addChildren([

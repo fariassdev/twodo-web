@@ -55,7 +55,7 @@ export default function Register() {
         email: email.trim(),
         password,
       });
-      navigate({ to: '/pending-access' });
+      navigate({ to: '/auth/verify-email', search: { email: email.trim() } });
     } catch {
       setFormError(t('auth.register.error'));
     }

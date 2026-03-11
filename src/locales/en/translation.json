@@ -42,7 +42,8 @@
   },
   "auth": {
     "email": "Email",
-    "emailPlaceholder": "you@example.com",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "youremail@example.com",
     "password": "Password",
     "passwordPlaceholder": "At least 8 characters",
     "confirmPassword": "Confirm password",
@@ -62,7 +63,8 @@
       "cta": "Sign in",
       "error": "Invalid credentials or account unavailable.",
       "noAccount": "Don't have an account?",
-      "goRegister": "Create one"
+      "goRegister": "Create one",
+      "forgotPassword": "Forgot your password?"
     },
     "register": {
       "title": "Create account",
@@ -78,6 +80,39 @@
       "reasonProfile": "No existing profile matched your email yet.",
       "reasonHousehold": "Your profile exists but has no household membership assigned.",
       "signOut": "Sign out and try another account"
+    },
+    "forgotPassword": {
+      "title": "Recover password",
+      "description": "Enter your email and we'll send you a link to reset your password and get back to planning together.",
+      "cta": "Send recovery link",
+      "error": "We couldn't send the link. Please check your email and try again.",
+      "sentTitle": "Link sent!",
+      "sentDescription": "We've sent a recovery link to {{email}}. Check your inbox.",
+      "backToLogin": "Back to sign in",
+      "rememberPassword": "Remembered your password?",
+      "signIn": "Sign in"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "description": "Enter your new password to regain access.",
+      "cta": "Save new password",
+      "error": "We couldn't update your password. Please try again.",
+      "expiredTitle": "Link expired or invalid",
+      "expiredDescription": "The recovery link is no longer valid. Please request a new one.",
+      "requestNew": "Request new link",
+      "successTitle": "Password updated!",
+      "successDescription": "Your password has been updated. Redirecting to sign in..."
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "description": "We've sent you a verification email. Check your inbox.",
+      "descriptionWithEmail": "We've sent a verification email to {{email}}. Check your inbox.",
+      "hint": "Click the link in the email to activate your account and access the app.",
+      "resend": "Resend verification email",
+      "resendSuccess": "Email resent. Check your inbox.",
+      "resendError": "We couldn't resend the email. Please try again.",
+      "wrongAccount": "Wrong account?",
+      "signOut": "Sign out"
     }
   },
   "calendar": {

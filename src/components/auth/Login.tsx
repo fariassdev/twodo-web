@@ -102,6 +102,12 @@ export default function Login() {
             {t('auth.login.goRegister')}
           </Link>
         </p>
+
+        <p className="mt-3 text-center text-sm text-slate-400">
+          <Link to="/auth/forgot-password" className="font-semibold text-primary hover:text-primary/80">
+            {t('auth.login.forgotPassword')}
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -42,7 +42,8 @@
   },
   "auth": {
     "email": "Correo",
-    "emailPlaceholder": "tu@ejemplo.com",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tucorreo@ejemplo.com",
     "password": "Contrasena",
     "passwordPlaceholder": "Al menos 8 caracteres",
     "confirmPassword": "Confirmar contrasena",
@@ -61,8 +62,9 @@
       "subtitle": "Inicia sesion para continuar en tu organizador del hogar.",
       "cta": "Iniciar sesion",
       "error": "Credenciales invalidas o cuenta no disponible.",
-      "noAccount": "No tienes cuenta?",
-      "goRegister": "Crear cuenta"
+      "noAccount": "¿No tienes cuenta?",
+      "goRegister": "Crear cuenta",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
     },
     "register": {
       "title": "Crear cuenta",
@@ -78,6 +80,39 @@
       "reasonProfile": "Todavia no existe un perfil que coincida con tu email.",
       "reasonHousehold": "Tu perfil existe, pero no tiene hogar asignado.",
       "signOut": "Cerrar sesion y probar otra cuenta"
+    },
+    "forgotPassword": {
+      "title": "Recuperar contraseña",
+      "description": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña y volver a planificar juntos.",
+      "cta": "Enviar enlace de recuperación",
+      "error": "No pudimos enviar el enlace. Verifica el correo e inténtalo de nuevo.",
+      "sentTitle": "¡Enlace enviado!",
+      "sentDescription": "Hemos enviado un enlace de recuperación a {{email}}. Revisa tu bandeja de entrada.",
+      "backToLogin": "Volver a iniciar sesión",
+      "rememberPassword": "¿Recordaste tu contraseña?",
+      "signIn": "Inicia sesión"
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "description": "Introduce tu nueva contraseña para recuperar el acceso.",
+      "cta": "Guardar nueva contraseña",
+      "error": "No pudimos actualizar tu contraseña. Inténtalo de nuevo.",
+      "expiredTitle": "Enlace expirado o inválido",
+      "expiredDescription": "El enlace de recuperación ya no es válido. Solicita uno nuevo.",
+      "requestNew": "Solicitar nuevo enlace",
+      "successTitle": "¡Contraseña actualizada!",
+      "successDescription": "Tu contraseña ha sido actualizada. Redirigiendo al inicio de sesión..."
+    },
+    "verifyEmail": {
+      "title": "Verifica tu correo",
+      "description": "Te hemos enviado un correo de verificación. Revisa tu bandeja de entrada.",
+      "descriptionWithEmail": "Te hemos enviado un correo de verificación a {{email}}. Revisa tu bandeja de entrada.",
+      "hint": "Haz clic en el enlace del correo para activar tu cuenta y acceder a la app.",
+      "resend": "Reenviar correo de verificación",
+      "resendSuccess": "Correo reenviado. Revisa tu bandeja de entrada.",
+      "resendError": "No pudimos reenviar el correo. Inténtalo de nuevo.",
+      "wrongAccount": "¿Cuenta incorrecta?",
+      "signOut": "Cerrar sesión"
     }
   },
   "calendar": {

@@ -45,10 +45,13 @@ import {
 import { queryKeys } from './queryKeys';
 import {
   onAuthStateChange,
+  resetPasswordForEmail,
+  resendConfirmationEmail,
   signInWithPassword,
   signOut,
   signUpWithPassword,
   supabase,
+  updatePassword,
 } from './supabase';
 import type { AuthContext, LoveNote, Profile, ShoppingItem, Task } from './types';
 
@@ -420,6 +423,30 @@ export function useSignOutMutation() {
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
     },
+  });
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: ({ email }: { email: string }) =>
+      resetPasswordForEmail(email, `${window.location.origin}/auth/reset-password`),
+  });
+}
+
+export function useUpdatePasswordMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ password }: { password: string }) => updatePassword(password),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
+    },
+  });
+}
+
+export function useResendVerificationMutation() {
+  return useMutation({
+    mutationFn: ({ email }: { email: string }) => resendConfirmationEmail(email),
   });
 }
 
