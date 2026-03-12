@@ -14,24 +14,7 @@ import type { Task } from '../lib/types';
 // ---------------------------------------------------------------------------
 // Icon helper (reuses app pattern from Dashboard)
 // ---------------------------------------------------------------------------
-const TASK_ICONS: Record<string, string> = {
-  mercadona: 'shopping_cart',
-  compra: 'shopping_cart',
-  limpi: 'cleaning_services',
-  cocina: 'restaurant',
-  basura: 'delete',
-  planch: 'iron',
-  perro: 'pets',
-  lavar: 'water_drop',
-};
-
-function getTaskIcon(task: Task): string {
-  const haystack = `${task.title} ${task.location ?? ''}`.toLowerCase();
-  for (const [keyword, icon] of Object.entries(TASK_ICONS)) {
-    if (haystack.includes(keyword)) return icon;
-  }
-  return 'task_alt';
-}
+import { getTaskIcon } from '../lib/taskIcons';
 
 // ---------------------------------------------------------------------------
 // TaskCard – used for the "your task" / "new task" comparison cards
@@ -44,7 +27,7 @@ interface TaskCardProps {
 
 function TaskCard({ task, label, labelColor }: TaskCardProps) {
   const { t } = useTranslation();
-  const icon = getTaskIcon(task);
+  const icon = getTaskIcon(task.title);
 
   return (
     <div className="flex-1 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3 min-w-0">
@@ -74,7 +57,7 @@ interface CandidateRowProps {
 
 const CandidateRow: React.FC<CandidateRowProps> = ({ task, selected, onSelect }) => {
   const { t, i18n } = useTranslation();
-  const icon = getTaskIcon(task);
+  const icon = getTaskIcon(task.title, task.location);
 
   const dateLabel = task.date
     ? new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, {

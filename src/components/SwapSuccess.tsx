@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { swapSuccessRoute } from '../router';
+import { getTaskIcon } from '../lib/taskIcons';
 
 export default function SwapSuccess() {
   const { t } = useTranslation();
@@ -30,18 +31,26 @@ export default function SwapSuccess() {
             {myTaskTitle && (
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-14 h-14 rounded-xl bg-slate-700 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl text-slate-400">task_alt</span>
+                  <span className="material-symbols-outlined text-2xl text-slate-400">
+                    {getTaskIcon(myTaskTitle)}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-400 text-center max-w-[80px] leading-tight">{myTaskTitle}</span>
+                <span className="text-xs text-slate-400 text-center max-w-[80px] leading-tight">
+                  {myTaskTitle}
+                </span>
               </div>
             )}
             <span className="material-symbols-outlined text-2xl text-primary">swap_horiz</span>
             {partnerTaskTitle && (
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl text-primary">pets</span>
+                  <span className="material-symbols-outlined text-2xl text-primary">
+                    {getTaskIcon(partnerTaskTitle)}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-400 text-center max-w-[80px] leading-tight">{partnerTaskTitle}</span>
+                <span className="text-xs text-slate-400 text-center max-w-[80px] leading-tight">
+                  {partnerTaskTitle}
+                </span>
               </div>
             )}
           </div>
