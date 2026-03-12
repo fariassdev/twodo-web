@@ -570,6 +570,7 @@ export async function getSwapDataset(
     .from('tasks')
     .select('*')
     .eq('household_id', householdId)
+    .eq('type', 'task')
     .eq('assigned_to', partnerProfile.id)
     .in('status', ['pending', 'postponed'])
     .gte('date', today)
@@ -583,8 +584,8 @@ export async function getSwapDataset(
     .from('tasks')
     .select('*')
     .eq('household_id', householdId)
-    .eq('assigned_to', myProfileId)
     .in('status', ['pending', 'postponed'])
+    .or(`assigned_to.eq.${myProfileId},created_by.eq.${myProfileId}`)
     .gte('date', today)
     .is('deleted_at', null);
 
@@ -595,8 +596,8 @@ export async function getSwapDataset(
     .from('tasks')
     .select('*')
     .eq('household_id', householdId)
-    .eq('assigned_to', partnerProfile.id)
     .in('status', ['pending', 'postponed'])
+    .or(`assigned_to.eq.${partnerProfile.id},created_by.eq.${partnerProfile.id}`)
     .gte('date', today)
     .is('deleted_at', null);
 

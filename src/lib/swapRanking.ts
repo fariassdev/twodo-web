@@ -66,8 +66,9 @@ export function isSwappable(task: Task, myProfileId: string): boolean {
 /**
  * Filter the partner's tasks down to eligible swap candidates:
  * - status pending or postponed
- * - date today or future (or null date is included for undated tasks)
+ * - date today or future
  * - not deleted
+ * - type must be task (events never appear as swap candidates)
  * - assignment_type individual or strict_rotation, and assigned to partner
  * - not the same as the origin task
  * - candidate's time range must NOT overlap with any of MY busy tasks
@@ -83,8 +84,9 @@ export function filterCandidates(
   return partnerTasks.filter((candidate) => {
     if (candidate.id === originTaskId) return false;
     if (candidate.deleted_at) return false;
+    if (candidate.type !== 'task') return false;
     if (!['pending', 'postponed'].includes(candidate.status)) return false;
-    if (candidate.date && candidate.date < today) return false;
+    if (!candidate.date || candidate.date < today) return false;
     if (!['individual', 'strict_rotation'].includes(candidate.assignment_type)) return false;
     if (candidate.assigned_to !== partnerProfileId) return false;
 
@@ -175,7 +177,7 @@ export function rankCandidates(
     // Count how many tasks the partner has on the candidate's date
     const dateKey = candidate.date ?? '__nodate__';
     const partnerLoad = (partnerTasksByDate.get(dateKey) ?? []).filter(
-      (t) => t.status !== 'completed' && !t.deleted_at,
+      (t) => t.type === 'task' && t.status !== 'completed' && !t.deleted_at,
     ).length;
 
     const score = pointsDiff * W_POINTS + partnerLoad * W_DAILY_LOAD;
@@ -216,6 +218,7 @@ export function buildSwapOptions(
   // Build date → tasks map for load scoring
   const partnerTasksByDate = new Map<string, Task[]>();
   for (const t of allPartnerTasks) {
+    if (t.type !== 'task') continue;
     const key = t.date ?? '__nodate__';
     const bucket = partnerTasksByDate.get(key) ?? [];
     bucket.push(t);
