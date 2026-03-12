@@ -11,9 +11,11 @@ export default function CreateEntry() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const router = useRouter();
-  const searchParams = useSearch({ strict: false }) as { date?: string; type?: 'task' | 'event' };
+  const searchParams = useSearch({ strict: false }) as { date?: string; type?: 'task' | 'event'; startTime?: string; endTime?: string };
   const initialDate = searchParams?.date;
   const initialType = searchParams?.type === 'event' ? 'event' : 'task';
+  const initialStartTime = searchParams?.startTime || '';
+  const initialEndTime = searchParams?.endTime || '';
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [points, setPoints] = useState(10);
@@ -26,6 +28,36 @@ export default function CreateEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
+  const [timeError, setTimeError] = useState('');
+
+  // automatically adjust endTime when startTime is entered
+  useEffect(() => {
+    if (!startTime) return;
+    // only override if endTime is empty or earlier than startTime
+    if (!endTime || endTime <= startTime) {
+      const [hStr, mStr] = startTime.split(':');
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      let total = h * 60 + m + 30;
+      let newEnd = '';
+      if (total >= 24 * 60 - 1) {
+        newEnd = '23:59';
+      } else {
+        const nh = Math.floor(total / 60);
+        const nm = total % 60;
+        newEnd = `${nh.toString().padStart(2, '0')}:${nm.toString().padStart(2, '0')}`;
+      }
+      setEndTime(newEnd);
+    }
+  }, [startTime]);
+
+  useEffect(() => {
+    if (timeError && startTime && endTime && endTime >= startTime) {
+      setTimeError('');
+    }
+  }, [startTime, endTime, timeError]);
   const profilesQuery = useProfilesQuery();
   const createTasksMutation = useCreateTasksMutation();
 
@@ -40,6 +72,12 @@ export default function CreateEntry() {
 
   async function handleSave() {
     if (!title.trim()) return;
+    // validate time order
+    if (startTime && endTime && endTime < startTime) {
+      setTimeError(t('entryForm.timeError'));
+      return;
+    }
+    setTimeError('');
 
     try {
       const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = assignmentCategory === 'team_work'
@@ -59,6 +97,8 @@ export default function CreateEntry() {
         assignment_type: finalAssignmentType,
         assigned_to: assignmentCategory === 'individual' ? assignedTo : undefined,
         location: location.trim() || undefined,
+        start_time: startTime || undefined,
+        end_time: endTime || undefined,
       };
 
       let inputs: CreateTaskInput[] = [];
@@ -125,7 +165,7 @@ export default function CreateEntry() {
           <button
             aria-label={t('topBar.save')}
             className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
-            disabled={saving}
+            disabled={saving || !!timeError}
             onClick={handleSave}
             type="button"
           >
@@ -169,6 +209,29 @@ export default function CreateEntry() {
             </label>
           )}
         </div>
+        <div className="grid gap-4 grid-cols-2">
+          <label className="flex flex-col">
+            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.startTime')}</p>
+            <input
+              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
+              type="time"
+              placeholder={t('entryForm.startTimePlaceholder')}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col">
+            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.endTime')}</p>
+            <input
+              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
+              type="time"
+              placeholder={t('entryForm.endTimePlaceholder')}
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </label>
+        </div>
+        {timeError && <p className="text-sm text-red-400 mt-1">{timeError}</p>}
 
         <label className="flex flex-col w-full">
           <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>

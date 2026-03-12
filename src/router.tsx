@@ -354,6 +354,8 @@ export const editEntryRoute = createRoute({
 interface CreateEntrySearch {
   date?: string;
   type?: 'task' | 'event';
+  startTime?: string;
+  endTime?: string;
 }
 
 export const createEntryRoute = createRoute({
@@ -366,6 +368,8 @@ export const createEntryRoute = createRoute({
         typeof search?.type === 'string' && (search.type === 'task' || search.type === 'event')
           ? search.type
           : undefined,
+      startTime: typeof search?.startTime === 'string' ? search.startTime : undefined,
+      endTime: typeof search?.endTime === 'string' ? search.endTime : undefined,
     };
   },
   component: () => (

@@ -31,6 +31,34 @@ export default function EditEntry() {
   const [isRotating, setIsRotating] = useState(false);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [timeError, setTimeError] = useState('');
+
+  useEffect(() => {
+    if (!startTime) return;
+    if (!endTime || endTime <= startTime) {
+      const [hStr, mStr] = startTime.split(':');
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      let total = h * 60 + m + 30;
+      let newEnd = '';
+      if (total >= 24 * 60 - 1) {
+        newEnd = '23:59';
+      } else {
+        const nh = Math.floor(total / 60);
+        const nm = total % 60;
+        newEnd = `${nh.toString().padStart(2, '0')}:${nm.toString().padStart(2, '0')}`;
+      }
+      setEndTime(newEnd);
+    }
+  }, [startTime]);
+
+  useEffect(() => {
+    if (timeError && startTime && endTime && endTime >= startTime) {
+      setTimeError('');
+    }
+  }, [startTime, endTime, timeError]);
   const profilesQuery = useProfilesQuery();
   const taskQuery = useTaskByIdQuery(taskId);
   const updateTaskMutation = useUpdateTaskMutation();
@@ -82,11 +110,19 @@ export default function EditEntry() {
       }
       setDescription(task.description || '');
       setLocation(task.location || '');
+      setStartTime(task.start_time || '');
+      setEndTime(task.end_time || '');
     }
   }, [taskQuery.data]);
 
   async function handleSave() {
     if (!title.trim() || !taskId) return;
+    // validate times
+    if (startTime && endTime && endTime < startTime) {
+      setTimeError(t('entryForm.timeError'));
+      return;
+    }
+    setTimeError('');
     
     if (originalTask?.recurrence_id) {
       setEditModalOpen(true);
@@ -98,6 +134,12 @@ export default function EditEntry() {
 
   async function saveChanges(mode: 'single' | 'following') {
     if (!taskId || !originalTask) return;
+    // validate times before making any mutations
+    if (startTime && endTime && endTime < startTime) {
+      setTimeError(t('entryForm.timeError'));
+      return;
+    }
+    setTimeError('');
     setEditModalOpen(false);
 
     try {
@@ -119,6 +161,8 @@ export default function EditEntry() {
         assignment_type: finalAssignmentType,
         assigned_to: assignmentCategory === 'individual' ? assignedTo : null,
         location: location.trim() || undefined,
+        start_time: startTime || undefined,
+        end_time: endTime || undefined,
       };
 
       await updateTaskMutation.mutateAsync({ taskId, input });
@@ -162,6 +206,8 @@ export default function EditEntry() {
               assignment_type: finalAssignmentType,
               assigned_to: assignmentCategory === 'individual' ? currentAssignedTo : undefined,
               location: location.trim() || undefined,
+              start_time: startTime || undefined,
+              end_time: endTime || undefined,
               recurrence_id: originalTask.recurrence_id,
             });
 
@@ -231,7 +277,7 @@ export default function EditEntry() {
           <button
             aria-label={t('topBar.save')}
             className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
-            disabled={saving}
+            disabled={saving || !!timeError}
             onClick={handleSave}
             type="button"
           >
@@ -275,6 +321,29 @@ export default function EditEntry() {
             </label>
           )}
         </div>
+        <div className="grid gap-4 grid-cols-2">
+          <label className="flex flex-col">
+            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.startTime')}</p>
+            <input
+              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
+              type="time"
+              placeholder={t('entryForm.startTimePlaceholder')}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col">
+            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.endTime')}</p>
+            <input
+              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
+              type="time"
+              placeholder={t('entryForm.endTimePlaceholder')}
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </label>
+        </div>
+        {timeError && <p className="text-sm text-red-400 mt-1">{timeError}</p>}
 
         <label className="flex flex-col w-full">
           <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>

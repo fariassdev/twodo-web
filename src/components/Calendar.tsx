@@ -539,12 +539,18 @@ export default function Calendar() {
                           )}
                         </div>
                         <p className="text-sm text-slate-400 truncate flex items-center gap-1">
-                          {task.start_time && (
-                            <><span className="material-symbols-outlined text-[16px]">schedule</span> {task.start_time.slice(0, 5)}</>
+                          {(task.start_time || task.end_time) && (
+                            <>
+                              <span className="material-symbols-outlined text-[16px]">schedule</span>{' '}
+                              <span>
+                                {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}
+                                {task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
+                              </span>
+                            </>
                           )}
-                          {task.start_time && task.location && <span className="mx-0.5">•</span>}
+                          {(task.start_time || task.end_time) && task.location && <span className="mx-0.5">•</span>}
                           {task.location && (
-                            <span className={task.start_time ? 'text-emerald-400' : ''}>{task.location}</span>
+                            <span className={(task.start_time || task.end_time) ? 'text-emerald-400' : ''}>{task.location}</span>
                           )}
                         </p>
                       </div>
