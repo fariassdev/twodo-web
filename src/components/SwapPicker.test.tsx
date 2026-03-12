@@ -152,7 +152,7 @@ describe('SwapPicker UI contracts', () => {
     renderSwapPicker(dataset);
 
     expect(
-      screen.getByText(/Alex tiene "Poner la lavadora" en el mismo horario que tu tarea/i),
+      screen.getByText(/swap.partnerBusyWarning/i),
     ).toBeInTheDocument();
   });
 
@@ -174,7 +174,7 @@ describe('SwapPicker UI contracts', () => {
     renderSwapPicker(dataset);
 
     expect(
-      screen.getByText(/Alex tiene "Cena familiar" en el mismo horario que tu tarea/i),
+      screen.getByText(/swap.partnerBusyWarning/i),
     ).toBeInTheDocument();
   });
 
@@ -339,7 +339,7 @@ describe('SwapPicker UI contracts', () => {
 
     renderSwapPicker(dataset);
 
-    expect(screen.getByText(/no tiene tareas compatibles para intercambiar/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /confirmar intercambio/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/swap.noOptions/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /swap.confirmSwap/i })).not.toBeInTheDocument();
   });
 });
