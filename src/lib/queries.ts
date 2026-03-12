@@ -8,6 +8,8 @@ import type {
   LoveNote,
   Profile,
   ShoppingItem,
+  SwapDataset,
+  SwapTasksInput,
   Task,
 } from './types';
 
@@ -537,6 +539,90 @@ export async function postponeTask(taskId: string, householdId: string): Promise
     .eq('id', taskId)
     .eq('household_id', householdId);
 
+  if (error) throw error;
+}
+
+// Swap
+
+/**
+ * Fetch all data needed for the swap picker in a single round-trip batch.
+ * Returns the origin task, partner profile, partner's eligible tasks, and
+ * both users' busy tasks (for conflict detection).
+ */
+export async function getSwapDataset(
+  originTaskId: string,
+  myProfileId: string,
+  householdId: string,
+): Promise<SwapDataset> {
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. Origin task
+  const originTask = await getTaskById(originTaskId, householdId);
+  if (!originTask) throw new Error('origin_task_not_found');
+
+  // 2. Partner profile (the other household member)
+  const profiles = await getProfiles(householdId);
+  const partnerProfile = profiles.find((p) => p.id !== myProfileId);
+  if (!partnerProfile) throw new Error('partner_not_found');
+
+  // 3. Partner tasks: today + future, pending/postponed, not deleted
+  const { data: partnerTasksRaw, error: ptError } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('assigned_to', partnerProfile.id)
+    .in('status', ['pending', 'postponed'])
+    .gte('date', today)
+    .is('deleted_at', null)
+    .order('date', { ascending: true });
+
+  if (ptError) throw ptError;
+
+  // 4. My busy tasks (tasks + events, non-completed, today+future)
+  const { data: myBusyRaw, error: mbError } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('assigned_to', myProfileId)
+    .in('status', ['pending', 'postponed'])
+    .gte('date', today)
+    .is('deleted_at', null);
+
+  if (mbError) throw mbError;
+
+  // 5. Partner's busy tasks (for conflict warning on origin task's timeslot)
+  const { data: partnerBusyRaw, error: pbError } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('assigned_to', partnerProfile.id)
+    .in('status', ['pending', 'postponed'])
+    .gte('date', today)
+    .is('deleted_at', null);
+
+  if (pbError) throw pbError;
+
+  return {
+    originTask,
+    partnerTasks: partnerTasksRaw ?? [],
+    myBusyTasks: myBusyRaw ?? [],
+    partnerBusyTasks: partnerBusyRaw ?? [],
+    partnerProfile,
+  };
+}
+
+/**
+ * Atomically swap the assigned_to of two tasks via the swap_tasks RPC.
+ */
+export async function swapTasks(input: SwapTasksInput): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc('swap_tasks', {
+    p_my_task_id: input.myTaskId,
+    p_partner_task_id: input.partnerTaskId,
+    p_my_profile_id: input.myProfileId,
+    p_partner_profile_id: input.partnerProfileId,
+    p_household_id: input.householdId,
+  });
   if (error) throw error;
 }
 

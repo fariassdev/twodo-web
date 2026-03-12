@@ -280,6 +280,7 @@
     "processing": "Procesando...",
     "markCompleted": "Marcar como completada",
     "postpone": "Posponer",
+    "swap": "Cambiar tarea",
     "assignmentDetails": "Detalles de asignación",
     "rotationType": "Tipo de rotación",
     "lastDoneBy": "Última vez hecha por",
@@ -336,5 +337,28 @@
     "inviteExpiredDesc": "Esta invitación ya no es válida. Pide a tu pareja que genere una nueva.",
     "inviteAlreadyUsed": "Invitación ya utilizada",
     "householdFull": "Este hogar ya está completo"
+  },
+  "swap": {
+    "title": "Intercambiar tarea",
+    "currentComparison": "Comparativa actual",
+    "yourTask": "Tu tarea",
+    "newTask": "Nueva tarea",
+    "selectHint": "Elige una tarea",
+    "sameValue": "Mismo valor",
+    "similarValue": "Valor similar",
+    "otherOptions": "Otras opciones",
+    "noOptions": "{{name}} no tiene tareas compatibles para intercambiar ahora mismo.",
+    "pts_one": "{{count}} pt",
+    "pts_other": "{{count}} pts",
+    "confirmSwap": "Confirmar Intercambio",
+    "partnerBusyWarning": "{{name}} tiene \"{{conflict}}\" en el mismo horario que tu tarea. El intercambio sigue siendo posible.",
+    "success": {
+      "title": "¡Trato Hecho!",
+      "swapped": "Has intercambiado",
+      "for": "por",
+      "partnerNotified": "{{name}} recibirá una notificación amistosa",
+      "cta": "Genial",
+      "hint": "Toca para volver al panel principal"
+    }
   }
 }

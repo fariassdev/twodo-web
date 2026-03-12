@@ -11,6 +11,7 @@ import {
   useTaskByIdQuery,
 } from '../lib/queryHooks';
 import { queryKeys } from '../lib/queryKeys';
+import { isSwappable } from '../lib/swapRanking';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
@@ -23,7 +24,7 @@ export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { householdId } = useAuthScope();
+  const { householdId, profileId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -344,6 +345,16 @@ export default function TaskDetails() {
                 <span className="material-symbols-outlined font-bold">check_circle</span>
                 {acting ? t('taskDetails.processing') : t('taskDetails.markCompleted')}
               </button>
+              {isSwappable(task, profileId ?? '') && (
+                <button
+                  onClick={() => navigate({ to: '/task/$taskId/swap', params: { taskId: task.id } })}
+                  disabled={acting}
+                  className="w-full bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-lg">swap_horiz</span>
+                  {t('taskDetails.swap')}
+                </button>
+              )}
               <button
                 onClick={handlePostpone}
                 disabled={acting}

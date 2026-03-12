@@ -50,4 +50,9 @@ export const queryKeys = {
     all: ['invites'] as const,
     info: (code: string) => ['invites', 'info', code] as const,
   },
+  swap: {
+    all: ['swap'] as const,
+    dataset: (originTaskId: string, householdId: string) =>
+      ['swap', 'dataset', originTaskId, householdId] as const,
+  },
 } as const;

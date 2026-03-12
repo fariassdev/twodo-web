@@ -280,6 +280,7 @@
     "processing": "Processing...",
     "markCompleted": "Mark as completed",
     "postpone": "Postpone",
+    "swap": "Swap task",
     "assignmentDetails": "Assignment details",
     "rotationType": "Rotation type",
     "lastDoneBy": "Last completed by",
@@ -336,5 +337,28 @@
     "inviteExpiredDesc": "This invitation is no longer valid. Ask your partner for a new one.",
     "inviteAlreadyUsed": "Invite already used",
     "householdFull": "This household is already full"
+  },
+  "swap": {
+    "title": "Swap Task",
+    "currentComparison": "Current comparison",
+    "yourTask": "Your task",
+    "newTask": "New task",
+    "selectHint": "Choose a task",
+    "sameValue": "Same value",
+    "similarValue": "Similar value",
+    "otherOptions": "Other options",
+    "noOptions": "{{name}} has no compatible tasks to swap right now.",
+    "pts_one": "{{count}} pt",
+    "pts_other": "{{count}} pts",
+    "confirmSwap": "Confirm Swap",
+    "partnerBusyWarning": "{{name}} has \"{{conflict}}\" at the same time as your task. You can still proceed with the swap.",
+    "success": {
+      "title": "Deal Done!",
+      "swapped": "You swapped",
+      "for": "for",
+      "partnerNotified": "{{name}} will receive a friendly notification",
+      "cta": "Great",
+      "hint": "Tap to return to the main panel"
+    }
   }
 }

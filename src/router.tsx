@@ -28,6 +28,8 @@ const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword')
 const VerifyEmail = React.lazy(() => import('./components/auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/auth/PendingAccess'));
 const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
+const SwapPicker = React.lazy(() => import('./components/SwapPicker'));
+const SwapSuccess = React.lazy(() => import('./components/SwapSuccess'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
 
@@ -351,6 +353,31 @@ export const editEntryRoute = createRoute({
   ),
 });
 
+export const swapPickerRoute = createRoute({
+  getParentRoute: () => privateGateRoute,
+  path: '/task/$taskId/swap',
+  component: () => (
+    <RouteShell sectionName="swap-picker">
+      <SwapPicker />
+    </RouteShell>
+  ),
+});
+
+export const swapSuccessRoute = createRoute({
+  getParentRoute: () => privateGateRoute,
+  path: '/task/$taskId/swap/success',
+  validateSearch: (search: Record<string, unknown>): { myTaskTitle?: string; partnerTaskTitle?: string; partnerName?: string } => ({
+    myTaskTitle: typeof search?.myTaskTitle === 'string' ? search.myTaskTitle : undefined,
+    partnerTaskTitle: typeof search?.partnerTaskTitle === 'string' ? search.partnerTaskTitle : undefined,
+    partnerName: typeof search?.partnerName === 'string' ? search.partnerName : undefined,
+  }),
+  component: () => (
+    <RouteShell sectionName="swap-success">
+      <SwapSuccess />
+    </RouteShell>
+  ),
+});
+
 interface CreateEntrySearch {
   date?: string;
   type?: 'task' | 'event';
@@ -395,6 +422,8 @@ const routeTree = rootRoute.addChildren([
     ]),
     taskDetailsRoute,
     editEntryRoute,
+    swapPickerRoute,
+    swapSuccessRoute,
     createEntryRoute,
   ]),
 ]);

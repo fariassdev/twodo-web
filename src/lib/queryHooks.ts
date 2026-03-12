@@ -40,6 +40,8 @@ import {
   acceptHouseholdInvite,
   getInviteInfo,
   sendEmailInvite,
+  getSwapDataset,
+  swapTasks,
   type CreateTaskInput,
   type EquityBalance,
   type PointsBreakdown,
@@ -58,7 +60,7 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
-import type { AuthContext, LoveNote, Profile, ShoppingItem, Task, InviteInfo } from './types';
+import type { AuthContext, LoveNote, Profile, ShoppingItem, SwapDataset, SwapTasksInput, Task, InviteInfo } from './types';
 
 type AuthCredentials = {
   email: string;
@@ -1009,6 +1011,49 @@ export function usePostponeTaskMutation() {
         type: 'postpone',
         taskId,
         taskDate: context.taskDate,
+      });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Swap hooks
+// ---------------------------------------------------------------------------
+
+export function useSwapDatasetQuery(originTaskId: string | undefined) {
+  const queryClient = useQueryClient();
+  const scope = (() => {
+    try {
+      return getLinkedScopeOrThrow(queryClient);
+    } catch {
+      return null;
+    }
+  })();
+
+  return useQuery<SwapDataset>({
+    queryKey:
+      originTaskId && scope
+        ? queryKeys.swap.dataset(originTaskId, scope.householdId)
+        : (['swap', 'dataset', 'disabled'] as const),
+    queryFn: () => getSwapDataset(originTaskId!, scope!.profileId, scope!.householdId),
+    enabled: Boolean(originTaskId && scope),
+    staleTime: 30_000,
+  });
+}
+
+export function useSwapTasksMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SwapTasksInput) => swapTasks(input),
+    onSuccess: async (_data, input) => {
+      const { householdId } = input;
+      // Invalidate all task-related caches so both tasks reflect new assignments
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.calendar.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.swap.dataset(input.myTaskId, householdId),
       });
     },
   });

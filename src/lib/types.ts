@@ -56,3 +56,20 @@ export interface InviteInfo {
 export interface AcceptInviteResult {
   household_id: string;
 }
+
+// Swap feature
+export interface SwapDataset {
+  originTask: Task;
+  partnerTasks: Task[];
+  myBusyTasks: Task[];
+  partnerBusyTasks: Task[];
+  partnerProfile: Profile;
+}
+
+export interface SwapTasksInput {
+  myTaskId: string;
+  partnerTaskId: string;
+  myProfileId: string;
+  partnerProfileId: string;
+  householdId: string;
+}
