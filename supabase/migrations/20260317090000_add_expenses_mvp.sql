@@ -145,6 +145,7 @@ $$;
 create or replace function public.log_expense_balance_events()
 returns trigger
 language plpgsql
+security definer
 set search_path = public
 as $$
 declare
@@ -256,7 +257,7 @@ begin
         amount_cents
       ) values (
         old.household_id,
-        old.id,
+        null,
         'expense_deleted_reverse',
         old.paid_by_profile_id,
         v_counterparty,
