@@ -34,6 +34,169 @@ export type Database = {
   }
   public: {
     Tables: {
+      expense_balance_events: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          event_kind: string
+          expense_id: string | null
+          from_profile_id: string
+          household_id: string
+          id: string
+          to_profile_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          event_kind: string
+          expense_id?: string | null
+          from_profile_id: string
+          household_id: string
+          id?: string
+          to_profile_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          event_kind?: string
+          expense_id?: string | null
+          from_profile_id?: string
+          household_id?: string
+          id?: string
+          to_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_balance_events_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_balance_events_from_profile_id_fkey"
+            columns: ["from_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_balance_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_balance_events_to_profile_id_fkey"
+            columns: ["to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_categories: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          key: string
+          name_en: string
+          name_es: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          icon: string
+          id?: string
+          key: string
+          name_en: string
+          name_es: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          key?: string
+          name_en?: string
+          name_es?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount_cents: number
+          category_id: string
+          created_at: string
+          created_by_profile_id: string
+          description: string | null
+          expense_date: string
+          household_id: string
+          id: string
+          is_shared: boolean
+          paid_by_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          category_id: string
+          created_at?: string
+          created_by_profile_id: string
+          description?: string | null
+          expense_date?: string
+          household_id: string
+          id?: string
+          is_shared?: boolean
+          paid_by_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          category_id?: string
+          created_at?: string
+          created_by_profile_id?: string
+          description?: string | null
+          expense_date?: string
+          household_id?: string
+          id?: string
+          is_shared?: boolean
+          paid_by_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_paid_by_profile_id_fkey"
+            columns: ["paid_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_invites: {
         Row: {
           accepted_at: string | null
@@ -287,6 +450,71 @@ export type Database = {
         }
         Relationships: []
       }
+      settlements: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by_profile_id: string
+          household_id: string
+          id: string
+          note: string | null
+          paid_by_profile_id: string
+          paid_to_profile_id: string
+          settled_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          created_by_profile_id: string
+          household_id: string
+          id?: string
+          note?: string | null
+          paid_by_profile_id: string
+          paid_to_profile_id: string
+          settled_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by_profile_id?: string
+          household_id?: string
+          id?: string
+          note?: string | null
+          paid_by_profile_id?: string
+          paid_to_profile_id?: string
+          settled_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlements_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlements_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlements_paid_by_profile_id_fkey"
+            columns: ["paid_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlements_paid_to_profile_id_fkey"
+            columns: ["paid_to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_items: {
         Row: {
           added_by: string | null
@@ -494,7 +722,15 @@ export type Database = {
         Args: { p_invite_code: string }
         Returns: Json
       }
+      calc_shared_half_cents: {
+        Args: { p_amount_cents: number }
+        Returns: number
+      }
       create_household_and_invite: { Args: never; Returns: Json }
+      current_balance_cents_since_last_settlement: {
+        Args: { p_household_id: string; p_profile_id: string }
+        Returns: number
+      }
       current_profile_id: { Args: never; Returns: string }
       delete_task_series_rpc: {
         Args: { p_from_date?: string; p_recurrence_id: string }
@@ -503,6 +739,10 @@ export type Database = {
       delete_tasks_after_rpc: {
         Args: { p_date: string; p_recurrence_id: string }
         Returns: undefined
+      }
+      get_counterparty_profile: {
+        Args: { p_household_id: string; p_profile_id: string }
+        Returns: string
       }
       get_invite_info: { Args: { p_invite_code: string }; Returns: Json }
       is_household_member: {
@@ -513,6 +753,16 @@ export type Database = {
       profile_in_household: {
         Args: { p_household_id: string; p_profile_id: string }
         Returns: boolean
+      }
+      swap_tasks: {
+        Args: {
+          p_household_id: string
+          p_my_profile_id: string
+          p_my_task_id: string
+          p_partner_profile_id: string
+          p_partner_task_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

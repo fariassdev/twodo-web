@@ -15,6 +15,16 @@ export type Task = Database['public']['Tables']['tasks']['Row'] & {
 };
 
 export type ShoppingItem = Database['public']['Tables']['shopping_items']['Row'];
+export type Expense = Database['public']['Tables']['expenses']['Row'];
+export type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row'];
+export type Settlement = Database['public']['Tables']['settlements']['Row'];
+export type ExpenseBalanceEvent = Database['public']['Tables']['expense_balance_events']['Row'];
+
+export interface ExpenseWithDetails extends Expense {
+  category?: ExpenseCategory | null;
+  paid_by_profile?: Profile | null;
+  created_by_profile?: Profile | null;
+}
 
 export type LoveNote = Database['public']['Tables']['love_notes']['Row'] & {
   sender?: Profile;

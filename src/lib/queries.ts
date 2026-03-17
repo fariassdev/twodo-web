@@ -2,12 +2,16 @@ import { supabase } from './supabase';
 import type {
   AcceptInviteResult,
   AuthContext,
+  Expense,
+  ExpenseCategory,
+  ExpenseWithDetails,
   Household,
   HouseholdInviteResult,
   InviteInfo,
   LoveNote,
   Profile,
   ShoppingItem,
+  Settlement,
   Task,
 } from './types';
 
@@ -768,6 +772,364 @@ export async function getPointsBreakdown(householdId: string, profilesInput?: Pr
       totalPoints: taskPoints + kudosPoints,
     };
   });
+}
+
+// Expenses
+export interface ExpenseBalanceSnapshot {
+  balanceCents: number;
+  amountCents: number;
+  direction: 'you_owe' | 'you_are_owed' | 'settled';
+  counterpartyProfile: Profile | null;
+  lastSettlementAt: string | null;
+}
+
+export interface ExpenseDashboardData {
+  balance: ExpenseBalanceSnapshot;
+  recentExpenses: ExpenseWithDetails[];
+}
+
+export interface ExpenseFilters {
+  categoryId?: string;
+  paidByProfileId?: string;
+  month?: string;
+  sharedOnly?: boolean;
+}
+
+export interface CreateExpenseInput {
+  amountCents: number;
+  description?: string;
+  categoryId: string;
+  paidByProfileId: string;
+  expenseDate: string;
+  isShared: boolean;
+}
+
+export type UpdateExpenseInput = Partial<CreateExpenseInput>;
+
+export interface SettlementWithDetails extends Settlement {
+  paid_by_profile?: Profile | null;
+  paid_to_profile?: Profile | null;
+  created_by_profile?: Profile | null;
+}
+
+function normalizeAmountCents(amountCents: number): number {
+  return Math.max(1, Math.round(amountCents));
+}
+
+function parseMonthRange(month: string): { startDate: string; endDate: string } | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const monthNumber = Number(match[2]);
+  if (!Number.isFinite(year) || !Number.isFinite(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+    return null;
+  }
+
+  const startDate = `${match[1]}-${match[2]}-01`;
+  const nextMonth = new Date(Date.UTC(year, monthNumber, 1));
+  const endDate = nextMonth.toISOString().slice(0, 10);
+  return { startDate, endDate };
+}
+
+async function mapExpensesWithDetails(expenses: Expense[], householdId: string): Promise<ExpenseWithDetails[]> {
+  if (expenses.length === 0) return [];
+
+  const [categories, profiles] = await Promise.all([getExpenseCategories(), getProfiles(householdId)]);
+
+  const categoryMap = new Map(categories.map((category) => [category.id, category]));
+  const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
+
+  return expenses.map((expense) => ({
+    ...expense,
+    category: categoryMap.get(expense.category_id) ?? null,
+    paid_by_profile: profileMap.get(expense.paid_by_profile_id) ?? null,
+    created_by_profile: profileMap.get(expense.created_by_profile_id) ?? null,
+  }));
+}
+
+function mapSettlementsWithDetails(settlements: Settlement[], profiles: Profile[]): SettlementWithDetails[] {
+  const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
+
+  return settlements.map((settlement) => ({
+    ...settlement,
+    paid_by_profile: profileMap.get(settlement.paid_by_profile_id) ?? null,
+    paid_to_profile: profileMap.get(settlement.paid_to_profile_id) ?? null,
+    created_by_profile: profileMap.get(settlement.created_by_profile_id) ?? null,
+  }));
+}
+
+export async function getExpenseCategories(): Promise<ExpenseCategory[]> {
+  const { data, error } = await supabase
+    .from('expense_categories')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getExpenseBalanceSnapshot(
+  householdId: string,
+  profileId: string,
+): Promise<ExpenseBalanceSnapshot> {
+  const [{ data: latestSettlement, error: latestSettlementError }, profiles] = await Promise.all([
+    supabase
+      .from('settlements')
+      .select('settled_at')
+      .eq('household_id', householdId)
+      .order('settled_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getProfiles(householdId),
+  ]);
+
+  if (latestSettlementError && !isNotFoundError(latestSettlementError)) {
+    throw latestSettlementError;
+  }
+
+  const lastSettlementAt = latestSettlement?.settled_at ?? null;
+
+  let eventsQuery = supabase
+    .from('expense_balance_events')
+    .select('from_profile_id, to_profile_id, amount_cents')
+    .eq('household_id', householdId);
+
+  if (lastSettlementAt) {
+    eventsQuery = eventsQuery.gt('created_at', lastSettlementAt);
+  }
+
+  const { data: events, error: eventsError } = await eventsQuery;
+  if (eventsError) throw eventsError;
+
+  const balanceCents = (events ?? []).reduce((acc, event) => {
+    if (event.to_profile_id === profileId) return acc + event.amount_cents;
+    if (event.from_profile_id === profileId) return acc - event.amount_cents;
+    return acc;
+  }, 0);
+
+  const counterpartyProfile = profiles.find((profile) => profile.id !== profileId) ?? null;
+
+  if (balanceCents > 0) {
+    return {
+      balanceCents,
+      amountCents: balanceCents,
+      direction: 'you_are_owed',
+      counterpartyProfile,
+      lastSettlementAt,
+    };
+  }
+
+  if (balanceCents < 0) {
+    return {
+      balanceCents,
+      amountCents: Math.abs(balanceCents),
+      direction: 'you_owe',
+      counterpartyProfile,
+      lastSettlementAt,
+    };
+  }
+
+  return {
+    balanceCents: 0,
+    amountCents: 0,
+    direction: 'settled',
+    counterpartyProfile,
+    lastSettlementAt,
+  };
+}
+
+export async function getRecentExpenses(householdId: string, limit = 5): Promise<ExpenseWithDetails[]> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('expense_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return mapExpensesWithDetails(data ?? [], householdId);
+}
+
+export async function getExpensesDashboard(
+  householdId: string,
+  profileId: string,
+): Promise<ExpenseDashboardData> {
+  const [balance, recentExpenses] = await Promise.all([
+    getExpenseBalanceSnapshot(householdId, profileId),
+    getRecentExpenses(householdId, 5),
+  ]);
+
+  return {
+    balance,
+    recentExpenses,
+  };
+}
+
+export async function getExpensesList(
+  householdId: string,
+  filters: ExpenseFilters = {},
+): Promise<ExpenseWithDetails[]> {
+  let query = supabase
+    .from('expenses')
+    .select('*')
+    .eq('household_id', householdId);
+
+  if (filters.categoryId) {
+    query = query.eq('category_id', filters.categoryId);
+  }
+
+  if (filters.paidByProfileId) {
+    query = query.eq('paid_by_profile_id', filters.paidByProfileId);
+  }
+
+  if (typeof filters.sharedOnly === 'boolean') {
+    query = query.eq('is_shared', filters.sharedOnly);
+  }
+
+  if (filters.month) {
+    const monthRange = parseMonthRange(filters.month);
+    if (monthRange) {
+      query = query.gte('expense_date', monthRange.startDate).lt('expense_date', monthRange.endDate);
+    }
+  }
+
+  const { data, error } = await query
+    .order('expense_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return mapExpensesWithDetails(data ?? [], householdId);
+}
+
+export async function getExpenseById(expenseId: string, householdId: string): Promise<ExpenseWithDetails | null> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('id', expenseId)
+    .maybeSingle();
+
+  if (error) {
+    if (isNotFoundError(error)) return null;
+    throw error;
+  }
+
+  if (!data) return null;
+
+  const [mapped] = await mapExpensesWithDetails([data], householdId);
+  return mapped ?? null;
+}
+
+export async function createExpense(input: CreateExpenseInput, scope: MutationScope): Promise<ExpenseWithDetails> {
+  const payload = {
+    household_id: scope.householdId,
+    paid_by_profile_id: input.paidByProfileId,
+    created_by_profile_id: scope.profileId,
+    category_id: input.categoryId,
+    amount_cents: normalizeAmountCents(input.amountCents),
+    description: input.description?.trim() || null,
+    expense_date: input.expenseDate,
+    is_shared: input.isShared,
+  };
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+
+  const [mapped] = await mapExpensesWithDetails([data], scope.householdId);
+  return mapped;
+}
+
+export async function updateExpense(
+  expenseId: string,
+  input: UpdateExpenseInput,
+  scope: MutationScope,
+): Promise<ExpenseWithDetails> {
+  const payload: Record<string, unknown> = {};
+
+  if (typeof input.amountCents === 'number') payload.amount_cents = normalizeAmountCents(input.amountCents);
+  if (typeof input.description !== 'undefined') payload.description = input.description?.trim() || null;
+  if (typeof input.categoryId === 'string') payload.category_id = input.categoryId;
+  if (typeof input.paidByProfileId === 'string') payload.paid_by_profile_id = input.paidByProfileId;
+  if (typeof input.expenseDate === 'string') payload.expense_date = input.expenseDate;
+  if (typeof input.isShared === 'boolean') payload.is_shared = input.isShared;
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .update(payload)
+    .eq('id', expenseId)
+    .eq('household_id', scope.householdId)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+
+  const [mapped] = await mapExpensesWithDetails([data], scope.householdId);
+  return mapped;
+}
+
+export async function deleteExpense(expenseId: string, householdId: string): Promise<void> {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', expenseId)
+    .eq('household_id', householdId);
+
+  if (error) throw error;
+}
+
+export async function getSettlementsHistory(householdId: string): Promise<SettlementWithDetails[]> {
+  const [{ data, error }, profiles] = await Promise.all([
+    supabase
+      .from('settlements')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('settled_at', { ascending: false })
+      .order('created_at', { ascending: false }),
+    getProfiles(householdId),
+  ]);
+
+  if (error) throw error;
+  return mapSettlementsWithDetails(data ?? [], profiles);
+}
+
+export async function createSettlement(
+  input: { note?: string },
+  scope: MutationScope,
+): Promise<SettlementWithDetails> {
+  const balance = await getExpenseBalanceSnapshot(scope.householdId, scope.profileId);
+
+  if (balance.direction !== 'you_owe' || !balance.counterpartyProfile) {
+    throw new Error('Only the debtor can create a settlement');
+  }
+
+  const payload = {
+    household_id: scope.householdId,
+    paid_by_profile_id: scope.profileId,
+    paid_to_profile_id: balance.counterpartyProfile.id,
+    created_by_profile_id: scope.profileId,
+    amount_cents: balance.amountCents,
+    note: input.note?.trim() || null,
+    settled_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from('settlements')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+
+  const profiles = await getProfiles(scope.householdId);
+  const [mapped] = mapSettlementsWithDetails([data], profiles);
+  return mapped;
 }
 
 // Invites
