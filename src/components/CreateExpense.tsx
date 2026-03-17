@@ -49,6 +49,17 @@ export default function CreateExpense() {
   const categories = categoriesQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
+  // Ensure the other household member is displayed first while keeping the current user selected.
+  const orderedProfiles = useMemo(() => {
+    if (!profileId || profiles.length <= 1) return profiles;
+    const meIndex = profiles.findIndex((profile) => profile.id === profileId);
+    if (meIndex === -1) return profiles;
+
+    const sorted = [...profiles];
+    const [me] = sorted.splice(meIndex, 1);
+    return [me, ...sorted];
+  }, [profiles, profileId]);
+
   const amountInput = watch('amountInput');
   const selectedCategoryId = watch('categoryId');
   const paidByProfileId = watch('paidByProfileId');
@@ -175,7 +186,7 @@ export default function CreateExpense() {
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.paidBy')}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
-          {profiles.map((profile) => {
+          {orderedProfiles.map((profile) => {
             const active = paidByProfileId === profile.id;
             return (
               <button
