@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import QueryErrorState from './ui/QueryErrorState';
+import { NumericInput } from './ui/NumericInput';
 import {
   useAuthScope,
   useDeleteExpenseMutation,
@@ -42,8 +43,9 @@ export default function ExpenseDetails() {
   const expense = expenseQuery.data;
 
   const {
-    register,
+    control,
     watch,
+    register,
     setValue,
     reset,
     handleSubmit,
@@ -215,10 +217,15 @@ export default function ExpenseDetails() {
 
         {isEditing && (
           <section className="mt-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-            <input
-              className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              inputMode="decimal"
-              {...register('amountInput')}
+            <Controller
+              name="amountInput"
+              control={control}
+              render={({ field }) => (
+                <NumericInput
+                  {...field}
+                  className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
+                />
+              )}
             />
             {errors.amountInput && <p className="text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
             <input

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
+import { NumericInput } from './ui/NumericInput';
 import {
   useAuthScope,
   useCreateExpenseMutation,
@@ -25,8 +26,9 @@ export default function CreateExpense() {
   const { profileId } = useAuthScope();
 
   const {
-    register,
+    control,
     watch,
+    register,
     setValue,
     handleSubmit,
     formState: { errors },
@@ -139,12 +141,17 @@ export default function CreateExpense() {
           <label className="text-sm uppercase tracking-wider text-primary/80">{t('expenses.amount')}</label>
           <div className="mt-2 flex items-end gap-2">
             <span className="pb-2 text-5xl font-bold text-slate-200">€</span>
-            <input
-              autoFocus
-              className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-slate-100 focus:outline-none"
-              inputMode="decimal"
-              placeholder="0.00"
-              {...register('amountInput')}
+            <Controller
+              name="amountInput"
+              control={control}
+              render={({ field }) => (
+                <NumericInput
+                  {...field}
+                  autoFocus
+                  className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-slate-100 focus:outline-none"
+                  placeholder="0.00"
+                />
+              )}
             />
           </div>
           {errors.amountInput && <p className="mt-2 text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
