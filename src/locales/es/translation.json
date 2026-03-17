@@ -2,6 +2,7 @@
   "nav": {
     "home": "Inicio",
     "calendar": "Calendario",
+    "expenses": "Gastos",
     "metrics": "Métricas",
     "shopping": "Compra",
     "profile": "Perfil"
@@ -258,6 +259,83 @@
     "emptyToBuy": "Lista vacía! Añade algo arriba.",
     "purchasedWithCount": "Comprados ({{count}})"
   },
+  "expenses": {
+    "dashboardTitle": "Gastos",
+    "allExpenses": "Todos los gastos",
+    "expenseDetail": "Detalle de gasto",
+    "newExpense": "Nuevo gasto",
+    "recentExpenses": "Gastos recientes",
+    "viewAll": "Ver todos",
+    "currentBalance": "Balance actual",
+    "settleUp": "Saldar",
+    "historyTitle": "Historial",
+    "emptyFirstExpense": "Añade vuestro primer gasto compartido.",
+    "emptyFiltered": "No hay gastos con estos filtros.",
+    "amount": "Importe",
+    "description": "Descripción",
+    "descriptionPlaceholder": "¿En qué fue?",
+    "category": "Categoría",
+    "categoryFallback": "Otros",
+    "paidBy": "Pagado por",
+    "paidByYou": "Pagado por ti",
+    "paidByName": "Pagado por {{name}}",
+    "splitTitle": "Reparto",
+    "splitShared": "50/50",
+    "validation": {
+      "amountRequired": "Introduce un importe.",
+      "amountPositive": "El importe debe ser mayor que cero.",
+      "categoryRequired": "Selecciona una categoría.",
+      "paidByRequired": "Selecciona quién pagó.",
+      "dateRequired": "Selecciona una fecha.",
+      "noteMaxLength": "La nota debe tener 200 caracteres o menos."
+    },
+    "date": "Fecha",
+    "editExpense": "Editar gasto",
+    "saveExpense": "Guardar gasto",
+    "deleteExpense": "Eliminar gasto",
+    "confirmDelete": "¿Seguro que quieres eliminar este gasto?",
+    "notFound": "Gasto no encontrado",
+    "partnerFallback": "tu pareja",
+    "me": "Yo",
+    "meWithName": "Yo ({{name}})",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "searchExpensesPlaceholder": "Buscar gastos...",
+    "filterCategory": "Categoría",
+    "filterPaidBy": "Pagado por",
+    "filterAllCategories": "Todas las categorías",
+    "filterAllPeople": "Todas las personas",
+    "dateRange": "Rango de fechas",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
+    "addExpense": "Añadir gasto",
+    "clearAllFilters": "Limpiar todos los filtros",
+    "emptyNoResultsTitle": "Todo tranquilo por aquí",
+    "emptyNoResultsSubtitle": "No hay gastos que coincidan con estos filtros. Prueba ajustando tu búsqueda o categorías.",
+    "filterAll": "Todo",
+    "filterShared": "Compartido",
+    "impact": {
+      "theyOwe": "Te deben {{amount}}",
+      "youOwe": "Debes {{amount}}"
+    },
+    "balance": {
+      "theyOweYou": "{{name}} te debe",
+      "youOwe": "Debes a {{name}}",
+      "settled": "Estáis en paz",
+      "settledSubtitle": "No hay deudas pendientes ahora mismo."
+    },
+    "settlement": {
+      "title": "Saldar balance",
+      "closeSheet": "Cerrar modal de liquidación",
+      "confirmTransfer": "Confirma que transferiste {{amount}} a {{name}}.",
+      "noteOptional": "Nota opcional",
+      "notePlaceholder": "Ej. Bizum marzo",
+      "confirmButton": "Confirmar liquidación",
+      "onlyDebtorHint": "Solo quien debe puede confirmar una liquidación.",
+      "paidTo": "{{from}} pagó a {{to}}",
+      "feedStatus": "Liquidado"
+    }
+  },
   "taskDetails": {
     "status": {
       "pending": "Pendiente",
@@ -341,6 +419,11 @@
     "inviteExpired": "Invitación expirada",
     "inviteExpiredDesc": "Esta invitación ya no es válida. Pide a tu pareja que genere una nueva.",
     "inviteAlreadyUsed": "Invitación ya utilizada",
-    "householdFull": "Este hogar ya está completo"
+    "householdFull": "Este hogar ya está completo",
+    "validation": {
+      "codeMinLength": "El código debe tener al menos 4 caracteres.",
+      "codeMaxLength": "El código debe tener como máximo 16 caracteres.",
+      "codeFormat": "El código solo puede contener letras y números."
+    }
   }
 }

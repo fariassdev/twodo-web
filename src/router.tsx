@@ -21,6 +21,10 @@ const TaskDetails = React.lazy(() => import('./components/TaskDetails'));
 const Profile = React.lazy(() => import('./components/Profile'));
 const EditEntry = React.lazy(() => import('./components/EditEntry'));
 const CreateEntry = React.lazy(() => import('./components/CreateEntry'));
+const ExpensesDashboard = React.lazy(() => import('./components/ExpensesDashboard'));
+const CreateExpense = React.lazy(() => import('./components/CreateExpense'));
+const ExpensesList = React.lazy(() => import('./components/ExpensesList'));
+const ExpenseDetails = React.lazy(() => import('./components/ExpenseDetails'));
 const Login = React.lazy(() => import('./components/auth/Login'));
 const Register = React.lazy(() => import('./components/auth/Register'));
 const ForgotPassword = React.lazy(() => import('./components/auth/ForgotPassword'));
@@ -331,6 +335,26 @@ export const profileRoute = createRoute({
   ),
 });
 
+export const expensesDashboardRoute = createRoute({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/expenses',
+  component: () => (
+    <RouteShell sectionName="expenses-dashboard">
+      <ExpensesDashboard />
+    </RouteShell>
+  ),
+});
+
+export const expensesListRoute = createRoute({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/expenses/list',
+  component: () => (
+    <RouteShell sectionName="expenses-list">
+      <ExpensesList />
+    </RouteShell>
+  ),
+});
+
 export const taskDetailsRoute = createRoute({
   getParentRoute: () => privateGateRoute,
   path: '/task/$taskId',
@@ -379,6 +403,26 @@ export const createEntryRoute = createRoute({
   ),
 });
 
+export const createExpenseRoute = createRoute({
+  getParentRoute: () => privateGateRoute,
+  path: '/expenses/new',
+  component: () => (
+    <RouteShell sectionName="expenses-new">
+      <CreateExpense />
+    </RouteShell>
+  ),
+});
+
+export const expenseDetailsRoute = createRoute({
+  getParentRoute: () => privateGateRoute,
+  path: '/expenses/$expenseId',
+  component: () => (
+    <RouteShell sectionName="expense-details">
+      <ExpenseDetails />
+    </RouteShell>
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   authGateRoute.addChildren([authIndexRoute, loginRoute, registerRoute, forgotPasswordRoute]),
   resetPasswordRoute,
@@ -392,10 +436,14 @@ const routeTree = rootRoute.addChildren([
       metricsRoute,
       shoppingRoute,
       profileRoute,
+      expensesDashboardRoute,
+      expensesListRoute,
     ]),
     taskDetailsRoute,
     editEntryRoute,
     createEntryRoute,
+    createExpenseRoute,
+    expenseDetailsRoute,
   ]),
 ]);
 

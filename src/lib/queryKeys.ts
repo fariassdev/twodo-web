@@ -40,6 +40,21 @@ export const queryKeys = {
     all: ['shopping'] as const,
     list: (householdId: string) => ['shopping', 'list', householdId] as const,
   },
+  expenses: {
+    all: ['expenses'] as const,
+    categories: () => ['expenses', 'categories'] as const,
+    dashboard: (householdId: string, profileId: string) =>
+      ['expenses', 'dashboard', householdId, profileId] as const,
+    balance: (householdId: string, profileId: string) =>
+      ['expenses', 'balance', householdId, profileId] as const,
+    feed: (householdId: string) => ['expenses', 'feed', householdId] as const,
+    recent: (householdId: string) => ['expenses', 'recent', householdId] as const,
+    list: (householdId: string, signature: string) =>
+      ['expenses', 'list', householdId, signature] as const,
+    detail: (expenseId: string, householdId: string) =>
+      ['expenses', 'detail', expenseId, householdId] as const,
+    settlements: (householdId: string) => ['expenses', 'settlements', householdId] as const,
+  },
   loveNotes: {
     all: ['loveNotes'] as const,
     latest: (householdId: string) => ['loveNotes', 'latest', householdId] as const,

@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "calendar": "Calendar",
+    "expenses": "Expenses",
     "metrics": "Metrics",
     "shopping": "Shopping",
     "profile": "Profile"
@@ -255,6 +256,83 @@
     "emptyToBuy": "Empty list! Add something above.",
     "purchasedWithCount": "Purchased ({{count}})"
   },
+  "expenses": {
+    "dashboardTitle": "Expenses",
+    "allExpenses": "All expenses",
+    "expenseDetail": "Expense details",
+    "newExpense": "New expense",
+    "recentExpenses": "Recent expenses",
+    "viewAll": "View all",
+    "currentBalance": "Current balance",
+    "settleUp": "Settle up",
+    "historyTitle": "History",
+    "emptyFirstExpense": "Add your first shared expense.",
+    "emptyFiltered": "No expenses match these filters.",
+    "amount": "Amount",
+    "description": "Description",
+    "descriptionPlaceholder": "What was it for?",
+    "category": "Category",
+    "categoryFallback": "Other",
+    "paidBy": "Paid by",
+    "paidByYou": "Paid by you",
+    "paidByName": "Paid by {{name}}",
+    "splitTitle": "Split",
+    "splitShared": "Split 50/50",
+    "validation": {
+      "amountRequired": "Enter an amount.",
+      "amountPositive": "Amount must be greater than zero.",
+      "categoryRequired": "Select a category.",
+      "paidByRequired": "Select who paid.",
+      "dateRequired": "Select a date.",
+      "noteMaxLength": "Note must be 200 characters or less."
+    },
+    "date": "Date",
+    "editExpense": "Edit expense",
+    "saveExpense": "Save expense",
+    "deleteExpense": "Delete expense",
+    "confirmDelete": "Are you sure you want to delete this expense?",
+    "notFound": "Expense not found",
+    "partnerFallback": "your partner",
+    "me": "Me",
+    "meWithName": "Me ({{name}})",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "searchExpensesPlaceholder": "Search expenses...",
+    "filterCategory": "Category",
+    "filterPaidBy": "Paid by",
+    "filterAllCategories": "All categories",
+    "filterAllPeople": "Everyone",
+    "dateRange": "Date range",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "addExpense": "Add Expense",
+    "clearAllFilters": "Clear all filters",
+    "emptyNoResultsTitle": "All quiet here!",
+    "emptyNoResultsSubtitle": "No expenses match these filters. Try adjusting your search or categories.",
+    "filterAll": "All",
+    "filterShared": "Shared",
+    "impact": {
+      "theyOwe": "You're owed {{amount}}",
+      "youOwe": "You owe {{amount}}"
+    },
+    "balance": {
+      "theyOweYou": "{{name}} owes you",
+      "youOwe": "You owe {{name}}",
+      "settled": "You're all settled up",
+      "settledSubtitle": "No pending debt right now."
+    },
+    "settlement": {
+      "title": "Settle balance",
+      "closeSheet": "Close settlement sheet",
+      "confirmTransfer": "Confirm you transferred {{amount}} to {{name}}.",
+      "noteOptional": "Optional note",
+      "notePlaceholder": "e.g. Bank transfer March",
+      "confirmButton": "Confirm settlement",
+      "onlyDebtorHint": "Only the member who owes can confirm a settlement.",
+      "paidTo": "{{from}} paid {{to}}",
+      "feedStatus": "Settled"
+    }
+  },
   "taskDetails": {
     "status": {
       "pending": "Pending",
@@ -338,6 +416,11 @@
     "inviteExpired": "Invite expired",
     "inviteExpiredDesc": "This invitation is no longer valid. Ask your partner for a new one.",
     "inviteAlreadyUsed": "Invite already used",
-    "householdFull": "This household is already full"
+    "householdFull": "This household is already full",
+    "validation": {
+      "codeMinLength": "Invite code must have at least 4 characters.",
+      "codeMaxLength": "Invite code must have at most 16 characters.",
+      "codeFormat": "Invite code can only contain letters and numbers."
+    }
   }
 }

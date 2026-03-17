@@ -1,5 +1,6 @@
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -9,41 +10,59 @@ import {
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
+  acceptHouseholdInvite,
   addShoppingItem,
+  createExpense,
+  createHouseholdAndInvite,
+  createSettlement,
   completeTask,
   createTask,
   createTasks,
+  deleteExpense,
   deleteShoppingItem,
   deleteTask,
   deleteTaskSeries,
   deleteTasksAfter,
+  getExpenseBalanceSnapshot,
+  getExpenseById,
+  getExpensesActivityFeedPage,
+  getExpenseCategories,
+  getExpensesDashboard,
+  getExpensesList,
+  getInviteInfo,
   getAuthContext,
   getEquityBalance,
   getLatestLoveNote,
   getLoveNoteForTask,
+  getOrCreateHouseholdInvite,
   getPointsBreakdown,
   getProfileById,
   getProfiles,
   getShoppingItems,
+  getSettlementsHistory,
   getTaskById,
   getTasksForMonth,
   getTodaysTasks,
   getUpcomingEvents,
   getWeeklyPulse,
+  sendEmailInvite,
   postponeTask,
   togglePurchased,
   updateProfile,
   updateQuantity,
+  updateExpense,
   updateTask,
-  createHouseholdAndInvite,
-  getOrCreateHouseholdInvite,
-  acceptHouseholdInvite,
-  getInviteInfo,
-  sendEmailInvite,
+  type CreateExpenseInput,
+  type ExpenseActivityFeedPage,
+  type ExpenseBalanceSnapshot,
+  type ExpenseDashboardData,
+  type ExpenseFilters,
+  type SettlementWithDetails,
   type CreateTaskInput,
   type EquityBalance,
   type PointsBreakdown,
   type UpdateProfileInput,
+  type UpdateExpenseInput,
   type UpdateTaskInput,
   type WeeklyPulse,
 } from './queries';
@@ -58,7 +77,16 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
-import type { AuthContext, LoveNote, Profile, ShoppingItem, Task, InviteInfo } from './types';
+import type {
+  AuthContext,
+  ExpenseCategory,
+  ExpenseWithDetails,
+  InviteInfo,
+  LoveNote,
+  Profile,
+  ShoppingItem,
+  Task,
+} from './types';
 
 type AuthCredentials = {
   email: string;
@@ -112,6 +140,7 @@ function clearPrivateDomainQueries(queryClient: QueryClient) {
   queryClient.removeQueries({ queryKey: queryKeys.taskDetail.all });
   queryClient.removeQueries({ queryKey: queryKeys.metrics.all });
   queryClient.removeQueries({ queryKey: queryKeys.shopping.all });
+  queryClient.removeQueries({ queryKey: queryKeys.expenses.all });
   queryClient.removeQueries({ queryKey: queryKeys.loveNotes.all });
 }
 
@@ -237,6 +266,33 @@ async function invalidateTaskMutationGraph(
   }
 }
 
+function getExpenseFiltersSignature(filters: ExpenseFilters = {}): string {
+  return JSON.stringify({
+    categoryId: filters.categoryId ?? null,
+    paidByProfileId: filters.paidByProfileId ?? null,
+    searchText: filters.searchText?.trim() ?? null,
+    fromDate: filters.fromDate ?? null,
+    toDate: filters.toDate ?? null,
+  });
+}
+
+async function invalidateExpenseMutationGraph(
+  queryClient: QueryClient,
+  householdId: string,
+  expenseId?: string,
+) {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      predicate: (query) => isDomainForHousehold(query.queryKey, 'expenses', householdId),
+    }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.categories() }),
+  ]);
+
+  if (expenseId) {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.detail(expenseId, householdId) });
+  }
+}
+
 function findTaskInCache(queryClient: QueryClient, householdId: string, taskId: string): Task | undefined {
   const fromToday = queryClient
     .getQueryData<Task[]>(queryKeys.tasks.today(householdId))
@@ -334,6 +390,66 @@ function reconcileShoppingItemsFromRealtime(
   }
 
   return sortShoppingItems(existing);
+}
+
+function findExpenseInCache(
+  queryClient: QueryClient,
+  householdId: string,
+  expenseId: string,
+): ExpenseWithDetails | undefined {
+  const candidates = queryClient
+    .getQueryCache()
+    .findAll({
+      predicate: (query) => {
+        const queryKey = query.queryKey;
+        return Array.isArray(queryKey) && queryKey[0] === 'expenses' && queryKey.some((part) => part === householdId);
+      },
+    })
+    .map((query) => query.state.data);
+
+  for (const data of candidates) {
+    if (!data) continue;
+
+    if (Array.isArray(data)) {
+      const found = (data as ExpenseWithDetails[]).find((expense) => expense.id === expenseId);
+      if (found) return found;
+      continue;
+    }
+
+    if (typeof data === 'object' && data !== null && 'id' in data) {
+      const maybeExpense = data as ExpenseWithDetails;
+      if (maybeExpense.id === expenseId) return maybeExpense;
+      continue;
+    }
+
+    if (typeof data === 'object' && data !== null && 'recentExpenses' in data) {
+      const maybeDashboard = data as ExpenseDashboardData;
+      const found = maybeDashboard.recentExpenses.find((expense) => expense.id === expenseId);
+      if (found) return found;
+      continue;
+    }
+
+    if (typeof data === 'object' && data !== null && 'pages' in data) {
+      const maybeInfinite = data as { pages?: Array<{ items?: unknown[] }> };
+
+      for (const page of maybeInfinite.pages ?? []) {
+        const items = page.items ?? [];
+        for (const item of items) {
+          if (!item || typeof item !== 'object' || !('type' in item)) continue;
+          const maybeFeedItem = item as {
+            type?: string;
+            expense?: ExpenseWithDetails;
+          };
+
+          if (maybeFeedItem.type === 'expense' && maybeFeedItem.expense?.id === expenseId) {
+            return maybeFeedItem.expense;
+          }
+        }
+      }
+    }
+  }
+
+  return undefined;
 }
 
 export function useAuthContextSnapshot(): AuthContext {
@@ -1152,6 +1268,166 @@ export function useDeleteShoppingItemMutation() {
     onSettled: async (_data, error, _variables, context) => {
       if (!error || !context) return;
       await queryClient.invalidateQueries({ queryKey: queryKeys.shopping.list(context.householdId) });
+    },
+  });
+}
+
+export function useExpenseCategoriesQuery() {
+  return useQuery<ExpenseCategory[]>({
+    queryKey: queryKeys.expenses.categories(),
+    queryFn: getExpenseCategories,
+  });
+}
+
+export function useExpensesDashboardQuery() {
+  const { householdId, profileId } = useAuthScope();
+
+  return useQuery<ExpenseDashboardData>({
+    queryKey:
+      householdId && profileId
+        ? queryKeys.expenses.dashboard(householdId, profileId)
+        : disabledKey('expenses', 'dashboard'),
+    queryFn: () => getExpensesDashboard(householdId as string, profileId as string),
+    enabled: Boolean(householdId && profileId),
+  });
+}
+
+export function useExpenseBalanceSnapshotQuery() {
+  const { householdId, profileId } = useAuthScope();
+
+  return useQuery<ExpenseBalanceSnapshot>({
+    queryKey:
+      householdId && profileId
+        ? queryKeys.expenses.balance(householdId, profileId)
+        : disabledKey('expenses', 'balance'),
+    queryFn: () => getExpenseBalanceSnapshot(householdId as string, profileId as string),
+    enabled: Boolean(householdId && profileId),
+  });
+}
+
+export function useExpensesActivityFeedInfiniteQuery(pageSize = 20, options?: { enabled?: boolean }) {
+  const householdId = useCurrentHouseholdId();
+  const isEnabled = options?.enabled ?? true;
+
+  return useInfiniteQuery<ExpenseActivityFeedPage>({
+    queryKey: householdId ? queryKeys.expenses.feed(householdId) : disabledKey('expenses', 'feed'),
+    queryFn: ({ pageParam }) =>
+      getExpensesActivityFeedPage(householdId as string, pageSize, Number(pageParam ?? 0)),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.pageIndex + 1 : undefined),
+    enabled: Boolean(householdId) && isEnabled,
+    staleTime: 30000,
+  });
+}
+
+export function useExpensesListQuery(filters: ExpenseFilters = {}, options?: { enabled?: boolean }) {
+  const householdId = useCurrentHouseholdId();
+  const signature = useMemo(() => getExpenseFiltersSignature(filters), [filters]);
+  const isEnabled = options?.enabled ?? true;
+
+  return useQuery<ExpenseWithDetails[]>({
+    queryKey: householdId
+      ? queryKeys.expenses.list(householdId, signature)
+      : disabledKey('expenses', 'list', signature),
+    queryFn: () => getExpensesList(householdId as string, filters),
+    enabled: Boolean(householdId) && isEnabled,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useExpenseByIdQuery(expenseId: string | undefined) {
+  const queryClient = useQueryClient();
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<ExpenseWithDetails | null>({
+    queryKey:
+      expenseId && householdId
+        ? queryKeys.expenses.detail(expenseId, householdId)
+        : disabledKey('expenses', 'detail', expenseId ?? 'none'),
+    queryFn: () => getExpenseById(expenseId as string, householdId as string),
+    enabled: Boolean(expenseId && householdId),
+    initialData:
+      expenseId && householdId
+        ? findExpenseInCache(queryClient, householdId, expenseId) ?? undefined
+        : undefined,
+  });
+}
+
+export function useSettlementsHistoryQuery() {
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<SettlementWithDetails[]>({
+    queryKey: householdId
+      ? queryKeys.expenses.settlements(householdId)
+      : disabledKey('expenses', 'settlements'),
+    queryFn: () => getSettlementsHistory(householdId as string),
+    enabled: Boolean(householdId),
+  });
+}
+
+export function useCreateExpenseMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateExpenseInput) => createExpense(input, getLinkedScopeOrThrow(queryClient)),
+    onSuccess: async (expense) => {
+      const householdId = expense.household_id;
+      queryClient.setQueryData<ExpenseWithDetails | null>(
+        queryKeys.expenses.detail(expense.id, householdId),
+        expense,
+      );
+
+      await invalidateExpenseMutationGraph(queryClient, householdId, expense.id);
+    },
+  });
+}
+
+export function useUpdateExpenseMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ expenseId, input }: { expenseId: string; input: UpdateExpenseInput }) =>
+      updateExpense(expenseId, input, getLinkedScopeOrThrow(queryClient)),
+    onSuccess: async (expense) => {
+      const householdId = expense.household_id;
+      queryClient.setQueryData<ExpenseWithDetails | null>(
+        queryKeys.expenses.detail(expense.id, householdId),
+        expense,
+      );
+
+      await invalidateExpenseMutationGraph(queryClient, householdId, expense.id);
+    },
+  });
+}
+
+export function useDeleteExpenseMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (expenseId: string) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      return deleteExpense(expenseId, householdId);
+    },
+    onMutate: async (expenseId) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      queryClient.removeQueries({ queryKey: queryKeys.expenses.detail(expenseId, householdId) });
+      return { householdId, expenseId };
+    },
+    onSuccess: async (_data, _expenseId, context) => {
+      if (!context) return;
+      await invalidateExpenseMutationGraph(queryClient, context.householdId, context.expenseId);
+    },
+  });
+}
+
+export function useCreateSettlementMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ note }: { note?: string }) => createSettlement({ note }, getLinkedScopeOrThrow(queryClient)),
+    onSuccess: async (settlement) => {
+      await invalidateExpenseMutationGraph(queryClient, settlement.household_id);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.settlements(settlement.household_id) });
     },
   });
 }
