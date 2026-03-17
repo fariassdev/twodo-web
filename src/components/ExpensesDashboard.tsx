@@ -152,12 +152,6 @@ export default function ExpensesDashboard() {
               label: t('expenses.viewAll'),
               onClick: () => navigate({ to: '/expenses/list' }),
             },
-            {
-              id: 'view-settlements',
-              icon: 'history',
-              label: t('expenses.settlementsTitle'),
-              onClick: () => navigate({ to: '/expenses/settlements' }),
-            },
           ],
         }}
       />

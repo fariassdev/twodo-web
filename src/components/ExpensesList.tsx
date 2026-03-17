@@ -214,14 +214,7 @@ export default function ExpensesList() {
                 onChange={(event) => {
                   const nextTo = event.target.value;
                   setToDate(nextTo);
-                  feat(expenses): add combined activity feed with infinite scroll
-                  
-                  - Add unified expenses+settlements activity feed query and types
-                  - Introduce useExpensesActivityFeedInfiniteQuery hook (useInfiniteQuery)
-                  - Add ExpensesActivityFeed component with day grouping + load-more sentinel
-                  - Update ExpensesDashboard and ExpensesList to use mixed feed (20 items/page)
-                  - Preserve existing filters behavior (hide settlements when filters active)
-                  - Add i18n keys for settlement feed status                  if (fromDate && nextTo < fromDate) {
+                  if (fromDate && nextTo < fromDate) {
                     setFromDate(nextTo);
                   }
                 }}

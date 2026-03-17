@@ -25,7 +25,6 @@ const ExpensesDashboard = React.lazy(() => import('./components/ExpensesDashboar
 const CreateExpense = React.lazy(() => import('./components/CreateExpense'));
 const ExpensesList = React.lazy(() => import('./components/ExpensesList'));
 const ExpenseDetails = React.lazy(() => import('./components/ExpenseDetails'));
-const ExpenseSettlements = React.lazy(() => import('./components/ExpenseSettlements'));
 const Login = React.lazy(() => import('./components/auth/Login'));
 const Register = React.lazy(() => import('./components/auth/Register'));
 const ForgotPassword = React.lazy(() => import('./components/auth/ForgotPassword'));
@@ -356,16 +355,6 @@ export const expensesListRoute = createRoute({
   ),
 });
 
-export const expensesSettlementsRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
-  path: '/expenses/settlements',
-  component: () => (
-    <RouteShell sectionName="expenses-settlements">
-      <ExpenseSettlements />
-    </RouteShell>
-  ),
-});
-
 export const taskDetailsRoute = createRoute({
   getParentRoute: () => privateGateRoute,
   path: '/task/$taskId',
@@ -449,7 +438,6 @@ const routeTree = rootRoute.addChildren([
       profileRoute,
       expensesDashboardRoute,
       expensesListRoute,
-      expensesSettlementsRoute,
     ]),
     taskDetailsRoute,
     editEntryRoute,
