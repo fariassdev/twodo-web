@@ -1,9 +1,11 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useUpdatePasswordMutation } from '../../lib/queryHooks';
+import { resetPasswordSchema, type ResetPasswordFormValues } from '../../lib/schemas';
 
 type PageState = 'loading' | 'ready' | 'expired' | 'success';
 
@@ -13,9 +15,13 @@ export default function ResetPassword() {
   const updateMutation = useUpdatePasswordMutation();
 
   const [pageState, setPageState] = useState<PageState>('loading');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordFormValues>({ resolver: zodResolver(resetPasswordSchema) });
 
   const loading = updateMutation.isPending;
 
@@ -47,35 +53,16 @@ export default function ResetPassword() {
     };
   }, []);
 
-  function validateForm() {
-    if (!password.trim() || !confirmPassword.trim()) {
-      setFormError(t('auth.validation.requiredFields'));
-      return false;
-    }
-    if (password.length < 8) {
-      setFormError(t('auth.validation.passwordMinLength'));
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setFormError(t('auth.validation.passwordMismatch'));
-      return false;
-    }
-    setFormError(null);
-    return true;
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!validateForm()) return;
-
+  async function onSubmit(data: ResetPasswordFormValues) {
+    setServerError(null);
     try {
-      await updateMutation.mutateAsync({ password });
+      await updateMutation.mutateAsync({ password: data.password });
       setPageState('success');
       setTimeout(() => {
         void navigate({ to: '/auth/login' });
       }, 2000);
     } catch {
-      setFormError(t('auth.resetPassword.error'));
+      setServerError(t('auth.resetPassword.error'));
     }
   }
 
@@ -132,7 +119,7 @@ export default function ResetPassword() {
       )}
 
       {pageState === 'ready' && (
-        <form className="flex-1 flex flex-col" onSubmit={handleSubmit}>
+        <form className="flex-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4 mb-4">
             <label className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-slate-200">{t('auth.password')}</span>
@@ -140,10 +127,12 @@ export default function ResetPassword() {
                 className="h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary"
                 type="password"
                 autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 placeholder={t('auth.passwordPlaceholder')}
+                {...register('password')}
               />
+              {errors.password && (
+                <p className="text-xs font-medium text-rose-300">{t(errors.password.message!)}</p>
+              )}
             </label>
 
             <label className="flex flex-col gap-2">
@@ -152,16 +141,18 @@ export default function ResetPassword() {
                 className="h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary"
                 type="password"
                 autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder={t('auth.confirmPasswordPlaceholder')}
+                {...register('confirmPassword')}
               />
+              {errors.confirmPassword && (
+                <p className="text-xs font-medium text-rose-300">{t(errors.confirmPassword.message!)}</p>
+              )}
             </label>
           </div>
 
-          {formError && (
+          {serverError && (
             <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100 mb-4">
-              {formError}
+              {serverError}
             </p>
           )}
 

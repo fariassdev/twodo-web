@@ -1,41 +1,34 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useForgotPasswordMutation } from '../../lib/queryHooks';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../lib/schemas';
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
   const forgotMutation = useForgotPasswordMutation();
 
-  const [email, setEmail] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormValues>({ resolver: zodResolver(forgotPasswordSchema) });
 
   const loading = forgotMutation.isPending;
 
-  function validateForm() {
-    if (!email.trim()) {
-      setFormError(t('auth.validation.requiredFields'));
-      return false;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-      setFormError(t('auth.validation.invalidEmail'));
-      return false;
-    }
-    setFormError(null);
-    return true;
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!validateForm()) return;
-
+  async function onSubmit(data: ForgotPasswordFormValues) {
+    setServerError(null);
     try {
-      await forgotMutation.mutateAsync({ email: email.trim() });
+      await forgotMutation.mutateAsync({ email: data.email.trim() });
       setSent(true);
     } catch {
-      setFormError(t('auth.forgotPassword.error'));
+      setServerError(t('auth.forgotPassword.error'));
     }
   }
 
@@ -66,7 +59,7 @@ export default function ForgotPassword() {
         <div className="flex-1 flex flex-col">
           <div className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-5 mb-6">
             <p className="text-sm font-semibold text-primary mb-1">{t('auth.forgotPassword.sentTitle')}</p>
-            <p className="text-sm text-slate-300">{t('auth.forgotPassword.sentDescription', { email })}</p>
+            <p className="text-sm text-slate-300">{t('auth.forgotPassword.sentDescription', { email: getValues('email') })}</p>
           </div>
           <Link
             to="/auth/login"
@@ -76,7 +69,7 @@ export default function ForgotPassword() {
           </Link>
         </div>
       ) : (
-        <form className="flex-1 flex flex-col" onSubmit={handleSubmit}>
+        <form className="flex-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
           <label className="flex flex-col gap-2 mb-4">
             <span className="text-sm font-semibold text-slate-200">{t('auth.emailLabel')}</span>
             <div className="flex items-center h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 gap-3 focus-within:ring-1 focus-within:ring-primary">
@@ -87,16 +80,18 @@ export default function ForgotPassword() {
                 className="flex-1 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none"
                 type="email"
                 autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
                 placeholder={t('auth.emailPlaceholder')}
+                {...register('email')}
               />
             </div>
+            {errors.email && (
+              <p className="text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
+            )}
           </label>
 
-          {formError && (
+          {serverError && (
             <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100 mb-4">
-              {formError}
+              {serverError}
             </p>
           )}
 

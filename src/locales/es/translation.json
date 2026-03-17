@@ -178,6 +178,9 @@
     "endTime": "Hora de fin",
     "endTimePlaceholder": "Ej.: 15:00",
     "timeError": "La hora de fin no puede ser anterior a la de inicio.",
+    "validation": {
+      "titleRequired": "El nombre del plan es obligatorio."
+    },
     "priority": "Prioridad",
     "priorityCritical": "Crítica",
     "priorityFlexible": "Flexible",
@@ -240,6 +243,9 @@
     "jointNotifications": "Notificaciones conjuntas",
     "syncAlerts": "Sincroniza alertas con tu pareja",
     "householdMembers": "Miembros del hogar",
+    "validation": {
+      "invalidUrl": "Por favor, introduce una URL válida."
+    },
     "saveChanges": "Guardar cambios",
     "alertSaved": "Perfil guardado exitosamente.",
     "alertSaveError": "Ocurrió un error al guardar el perfil."

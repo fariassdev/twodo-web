@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useCreateTasksMutation,
   useDeleteTasksAfterMutation,
@@ -10,6 +12,7 @@ import type { UpdateTaskInput, CreateTaskInput } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import { entryFormSchema, type EntryFormValues } from '../lib/schemas';
 
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
@@ -18,25 +21,48 @@ export default function EditEntry() {
   const navigate = useNavigate();
   const router = useRouter();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [points, setPoints] = useState(10);
-  const [priority, setPriority] = useState<'critical' | 'flexible'>('critical');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
-  const [type, setType] = useState<'task' | 'event'>('task');
-  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'anyone' | 'individual'>('team_work');
-  const [assignedTo, setAssignedTo] = useState<string>('');
-  const [isRotating, setIsRotating] = useState(false);
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [timeError, setTimeError] = useState('');
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    reset,
+    formState: { errors },
+  } = useForm<EntryFormValues>({
+    resolver: zodResolver(entryFormSchema),
+    defaultValues: {
+      title: '',
+      date: '',
+      points: 10,
+      priority: 'critical',
+      isRecurring: false,
+      frequency: 'weekly',
+      type: 'task',
+      assignmentCategory: 'team_work',
+      assignedTo: '',
+      isRotating: false,
+      description: '',
+      location: '',
+      startTime: '',
+      endTime: '',
+    },
+  });
+
+  const type = watch('type');
+  const priority = watch('priority');
+  const isRecurring = watch('isRecurring');
+  const frequency = watch('frequency');
+  const assignmentCategory = watch('assignmentCategory');
+  const assignedTo = watch('assignedTo');
+  const isRotating = watch('isRotating');
+  const startTime = watch('startTime');
+
+  // automatically adjust endTime when startTime changes
   useEffect(() => {
     if (!startTime) return;
+    const endTime = getValues('endTime');
     if (!endTime || endTime <= startTime) {
       const [hStr, mStr] = startTime.split(':');
       const h = parseInt(hStr, 10);
@@ -50,15 +76,10 @@ export default function EditEntry() {
         const nm = total % 60;
         newEnd = `${nh.toString().padStart(2, '0')}:${nm.toString().padStart(2, '0')}`;
       }
-      setEndTime(newEnd);
+      setValue('endTime', newEnd);
     }
   }, [startTime]);
 
-  useEffect(() => {
-    if (timeError && startTime && endTime && endTime >= startTime) {
-      setTimeError('');
-    }
-  }, [startTime, endTime, timeError]);
   const profilesQuery = useProfilesQuery();
   const taskQuery = useTaskByIdQuery(taskId);
   const updateTaskMutation = useUpdateTaskMutation();
@@ -74,140 +95,124 @@ export default function EditEntry() {
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {
-      setAssignedTo(profiles[0].id);
+      setValue('assignedTo', profiles[0].id);
     }
   }, [profiles, assignedTo, assignmentCategory]);
 
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
+  // Populate form when task data loads
   useEffect(() => {
     const task = taskQuery.data;
     if (task) {
       setOriginalTask(task);
-      setTitle(task.title);
-      setDate(task.date || '');
-      setPoints(task.points || 0);
-      setPriority(task.priority);
-      setIsRecurring(task.is_recurring);
-      setFrequency(task.frequency);
-      setType(task.type);
+      let category: 'team_work' | 'anyone' | 'individual' = 'team_work';
+      let rotating = false;
       if (task.assignment_type === 'team_work') {
-        setAssignmentCategory('team_work');
-        setIsRotating(false);
+        category = 'team_work';
       } else if (task.assignment_type === 'anyone') {
-        setAssignmentCategory('anyone');
-        setIsRotating(false);
-        setAssignedTo('');
+        category = 'anyone';
       } else if (task.assignment_type === 'strict_rotation') {
-        setAssignmentCategory('individual');
-        setIsRotating(true);
-        setAssignedTo(task.assigned_to || '');
+        category = 'individual';
+        rotating = true;
       } else {
-        setAssignmentCategory('individual');
-        setIsRotating(false);
-        setAssignedTo(task.assigned_to || '');
+        category = 'individual';
       }
-      setDescription(task.description || '');
-      setLocation(task.location || '');
-      setStartTime(task.start_time || '');
-      setEndTime(task.end_time || '');
+      reset({
+        title: task.title,
+        date: task.date || '',
+        points: task.points || 0,
+        priority: task.priority as 'critical' | 'flexible',
+        isRecurring: task.is_recurring,
+        frequency: (task.frequency ?? 'weekly') as 'daily' | 'weekly' | 'monthly',
+        type: task.type as 'task' | 'event',
+        assignmentCategory: category,
+        assignedTo: task.assigned_to || '',
+        isRotating: rotating,
+        description: task.description || '',
+        location: task.location || '',
+        startTime: task.start_time || '',
+        endTime: task.end_time || '',
+      });
     }
-  }, [taskQuery.data]);
+  }, [taskQuery.data, reset]);
 
-  async function handleSave() {
-    if (!title.trim() || !taskId) return;
-    // validate times
-    if (startTime && endTime && endTime < startTime) {
-      setTimeError(t('entryForm.timeError'));
-      return;
-    }
-    setTimeError('');
-    
+  function handleSave() {
     if (originalTask?.recurrence_id) {
       setEditModalOpen(true);
       return;
     }
-    
-    await saveChanges('single');
+    void handleSubmit((data) => saveChanges('single', data))();
   }
 
-  async function saveChanges(mode: 'single' | 'following') {
+  async function saveChanges(mode: 'single' | 'following', data: EntryFormValues) {
     if (!taskId || !originalTask) return;
-    // validate times before making any mutations
-    if (startTime && endTime && endTime < startTime) {
-      setTimeError(t('entryForm.timeError'));
-      return;
-    }
-    setTimeError('');
     setEditModalOpen(false);
 
     try {
-      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = assignmentCategory === 'team_work'
+      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = data.assignmentCategory === 'team_work'
         ? 'team_work'
-        : assignmentCategory === 'anyone'
+        : data.assignmentCategory === 'anyone'
           ? 'anyone'
-          : (isRotating ? 'strict_rotation' : 'individual');
+          : (data.isRotating ? 'strict_rotation' : 'individual');
 
       const input: UpdateTaskInput = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        type,
-        priority: type === 'task' ? priority : 'flexible',
-        date: date || undefined,
-        points: type === 'task' ? points : 0,
-        is_recurring: isRecurring,
-        frequency: isRecurring ? frequency : null,
+        title: data.title.trim(),
+        description: data.description.trim() || undefined,
+        type: data.type,
+        priority: data.type === 'task' ? data.priority : 'flexible',
+        date: data.date || undefined,
+        points: data.type === 'task' ? data.points : 0,
+        is_recurring: data.isRecurring,
+        frequency: data.isRecurring ? data.frequency : null,
         assignment_type: finalAssignmentType,
-        assigned_to: assignmentCategory === 'individual' ? assignedTo : null,
-        location: location.trim() || undefined,
-        start_time: startTime || undefined,
-        end_time: endTime || undefined,
+        assigned_to: data.assignmentCategory === 'individual' ? data.assignedTo : null,
+        location: data.location.trim() || undefined,
+        start_time: data.startTime || undefined,
+        end_time: data.endTime || undefined,
       };
 
       await updateTaskMutation.mutateAsync({ taskId, input });
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
-        // Delete any existing future tasks in this series
         await deleteTasksAfterMutation.mutateAsync({
           recurrenceId: originalTask.recurrence_id,
           date: originalTask.date,
         });
 
-        // If it's still recurring, generate the new future tasks based on the updated frequency
-        if (isRecurring && frequency && date) {
+        if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];
           
-          let currentDate = new Date(date);
+          let currentDate = new Date(data.date);
           const endDate = new Date(currentDate);
           endDate.setFullYear(endDate.getFullYear() + 1);
 
-          // Advance by one frequency step to skip the current task we just updated
-          if (frequency === 'daily') {
+          if (data.frequency === 'daily') {
             currentDate.setDate(currentDate.getDate() + 1);
-          } else if (frequency === 'weekly') {
+          } else if (data.frequency === 'weekly') {
             currentDate.setDate(currentDate.getDate() + 7);
-          } else if (frequency === 'monthly') {
+          } else if (data.frequency === 'monthly') {
             currentDate.setMonth(currentDate.getMonth() + 1);
           }
 
-          let currentAssignedTo = assignedTo;
+          let currentAssignedTo = data.assignedTo;
 
           while (currentDate <= endDate) {
             newTasks.push({
-              title: title.trim(),
-              description: description.trim() || undefined,
-              type,
-              priority: type === 'task' ? priority : 'flexible',
+              title: data.title.trim(),
+              description: data.description.trim() || undefined,
+              type: data.type,
+              priority: data.type === 'task' ? data.priority : 'flexible',
               date: currentDate.toISOString().split('T')[0],
-              points: type === 'task' ? points : 0,
+              points: data.type === 'task' ? data.points : 0,
               is_recurring: true,
-              frequency,
+              frequency: data.frequency,
               assignment_type: finalAssignmentType,
-              assigned_to: assignmentCategory === 'individual' ? currentAssignedTo : undefined,
-              location: location.trim() || undefined,
-              start_time: startTime || undefined,
-              end_time: endTime || undefined,
+              assigned_to: data.assignmentCategory === 'individual' ? currentAssignedTo : undefined,
+              location: data.location.trim() || undefined,
+              start_time: data.startTime || undefined,
+              end_time: data.endTime || undefined,
               recurrence_id: originalTask.recurrence_id,
             });
 
@@ -217,11 +222,11 @@ export default function EditEntry() {
               currentAssignedTo = profiles[nextIndex]?.id || currentAssignedTo;
             }
 
-            if (frequency === 'daily') {
+            if (data.frequency === 'daily') {
               currentDate.setDate(currentDate.getDate() + 1);
-            } else if (frequency === 'weekly') {
+            } else if (data.frequency === 'weekly') {
               currentDate.setDate(currentDate.getDate() + 7);
-            } else if (frequency === 'monthly') {
+            } else if (data.frequency === 'monthly') {
               currentDate.setMonth(currentDate.getMonth() + 1);
             }
           }
@@ -237,7 +242,6 @@ export default function EditEntry() {
       console.error('Update task error:', err);
     }
   }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background-dark">
@@ -257,8 +261,8 @@ export default function EditEntry() {
               <p className="text-slate-400 text-sm">{t('entryEdit.recurringModalDescription')}</p>
             </div>
             <div className="flex flex-col border-t border-slate-700 divide-y divide-slate-700">
-              <button onClick={() => saveChanges('single')} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('entryEdit.recurringModalOnlyThis')}</button>
-              <button onClick={() => saveChanges('following')} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('entryEdit.recurringModalThisAndFollowing')}</button>
+              <button onClick={() => handleSubmit((data) => saveChanges('single', data))()} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('entryEdit.recurringModalOnlyThis')}</button>
+              <button onClick={() => handleSubmit((data) => saveChanges('following', data))()} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('entryEdit.recurringModalThisAndFollowing')}</button>
               <button onClick={() => setEditModalOpen(false)} className="p-4 text-center text-slate-400 hover:bg-slate-700 transition-colors font-medium bg-slate-800/50">{t('cta.cancel')}</button>
             </div>
           </div>
@@ -277,7 +281,7 @@ export default function EditEntry() {
           <button
             aria-label={t('topBar.save')}
             className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
-            disabled={saving || !!timeError}
+            disabled={saving}
             onClick={handleSave}
             type="button"
           >
@@ -293,9 +297,9 @@ export default function EditEntry() {
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
             placeholder={t('entryForm.planNamePlaceholder')}
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            {...register('title')}
           />
+          {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
         </label>
 
         <div className={`grid gap-4 ${type === 'task' ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -304,8 +308,7 @@ export default function EditEntry() {
             <input
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              {...register('date')}
             />
           </label>
           {type === 'task' && (
@@ -315,8 +318,7 @@ export default function EditEntry() {
                 className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
                 placeholder={t('entryForm.pointsPlaceholder')}
                 type="number"
-                value={points}
-                onChange={(e) => setPoints(Number(e.target.value) || 0)}
+                {...register('points', { valueAsNumber: true })}
               />
             </label>
           )}
@@ -328,8 +330,7 @@ export default function EditEntry() {
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="time"
               placeholder={t('entryForm.startTimePlaceholder')}
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              {...register('startTime')}
             />
           </label>
           <label className="flex flex-col">
@@ -338,12 +339,11 @@ export default function EditEntry() {
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="time"
               placeholder={t('entryForm.endTimePlaceholder')}
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              {...register('endTime')}
             />
           </label>
         </div>
-        {timeError && <p className="text-sm text-red-400 mt-1">{timeError}</p>}
+        {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
 
         <label className="flex flex-col w-full">
           <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>
@@ -351,8 +351,7 @@ export default function EditEntry() {
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
             placeholder={t('entryForm.locationPlaceholder')}
             type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            {...register('location')}
           />
         </label>
 
@@ -362,11 +361,11 @@ export default function EditEntry() {
             <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
               <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'critical' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                 <span className="truncate">{t('entryForm.priorityCritical')}</span>
-                <input className="invisible w-0" name="priority" type="radio" value="critical" checked={priority === 'critical'} onChange={() => setPriority('critical')} />
+                <input className="invisible w-0" type="radio" value="critical" {...register('priority')} />
               </label>
               <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'flexible' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                 <span className="truncate">{t('entryForm.priorityFlexible')}</span>
-                <input className="invisible w-0" name="priority" type="radio" value="flexible" checked={priority === 'flexible'} onChange={() => setPriority('flexible')} />
+                <input className="invisible w-0" type="radio" value="flexible" {...register('priority')} />
               </label>
             </div>
           </div>
@@ -380,7 +379,7 @@ export default function EditEntry() {
             </div>
             <label className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${isRecurring ? 'justify-end bg-primary' : 'bg-primary/20'}`}>
               <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
-              <input className="invisible absolute" type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+              <input className="invisible absolute" type="checkbox" {...register('isRecurring')} />
             </label>
           </div>
           {isRecurring && (
@@ -390,7 +389,7 @@ export default function EditEntry() {
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
                   <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                     <span className="truncate">{t(`entryForm.frequencyOptions.${f}`)}</span>
-                    <input className="invisible w-0" name="frequency" type="radio" value={f} checked={frequency === f} onChange={() => setFrequency(f)} />
+                    <input className="invisible w-0" type="radio" value={f} {...register('frequency')} />
                   </label>
                 ))}
               </div>
@@ -406,14 +405,14 @@ export default function EditEntry() {
                 <span className="material-symbols-outlined text-lg">check_circle</span>
                 <span className="truncate">{t('entryForm.typeTask')}</span>
               </div>
-              <input className="invisible w-0" name="entry_type" type="radio" value="task" checked={type === 'task'} onChange={() => setType('task')} />
+              <input className="invisible w-0" type="radio" value="task" {...register('type')} />
             </label>
             <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">calendar_today</span>
                 <span className="truncate">{t('entryForm.typeEvent')}</span>
               </div>
-              <input className="invisible w-0" name="entry_type" type="radio" value="event" checked={type === 'event'} onChange={() => setType('event')} />
+              <input className="invisible w-0" type="radio" value="event" {...register('type')} />
             </label>
           </div>
         </div>
@@ -429,7 +428,7 @@ export default function EditEntry() {
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentTeamTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
-              <input type="radio" className="hidden" checked={assignmentCategory === 'team_work'} onChange={() => { setAssignmentCategory('team_work'); setIsRotating(false); }} />
+              <input type="radio" className="hidden" value="team_work" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'team_work'); setValue('isRotating', false); }} />
             </label>
 
             <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'anyone' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
@@ -440,7 +439,7 @@ export default function EditEntry() {
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
               </div>
-              <input type="radio" className="hidden" checked={assignmentCategory === 'anyone'} onChange={() => { setAssignmentCategory('anyone'); setIsRotating(false); }} />
+              <input type="radio" className="hidden" value="anyone" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'anyone'); setValue('isRotating', false); }} />
             </label>
 
             <div className={`flex flex-col gap-4 p-4 rounded-xl border transition-all ${assignmentCategory === 'individual' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
@@ -449,7 +448,7 @@ export default function EditEntry() {
                   {assignmentCategory === 'individual' && <div className="w-3 h-3 rounded-full bg-primary" />}
                 </div>
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentIndividual')}</span>
-                <input type="radio" className="hidden" checked={assignmentCategory === 'individual'} onChange={() => setAssignmentCategory('individual')} />
+                <input type="radio" className="hidden" value="individual" {...register('assignmentCategory')} />
               </label>
 
               {assignmentCategory === 'individual' && (
@@ -459,7 +458,7 @@ export default function EditEntry() {
                       <button
                         key={p.id}
                         type="button"
-                        onClick={() => setAssignedTo(p.id)}
+                        onClick={() => setValue('assignedTo', p.id)}
                         className={`flex h-full grow items-center justify-center rounded-lg text-sm font-bold transition-all ${assignedTo === p.id ? 'bg-primary/20 text-primary' : 'text-primary/60 hover:text-primary'}`}
                       >
                         {p.name}
@@ -478,8 +477,7 @@ export default function EditEntry() {
                         className="invisible absolute" 
                         type="checkbox" 
                         disabled={!isRecurring}
-                        checked={isRotating} 
-                        onChange={(e) => setIsRotating(e.target.checked)} 
+                        {...register('isRotating')}
                       />
                     </label>
                   </div>
@@ -497,8 +495,7 @@ export default function EditEntry() {
           <textarea
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
             placeholder={t('entryForm.descriptionPlaceholder')}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            {...register('description')}
           />
         </label>
       </div>

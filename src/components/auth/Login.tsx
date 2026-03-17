@@ -1,50 +1,33 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useSignInMutation } from '../../lib/queryHooks';
+import { loginSchema, type LoginFormValues } from '../../lib/schemas';
 
 export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const signInMutation = useSignInMutation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
   const loading = signInMutation.isPending;
 
-  function validateForm() {
-    if (!email.trim() || !password.trim()) {
-      setFormError(t('auth.validation.requiredFields'));
-      return false;
-    }
-
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-      setFormError(t('auth.validation.invalidEmail'));
-      return false;
-    }
-
-    setFormError(null);
-    return true;
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  async function onSubmit(data: LoginFormValues) {
+    setServerError(null);
     try {
-      await signInMutation.mutateAsync({
-        email: email.trim(),
-        password,
-      });
+      await signInMutation.mutateAsync({ email: data.email.trim(), password: data.password });
       navigate({ to: '/' });
     } catch {
-      setFormError(t('auth.login.error'));
+      setServerError(t('auth.login.error'));
     }
   }
 
@@ -56,17 +39,19 @@ export default function Login() {
           <p className="mt-2 text-sm text-slate-400">{t('auth.login.subtitle')}</p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <label className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-slate-200">{t('auth.email')}</span>
             <input
               className="h-12 rounded-xl border border-primary/20 bg-background-dark px-4 text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
               type="email"
               autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
               placeholder={t('auth.emailPlaceholder')}
+              {...register('email')}
             />
+            {errors.email && (
+              <p className="text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
+            )}
           </label>
 
           <label className="flex flex-col gap-2">
@@ -75,15 +60,17 @@ export default function Login() {
               className="h-12 rounded-xl border border-primary/20 bg-background-dark px-4 text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
               type="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
               placeholder={t('auth.passwordPlaceholder')}
+              {...register('password')}
             />
+            {errors.password && (
+              <p className="text-xs font-medium text-rose-300">{t(errors.password.message!)}</p>
+            )}
           </label>
 
-          {formError && (
+          {serverError && (
             <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-              {formError}
+              {serverError}
             </p>
           )}
 

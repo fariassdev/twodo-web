@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useCurrentProfileId,
   useSignOutMutation,
@@ -10,6 +12,7 @@ import {
 } from '../lib/queryHooks';
 import type { Profile } from '../lib/types';
 import TopBar from './ui/TopBar';
+import { profileSchema, type ProfileFormValues } from '../lib/schemas';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -25,31 +28,34 @@ export default function Profile() {
   const loading = !currentProfileId || profilesQuery.isPending || profileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
-  // Form state
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [bio, setBio] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { name: '', email: '', bio: '', avatarUrl: '' },
+  });
+
+  const avatarUrlValue = watch('avatarUrl');
+  const nameValue = watch('name');
 
   // Settings state (visual only for now)
-
   const [notifications, setNotifications] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
-      setName(profile.name || '');
-      setEmail(profile.email || '');
-      setBio(profile.bio || '');
-      setAvatarUrl(profile.avatar_url || '');
-      return;
+      reset({
+        name: profile.name ?? '',
+        email: profile.email ?? '',
+        bio: profile.bio ?? '',
+        avatarUrl: profile.avatar_url ?? '',
+      });
     }
-
-    setName('');
-    setEmail('');
-    setBio('');
-    setAvatarUrl('');
-  }, [profile]);
+  }, [profile, reset]);
 
   async function handleSignOut() {
     setAuthError(null);
@@ -60,24 +66,24 @@ export default function Profile() {
     }
   }
 
-  async function handleSave() {
+  async function onSubmit(data: ProfileFormValues) {
     if (!profile || !currentProfileId) return;
     try {
-      const normalizedAvatarUrl = avatarUrl.trim();
       const updated = await updateProfileMutation.mutateAsync({
         profileId: currentProfileId,
         input: {
-        name,
-        email,
-        bio,
-        avatar_url: normalizedAvatarUrl || null,
+          name: data.name,
+          email: data.email,
+          bio: data.bio,
+          avatar_url: data.avatarUrl.trim() || null,
         },
       });
-
-      setName(updated.name || '');
-      setEmail(updated.email || '');
-      setBio(updated.bio || '');
-      setAvatarUrl(updated.avatar_url || '');
+      reset({
+        name: updated.name ?? '',
+        email: updated.email ?? '',
+        bio: updated.bio ?? '',
+        avatarUrl: updated.avatar_url ?? '',
+      });
       alert(t('profile.alertSaved'));
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -128,14 +134,16 @@ export default function Profile() {
           </div>
         </div>
 
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+
         {/* Avatar Section */}
         <div className="flex flex-col items-center">
           <div className="relative">
             <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-primary/20 flex items-center justify-center">
-              {avatarUrl ? (
+              {avatarUrlValue ? (
                 <img 
-                  src={avatarUrl}
-                  alt={name || t('profile.avatarFallbackAlt')} 
+                  src={avatarUrlValue}
+                  alt={nameValue || t('profile.avatarFallbackAlt')} 
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -148,14 +156,13 @@ export default function Profile() {
           </div>
           
           <div className="mt-4 text-center">
-            <h2 className="text-2xl font-bold">{name || t('profile.noName')}</h2>
+            <h2 className="text-2xl font-bold">{nameValue || t('profile.noName')}</h2>
             <div className="mt-1 relative max-w-xs mx-auto">
                <input
                 type="text"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
                 placeholder={t('profile.bioPlaceholder')}
                 className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
+                {...register('bio')}
                />
             </div>
           </div>
@@ -174,9 +181,8 @@ export default function Profile() {
                 <input
                   id="displayName"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  {...register('name')}
                 />
               </div>
             </div>
@@ -188,11 +194,13 @@ export default function Profile() {
                 <input
                   id="emailAddress"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  {...register('email')}
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 ml-1 text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
+              )}
             </div>
 
             <div>
@@ -202,12 +210,14 @@ export default function Profile() {
                 <input
                   id="avatarUrl"
                   type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
                   placeholder={t('profile.avatarUrlPlaceholder')}
                   className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  {...register('avatarUrl')}
                 />
               </div>
+              {errors.avatarUrl && (
+                <p className="mt-1 ml-1 text-xs font-medium text-rose-300">{t(errors.avatarUrl.message!)}</p>
+              )}
             </div>
           </div>
         </section>
@@ -267,7 +277,7 @@ export default function Profile() {
         {/* Save Button */}
         <div className="pt-4">
           <button 
-            onClick={handleSave}
+            type="submit"
             disabled={saving}
             className="w-full bg-primary text-background-dark font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
@@ -280,7 +290,10 @@ export default function Profile() {
               </>
             )}
           </button>
+        </div>
+        </form>
 
+        <div className="pt-0 pb-4">
           <button
             type="button"
             onClick={handleSignOut}

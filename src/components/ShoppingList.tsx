@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAuthScope,
@@ -15,14 +17,14 @@ import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { shoppingItemSchema, type ShoppingItemFormValues } from '../lib/schemas';
 
 export default function ShoppingList() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
-  const [newItem, setNewItem] = useState('');
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const shoppingItemsQuery = useShoppingItemsQuery();
   const addShoppingItemMutation = useAddShoppingItemMutation();
@@ -30,19 +32,22 @@ export default function ShoppingList() {
   const updateQuantityMutation = useUpdateQuantityMutation();
   const deleteShoppingItemMutation = useDeleteShoppingItemMutation();
 
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ShoppingItemFormValues>({
+    resolver: zodResolver(shoppingItemSchema),
+  });
+
+  const { ref: registerRef, ...registerRest } = register('name');
+
   const items: ShoppingItemType[] = shoppingItemsQuery.data ?? [];
   const loading = shoppingItemsQuery.isPending;
   const isStale = shoppingItemsQuery.isStale;
   const isFetching = shoppingItemsQuery.isFetching;
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    const name = newItem.trim();
-    if (!name) return;
+  async function onAddItem(data: ShoppingItemFormValues) {
     setActionError(null);
     try {
-      await addShoppingItemMutation.mutateAsync(name);
-      setNewItem('');
+      await addShoppingItemMutation.mutateAsync(data.name.trim());
+      reset();
       inputRef.current?.focus();
     } catch (err) {
       console.error('Add item error:', err);
@@ -119,18 +124,20 @@ export default function ShoppingList() {
           </p>
         )}
 
-        <form onSubmit={handleAdd} className="mt-8 mb-10">
+        <form onSubmit={handleSubmit(onAddItem)} className="mt-8 mb-10">
           <label className="block text-sm font-medium text-primary mb-3" htmlFor="new-item">{t('shopping.addToList')}</label>
           <div className="relative">
             <input
-              ref={inputRef}
+              ref={(el) => {
+                registerRef(el);
+                (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+              }}
               className="w-full bg-primary/5 border-none rounded-xl h-16 px-6 text-xl placeholder:text-slate-600 focus:ring-2 focus:ring-primary focus:bg-primary/10 transition-all font-display"
               id="new-item"
               placeholder={t('shopping.newItemPlaceholder')}
               type="text"
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
               autoFocus
+              {...registerRest}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <button type="submit" className="bg-primary text-background-dark p-3 rounded-lg flex items-center justify-center">

@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateTasksMutation, useProfilesQuery } from '../lib/queryHooks';
 import type { CreateTaskInput } from '../lib/queries';
 import type { Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
+import { entryFormSchema, type EntryFormValues } from '../lib/schemas';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 
@@ -16,26 +19,47 @@ export default function CreateEntry() {
   const initialType = searchParams?.type === 'event' ? 'event' : 'task';
   const initialStartTime = searchParams?.startTime || '';
   const initialEndTime = searchParams?.endTime || '';
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
-  const [points, setPoints] = useState(10);
-  const [priority, setPriority] = useState<'critical' | 'flexible'>('critical');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [type, setType] = useState<'task' | 'event'>(initialType);
-  const [assignmentCategory, setAssignmentCategory] = useState<'team_work' | 'anyone' | 'individual'>('team_work');
-  const [assignedTo, setAssignedTo] = useState<string>('');
-  const [isRotating, setIsRotating] = useState(false);
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [startTime, setStartTime] = useState(initialStartTime);
-  const [endTime, setEndTime] = useState(initialEndTime);
-  const [timeError, setTimeError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useForm<EntryFormValues>({
+    resolver: zodResolver(entryFormSchema),
+    defaultValues: {
+      title: '',
+      date: initialDate || new Date().toISOString().split('T')[0],
+      points: 10,
+      priority: 'critical',
+      isRecurring: false,
+      frequency: 'weekly',
+      type: initialType,
+      assignmentCategory: 'team_work',
+      assignedTo: '',
+      isRotating: false,
+      description: '',
+      location: '',
+      startTime: initialStartTime,
+      endTime: initialEndTime,
+    },
+  });
+
+  const type = watch('type');
+  const priority = watch('priority');
+  const isRecurring = watch('isRecurring');
+  const frequency = watch('frequency');
+  const assignmentCategory = watch('assignmentCategory');
+  const assignedTo = watch('assignedTo');
+  const isRotating = watch('isRotating');
+  const startTime = watch('startTime');
 
   // automatically adjust endTime when startTime is entered
   useEffect(() => {
     if (!startTime) return;
-    // only override if endTime is empty or earlier than startTime
+    const endTime = getValues('endTime');
     if (!endTime || endTime <= startTime) {
       const [hStr, mStr] = startTime.split(':');
       const h = parseInt(hStr, 10);
@@ -49,15 +73,10 @@ export default function CreateEntry() {
         const nm = total % 60;
         newEnd = `${nh.toString().padStart(2, '0')}:${nm.toString().padStart(2, '0')}`;
       }
-      setEndTime(newEnd);
+      setValue('endTime', newEnd);
     }
   }, [startTime]);
 
-  useEffect(() => {
-    if (timeError && startTime && endTime && endTime >= startTime) {
-      setTimeError('');
-    }
-  }, [startTime, endTime, timeError]);
   const profilesQuery = useProfilesQuery();
   const createTasksMutation = useCreateTasksMutation();
 
@@ -66,62 +85,54 @@ export default function CreateEntry() {
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo) {
-      setAssignedTo(profiles[0].id);
+      setValue('assignedTo', profiles[0].id);
     }
   }, [profiles, assignedTo]);
 
-  async function handleSave() {
-    if (!title.trim()) return;
-    // validate time order
-    if (startTime && endTime && endTime < startTime) {
-      setTimeError(t('entryForm.timeError'));
-      return;
-    }
-    setTimeError('');
-
+  async function onSubmit(data: EntryFormValues) {
     try {
-      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = assignmentCategory === 'team_work'
+      const finalAssignmentType: 'team_work' | 'strict_rotation' | 'individual' | 'anyone' = data.assignmentCategory === 'team_work'
         ? 'team_work'
-        : assignmentCategory === 'anyone'
+        : data.assignmentCategory === 'anyone'
           ? 'anyone'
-          : (isRotating ? 'strict_rotation' : 'individual');
+          : (data.isRotating ? 'strict_rotation' : 'individual');
 
       const baseInput = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        type,
-        priority: type === 'task' ? priority : 'flexible',
-        points: type === 'task' ? points : 0,
-        is_recurring: isRecurring,
-        frequency: isRecurring ? frequency : null,
+        title: data.title.trim(),
+        description: data.description.trim() || undefined,
+        type: data.type,
+        priority: data.type === 'task' ? data.priority : 'flexible',
+        points: data.type === 'task' ? data.points : 0,
+        is_recurring: data.isRecurring,
+        frequency: data.isRecurring ? data.frequency : null,
         assignment_type: finalAssignmentType,
-        assigned_to: assignmentCategory === 'individual' ? assignedTo : undefined,
-        location: location.trim() || undefined,
-        start_time: startTime || undefined,
-        end_time: endTime || undefined,
+        assigned_to: data.assignmentCategory === 'individual' ? data.assignedTo : undefined,
+        location: data.location.trim() || undefined,
+        start_time: data.startTime || undefined,
+        end_time: data.endTime || undefined,
       };
 
       let inputs: CreateTaskInput[] = [];
 
-      if (isRecurring && frequency && date) {
+      if (data.isRecurring && data.frequency && data.date) {
         const recurrenceId = crypto.randomUUID();
-        const baseDate = new Date(date);
-        let instancesCount = frequency === 'daily' ? 365 : frequency === 'weekly' ? 52 : 12;
+        const baseDate = new Date(data.date);
+        let instancesCount = data.frequency === 'daily' ? 365 : data.frequency === 'weekly' ? 52 : 12;
 
-        let currentAssignedTo = assignedTo;
+        let currentAssignedTo = data.assignedTo;
 
         for (let i = 0; i < instancesCount; i++) {
           const instanceDate = new Date(baseDate);
-          if (frequency === 'daily') {
+          if (data.frequency === 'daily') {
             instanceDate.setDate(instanceDate.getDate() + i);
-          } else if (frequency === 'weekly') {
+          } else if (data.frequency === 'weekly') {
             instanceDate.setDate(instanceDate.getDate() + i * 7);
-          } else if (frequency === 'monthly') {
+          } else if (data.frequency === 'monthly') {
             instanceDate.setMonth(instanceDate.getMonth() + i);
           }
           inputs.push({
             ...baseInput,
-            assigned_to: assignmentCategory === 'individual' ? currentAssignedTo : undefined,
+            assigned_to: data.assignmentCategory === 'individual' ? currentAssignedTo : undefined,
             date: instanceDate.toISOString().split('T')[0],
             recurrence_id: recurrenceId,
           });
@@ -135,7 +146,7 @@ export default function CreateEntry() {
       } else {
         inputs.push({
           ...baseInput,
-          date: date || undefined,
+          date: data.date || undefined,
         });
       }
 
@@ -165,8 +176,8 @@ export default function CreateEntry() {
           <button
             aria-label={t('topBar.save')}
             className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
-            disabled={saving || !!timeError}
-            onClick={handleSave}
+            disabled={saving}
+            onClick={handleSubmit(onSubmit)}
             type="button"
           >
             {saving ? t('common.saving') : t('cta.save')}
@@ -181,9 +192,9 @@ export default function CreateEntry() {
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
             placeholder={t('entryForm.planNamePlaceholder')}
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            {...register('title')}
           />
+          {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
         </label>
 
         <div className={`grid gap-4 ${type === 'task' ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -192,8 +203,7 @@ export default function CreateEntry() {
             <input
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              {...register('date')}
             />
           </label>
           {type === 'task' && (
@@ -203,8 +213,7 @@ export default function CreateEntry() {
                 className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
                 placeholder={t('entryForm.pointsPlaceholder')}
                 type="number"
-                value={points}
-                onChange={(e) => setPoints(Number(e.target.value) || 0)}
+                {...register('points', { valueAsNumber: true })}
               />
             </label>
           )}
@@ -216,8 +225,7 @@ export default function CreateEntry() {
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="time"
               placeholder={t('entryForm.startTimePlaceholder')}
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              {...register('startTime')}
             />
           </label>
           <label className="flex flex-col">
@@ -226,12 +234,11 @@ export default function CreateEntry() {
               className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
               type="time"
               placeholder={t('entryForm.endTimePlaceholder')}
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              {...register('endTime')}
             />
           </label>
         </div>
-        {timeError && <p className="text-sm text-red-400 mt-1">{timeError}</p>}
+        {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
 
         <label className="flex flex-col w-full">
           <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>
@@ -239,8 +246,7 @@ export default function CreateEntry() {
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
             placeholder={t('entryForm.locationPlaceholder')}
             type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            {...register('location')}
           />
         </label>
 
@@ -250,11 +256,11 @@ export default function CreateEntry() {
             <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
               <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'critical' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                 <span className="truncate">{t('entryForm.priorityCritical')}</span>
-                <input className="invisible w-0" name="priority" type="radio" value="critical" checked={priority === 'critical'} onChange={() => setPriority('critical')} />
+                <input className="invisible w-0" type="radio" value="critical" {...register('priority')} />
               </label>
               <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'flexible' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                 <span className="truncate">{t('entryForm.priorityFlexible')}</span>
-                <input className="invisible w-0" name="priority" type="radio" value="flexible" checked={priority === 'flexible'} onChange={() => setPriority('flexible')} />
+                <input className="invisible w-0" type="radio" value="flexible" {...register('priority')} />
               </label>
             </div>
           </div>
@@ -268,7 +274,7 @@ export default function CreateEntry() {
             </div>
             <label className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${isRecurring ? 'justify-end bg-primary' : 'bg-primary/20'}`}>
               <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
-              <input className="invisible absolute" type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+              <input className="invisible absolute" type="checkbox" {...register('isRecurring')} />
             </label>
           </div>
           {isRecurring && (
@@ -278,7 +284,7 @@ export default function CreateEntry() {
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
                   <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
                     <span className="truncate">{t(`entryForm.frequencyOptions.${f}`)}</span>
-                    <input className="invisible w-0" name="frequency" type="radio" value={f} checked={frequency === f} onChange={() => setFrequency(f)} />
+                    <input className="invisible w-0" type="radio" value={f} {...register('frequency')} />
                   </label>
                 ))}
               </div>
@@ -294,14 +300,14 @@ export default function CreateEntry() {
                 <span className="material-symbols-outlined text-lg">check_circle</span>
                 <span className="truncate">{t('entryForm.typeTask')}</span>
               </div>
-              <input className="invisible w-0" name="entry_type" type="radio" value="task" checked={type === 'task'} onChange={() => setType('task')} />
+              <input className="invisible w-0" type="radio" value="task" {...register('type')} />
             </label>
             <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">calendar_today</span>
                 <span className="truncate">{t('entryForm.typeEvent')}</span>
               </div>
-              <input className="invisible w-0" name="entry_type" type="radio" value="event" checked={type === 'event'} onChange={() => setType('event')} />
+              <input className="invisible w-0" type="radio" value="event" {...register('type')} />
             </label>
           </div>
         </div>
@@ -317,7 +323,7 @@ export default function CreateEntry() {
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentTeamTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
-              <input type="radio" className="hidden" checked={assignmentCategory === 'team_work'} onChange={() => { setAssignmentCategory('team_work'); setIsRotating(false); }} />
+              <input type="radio" className="hidden" value="team_work" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'team_work'); setValue('isRotating', false); }} />
             </label>
 
             <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'anyone' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
@@ -328,7 +334,7 @@ export default function CreateEntry() {
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
               </div>
-              <input type="radio" className="hidden" checked={assignmentCategory === 'anyone'} onChange={() => { setAssignmentCategory('anyone'); setIsRotating(false); }} />
+              <input type="radio" className="hidden" value="anyone" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'anyone'); setValue('isRotating', false); }} />
             </label>
 
             <div className={`flex flex-col gap-4 p-4 rounded-xl border transition-all ${assignmentCategory === 'individual' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
@@ -337,7 +343,7 @@ export default function CreateEntry() {
                   {assignmentCategory === 'individual' && <div className="w-3 h-3 rounded-full bg-primary" />}
                 </div>
                 <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentIndividual')}</span>
-                <input type="radio" className="hidden" checked={assignmentCategory === 'individual'} onChange={() => setAssignmentCategory('individual')} />
+                <input type="radio" className="hidden" value="individual" {...register('assignmentCategory')} />
               </label>
 
               {assignmentCategory === 'individual' && (
@@ -347,7 +353,7 @@ export default function CreateEntry() {
                       <button
                         key={p.id}
                         type="button"
-                        onClick={() => setAssignedTo(p.id)}
+                        onClick={() => setValue('assignedTo', p.id)}
                         className={`flex h-full grow items-center justify-center rounded-lg text-sm font-bold transition-all ${assignedTo === p.id ? 'bg-primary/20 text-primary' : 'text-primary/60 hover:text-primary'}`}
                       >
                         {p.name}
@@ -366,8 +372,7 @@ export default function CreateEntry() {
                         className="invisible absolute" 
                         type="checkbox" 
                         disabled={!isRecurring}
-                        checked={isRotating} 
-                        onChange={(e) => setIsRotating(e.target.checked)} 
+                        {...register('isRotating')}
                       />
                     </label>
                   </div>
@@ -385,8 +390,7 @@ export default function CreateEntry() {
           <textarea
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
             placeholder={t('entryForm.descriptionPlaceholder')}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            {...register('description')}
           />
         </label>
       </div>
