@@ -267,8 +267,9 @@ function getExpenseFiltersSignature(filters: ExpenseFilters = {}): string {
   return JSON.stringify({
     categoryId: filters.categoryId ?? null,
     paidByProfileId: filters.paidByProfileId ?? null,
-    month: filters.month ?? null,
-    sharedOnly: typeof filters.sharedOnly === 'boolean' ? filters.sharedOnly : null,
+    searchText: filters.searchText?.trim() ?? null,
+    fromDate: filters.fromDate ?? null,
+    toDate: filters.toDate ?? null,
   });
 }
 

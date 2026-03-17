@@ -791,8 +791,9 @@ export interface ExpenseDashboardData {
 export interface ExpenseFilters {
   categoryId?: string;
   paidByProfileId?: string;
-  month?: string;
-  sharedOnly?: boolean;
+  searchText?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface CreateExpenseInput {
@@ -814,22 +815,6 @@ export interface SettlementWithDetails extends Settlement {
 
 function normalizeAmountCents(amountCents: number): number {
   return Math.max(1, Math.round(amountCents));
-}
-
-function parseMonthRange(month: string): { startDate: string; endDate: string } | null {
-  const match = /^(\d{4})-(\d{2})$/.exec(month);
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const monthNumber = Number(match[2]);
-  if (!Number.isFinite(year) || !Number.isFinite(monthNumber) || monthNumber < 1 || monthNumber > 12) {
-    return null;
-  }
-
-  const startDate = `${match[1]}-${match[2]}-01`;
-  const nextMonth = new Date(Date.UTC(year, monthNumber, 1));
-  const endDate = nextMonth.toISOString().slice(0, 10);
-  return { startDate, endDate };
 }
 
 async function mapExpensesWithDetails(expenses: Expense[], householdId: string): Promise<ExpenseWithDetails[]> {
@@ -984,15 +969,19 @@ export async function getExpensesList(
     query = query.eq('paid_by_profile_id', filters.paidByProfileId);
   }
 
-  if (typeof filters.sharedOnly === 'boolean') {
-    query = query.eq('is_shared', filters.sharedOnly);
+  const searchText = filters.searchText?.trim();
+  if (searchText) {
+    query = query.ilike('description', `%${searchText}%`);
   }
 
-  if (filters.month) {
-    const monthRange = parseMonthRange(filters.month);
-    if (monthRange) {
-      query = query.gte('expense_date', monthRange.startDate).lt('expense_date', monthRange.endDate);
-    }
+  const fromDate = filters.fromDate?.trim();
+  if (fromDate) {
+    query = query.gte('expense_date', fromDate);
+  }
+
+  const toDate = filters.toDate?.trim();
+  if (toDate) {
+    query = query.lte('expense_date', toDate);
   }
 
   const { data, error } = await query
