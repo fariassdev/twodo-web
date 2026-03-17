@@ -22,7 +22,6 @@ create table if not exists public.expenses (
   amount_cents integer not null check (amount_cents > 0),
   description text,
   expense_date date not null default current_date,
-  is_shared boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -118,7 +117,7 @@ begin
     raise exception 'Expense creator must belong to the same household';
   end if;
 
-  if new.is_shared and not exists (
+  if not exists (
     select 1
     from public.household_members hm
     where hm.household_id = new.household_id
@@ -153,117 +152,109 @@ declare
   v_half_cents integer;
 begin
   if tg_op = 'INSERT' then
-    if new.is_shared then
       v_counterparty := public.get_counterparty_profile(new.household_id, new.paid_by_profile_id);
 
-      if v_counterparty is null then
-        raise exception 'Shared expense requires a counterparty profile';
-      end if;
-
-      v_half_cents := public.calc_shared_half_cents(new.amount_cents);
-
-      insert into public.expense_balance_events (
-        household_id,
-        expense_id,
-        event_kind,
-        from_profile_id,
-        to_profile_id,
-        amount_cents
-      ) values (
-        new.household_id,
-        new.id,
-        'expense_created',
-        v_counterparty,
-        new.paid_by_profile_id,
-        v_half_cents
-      );
+    if v_counterparty is null then
+      raise exception 'Shared expense requires a counterparty profile';
     end if;
+
+    v_half_cents := public.calc_shared_half_cents(new.amount_cents);
+
+    insert into public.expense_balance_events (
+      household_id,
+      expense_id,
+      event_kind,
+      from_profile_id,
+      to_profile_id,
+      amount_cents
+    ) values (
+      new.household_id,
+      new.id,
+      'expense_created',
+      v_counterparty,
+      new.paid_by_profile_id,
+      v_half_cents
+    );
 
     return new;
   end if;
 
   if tg_op = 'UPDATE' then
-    if old.is_shared then
-      v_counterparty := public.get_counterparty_profile(old.household_id, old.paid_by_profile_id);
+    v_counterparty := public.get_counterparty_profile(old.household_id, old.paid_by_profile_id);
 
-      if v_counterparty is null then
-        raise exception 'Shared expense requires a counterparty profile';
-      end if;
-
-      v_half_cents := public.calc_shared_half_cents(old.amount_cents);
-
-      insert into public.expense_balance_events (
-        household_id,
-        expense_id,
-        event_kind,
-        from_profile_id,
-        to_profile_id,
-        amount_cents
-      ) values (
-        old.household_id,
-        old.id,
-        'expense_updated_reverse',
-        old.paid_by_profile_id,
-        v_counterparty,
-        v_half_cents
-      );
+    if v_counterparty is null then
+      raise exception 'Shared expense requires a counterparty profile';
     end if;
 
-    if new.is_shared then
-      v_counterparty := public.get_counterparty_profile(new.household_id, new.paid_by_profile_id);
+    v_half_cents := public.calc_shared_half_cents(old.amount_cents);
 
-      if v_counterparty is null then
-        raise exception 'Shared expense requires a counterparty profile';
-      end if;
+    insert into public.expense_balance_events (
+      household_id,
+      expense_id,
+      event_kind,
+      from_profile_id,
+      to_profile_id,
+      amount_cents
+    ) values (
+      old.household_id,
+      old.id,
+      'expense_updated_reverse',
+      old.paid_by_profile_id,
+      v_counterparty,
+      v_half_cents
+    );
 
-      v_half_cents := public.calc_shared_half_cents(new.amount_cents);
+    v_counterparty := public.get_counterparty_profile(new.household_id, new.paid_by_profile_id);
 
-      insert into public.expense_balance_events (
-        household_id,
-        expense_id,
-        event_kind,
-        from_profile_id,
-        to_profile_id,
-        amount_cents
-      ) values (
-        new.household_id,
-        new.id,
-        'expense_updated_apply',
-        v_counterparty,
-        new.paid_by_profile_id,
-        v_half_cents
-      );
+    if v_counterparty is null then
+      raise exception 'Shared expense requires a counterparty profile';
     end if;
+
+    v_half_cents := public.calc_shared_half_cents(new.amount_cents);
+
+    insert into public.expense_balance_events (
+      household_id,
+      expense_id,
+      event_kind,
+      from_profile_id,
+      to_profile_id,
+      amount_cents
+    ) values (
+      new.household_id,
+      new.id,
+      'expense_updated_apply',
+      v_counterparty,
+      new.paid_by_profile_id,
+      v_half_cents
+    );
 
     return new;
   end if;
 
   if tg_op = 'DELETE' then
-    if old.is_shared then
-      v_counterparty := public.get_counterparty_profile(old.household_id, old.paid_by_profile_id);
+    v_counterparty := public.get_counterparty_profile(old.household_id, old.paid_by_profile_id);
 
-      if v_counterparty is null then
-        raise exception 'Shared expense requires a counterparty profile';
-      end if;
-
-      v_half_cents := public.calc_shared_half_cents(old.amount_cents);
-
-      insert into public.expense_balance_events (
-        household_id,
-        expense_id,
-        event_kind,
-        from_profile_id,
-        to_profile_id,
-        amount_cents
-      ) values (
-        old.household_id,
-        null,
-        'expense_deleted_reverse',
-        old.paid_by_profile_id,
-        v_counterparty,
-        v_half_cents
-      );
+    if v_counterparty is null then
+      raise exception 'Shared expense requires a counterparty profile';
     end if;
+
+    v_half_cents := public.calc_shared_half_cents(old.amount_cents);
+
+    insert into public.expense_balance_events (
+      household_id,
+      expense_id,
+      event_kind,
+      from_profile_id,
+      to_profile_id,
+      amount_cents
+    ) values (
+      old.household_id,
+      null,
+      'expense_deleted_reverse',
+      old.paid_by_profile_id,
+      v_counterparty,
+      v_half_cents
+    );
 
     return old;
   end if;
@@ -374,7 +365,7 @@ $$;
 
 drop trigger if exists trg_expenses_enforce_integrity on public.expenses;
 create trigger trg_expenses_enforce_integrity
-before insert or update of household_id, paid_by_profile_id, created_by_profile_id, is_shared
+before insert or update of household_id, paid_by_profile_id, created_by_profile_id
 on public.expenses
 for each row
 execute function public.enforce_expense_integrity();
@@ -388,7 +379,7 @@ execute function public.set_expense_updated_at();
 
 drop trigger if exists trg_expenses_balance_events_insert_update on public.expenses;
 create trigger trg_expenses_balance_events_insert_update
-after insert or update of household_id, paid_by_profile_id, amount_cents, is_shared
+after insert or update of household_id, paid_by_profile_id, amount_cents
 on public.expenses
 for each row
 execute function public.log_expense_balance_events();

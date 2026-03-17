@@ -33,11 +33,10 @@ export default function ExpenseListItem({
       ? t('expenses.paidByYou')
       : t('expenses.paidByName', { name: expense.paid_by_profile?.name ?? t('expenses.partnerFallback') });
 
-  const impactLabel = expense.is_shared
-    ? expense.paid_by_profile_id === currentProfileId
+  const impactLabel =
+    expense.paid_by_profile_id === currentProfileId
       ? t('expenses.impact.theyOwe', { amount: splitAmountLabel })
-      : t('expenses.impact.youOwe', { amount: splitAmountLabel })
-    : t('expenses.impact.personalExpense');
+      : t('expenses.impact.youOwe', { amount: splitAmountLabel });
 
   const whenLabel = toRelativeExpenseDate(expense.expense_date, locale, {
     today: t('expenses.today'),
@@ -62,7 +61,7 @@ export default function ExpenseListItem({
     <article
       className={`rounded-3xl border border-primary/20 bg-primary/10 p-4 shadow-lg shadow-black/10 ${
         onClick ? 'cursor-pointer transition-transform active:scale-[0.99]' : ''
-      } ${expense.is_shared ? '' : 'opacity-80'}`}
+      }`}
       {...clickableProps}
     >
       <div className="flex items-center gap-4">
@@ -79,7 +78,7 @@ export default function ExpenseListItem({
 
         <div className="text-right">
           <p className="text-2xl font-bold text-slate-100">{amountLabel}</p>
-          <p className={`text-sm font-semibold ${expense.is_shared ? 'text-primary' : 'text-slate-400'}`}>
+          <p className="text-sm font-semibold text-primary">
             {impactLabel}
           </p>
           {showWhenLabel ? (

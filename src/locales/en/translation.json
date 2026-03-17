@@ -278,8 +278,6 @@
     "paidByName": "Paid by {{name}}",
     "splitTitle": "Split",
     "splitShared": "Split 50/50",
-    "splitOnlyMe": "Only me",
-    "personalExpenseHint": "This expense will not affect the shared balance.",
     "validation": {
       "amountRequired": "Enter an amount.",
       "amountPositive": "Amount must be greater than zero.",
@@ -313,11 +311,9 @@
     "emptyNoResultsSubtitle": "No expenses match these filters. Try adjusting your search or categories.",
     "filterAll": "All",
     "filterShared": "Shared",
-    "filterPersonal": "Only me",
     "impact": {
       "theyOwe": "You're owed {{amount}}",
-      "youOwe": "You owe {{amount}}",
-      "personalExpense": "Personal expense"
+      "youOwe": "You owe {{amount}}"
     },
     "balance": {
       "theyOweYou": "{{name}} owes you",

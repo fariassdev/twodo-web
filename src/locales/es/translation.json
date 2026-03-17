@@ -281,8 +281,6 @@
     "paidByName": "Pagado por {{name}}",
     "splitTitle": "Reparto",
     "splitShared": "50/50",
-    "splitOnlyMe": "Solo yo",
-    "personalExpenseHint": "Este gasto no afectará al balance compartido.",
     "validation": {
       "amountRequired": "Introduce un importe.",
       "amountPositive": "El importe debe ser mayor que cero.",
@@ -316,11 +314,9 @@
     "emptyNoResultsSubtitle": "No hay gastos que coincidan con estos filtros. Prueba ajustando tu búsqueda o categorías.",
     "filterAll": "Todo",
     "filterShared": "Compartido",
-    "filterPersonal": "Solo yo",
     "impact": {
       "theyOwe": "Te deben {{amount}}",
-      "youOwe": "Debes {{amount}}",
-      "personalExpense": "Gasto personal"
+      "youOwe": "Debes {{amount}}"
     },
     "balance": {
       "theyOweYou": "{{name}} te debe",

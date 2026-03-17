@@ -120,7 +120,6 @@ export const expenseFormSchema = z.object({
   description: z.string(),
   categoryId: z.string().min(1, 'expenses.validation.categoryRequired'),
   paidByProfileId: z.string().min(1, 'expenses.validation.paidByRequired'),
-  isShared: z.boolean(),
   expenseDate: z.string().trim().min(1, 'expenses.validation.dateRequired'),
 });
 

@@ -57,7 +57,6 @@ export default function ExpenseDetails() {
       description: '',
       categoryId: '',
       paidByProfileId: '',
-      isShared: true,
       expenseDate: '',
     },
   });
@@ -66,7 +65,6 @@ export default function ExpenseDetails() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const amountInput = watch('amountInput');
-  const isShared = watch('isShared');
 
   const amountCents = useMemo(() => inputToCents(amountInput), [amountInput]);
 
@@ -78,7 +76,6 @@ export default function ExpenseDetails() {
       categoryId: expense.category_id,
       paidByProfileId: expense.paid_by_profile_id,
       expenseDate: expense.expense_date,
-      isShared: expense.is_shared,
     });
   }
 
@@ -112,7 +109,6 @@ export default function ExpenseDetails() {
           categoryId: values.categoryId,
           paidByProfileId: values.paidByProfileId,
           expenseDate: values.expenseDate,
-          isShared: values.isShared,
         },
       });
 
@@ -198,9 +194,7 @@ export default function ExpenseDetails() {
             </div>
             <div className="flex items-center justify-between border-b border-primary/10 pb-3">
               <span className="text-slate-400">{t('expenses.splitTitle')}</span>
-              <span className="font-semibold text-slate-100">
-                {expense.is_shared ? t('expenses.splitShared') : t('expenses.splitOnlyMe')}
-              </span>
+              <span className="font-semibold text-slate-100">{t('expenses.splitShared')}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-400">{t('expenses.date')}</span>
@@ -261,22 +255,6 @@ export default function ExpenseDetails() {
               {...register('expenseDate')}
             />
             {errors.expenseDate && <p className="text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
-            <div className="grid grid-cols-2 gap-2 rounded-xl border border-primary/20 bg-background-dark p-1">
-              <button
-                className={`h-10 rounded-lg text-sm font-semibold ${isShared ? 'bg-primary text-background-dark' : 'text-slate-300'}`}
-                onClick={() => setValue('isShared', true)}
-                type="button"
-              >
-                {t('expenses.splitShared')}
-              </button>
-              <button
-                className={`h-10 rounded-lg text-sm font-semibold ${!isShared ? 'bg-primary text-background-dark' : 'text-slate-300'}`}
-                onClick={() => setValue('isShared', false)}
-                type="button"
-              >
-                {t('expenses.splitOnlyMe')}
-              </button>
-            </div>
           </section>
         )}
       </main>

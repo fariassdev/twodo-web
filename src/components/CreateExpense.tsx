@@ -39,7 +39,6 @@ export default function CreateExpense() {
       description: '',
       categoryId: '',
       paidByProfileId: '',
-      isShared: true,
       expenseDate: new Date().toISOString().slice(0, 10),
     },
   });
@@ -65,7 +64,6 @@ export default function CreateExpense() {
   const amountInput = watch('amountInput');
   const selectedCategoryId = watch('categoryId');
   const paidByProfileId = watch('paidByProfileId');
-  const isShared = watch('isShared');
   const expenseDate = watch('expenseDate');
 
   const [actionError, setActionError] = useState<string | null>(null);
@@ -98,7 +96,6 @@ export default function CreateExpense() {
         paidByProfileId: values.paidByProfileId,
         description: values.description,
         expenseDate: values.expenseDate,
-        isShared: values.isShared,
       });
 
       navigate({ to: '/expenses/$expenseId', params: { expenseId: created.id } });
@@ -210,32 +207,6 @@ export default function CreateExpense() {
           })}
         </div>
         {errors.paidByProfileId && <p className="mt-2 text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
-
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.splitTitle')}</p>
-        <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
-          <button
-            className={`h-12 rounded-xl text-sm font-bold transition-colors ${
-              isShared ? 'bg-primary text-background-dark' : 'text-slate-300'
-            }`}
-            onClick={() => setValue('isShared', true)}
-            type="button"
-          >
-            {t('expenses.splitShared')}
-          </button>
-          <button
-            className={`h-12 rounded-xl text-sm font-bold transition-colors ${
-              !isShared ? 'bg-primary text-background-dark' : 'text-slate-300'
-            }`}
-            onClick={() => setValue('isShared', false)}
-            type="button"
-          >
-            {t('expenses.splitOnlyMe')}
-          </button>
-        </div>
-
-        {!isShared && (
-          <p className="mt-2 text-xs text-slate-400">{t('expenses.personalExpenseHint')}</p>
-        )}
 
         <label className="mt-6 block text-sm font-semibold uppercase tracking-wide text-slate-300">
           {t('expenses.date')}

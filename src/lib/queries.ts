@@ -802,7 +802,6 @@ export interface CreateExpenseInput {
   categoryId: string;
   paidByProfileId: string;
   expenseDate: string;
-  isShared: boolean;
 }
 
 export type UpdateExpenseInput = Partial<CreateExpenseInput>;
@@ -1063,7 +1062,6 @@ export async function createExpense(input: CreateExpenseInput, scope: MutationSc
     amount_cents: normalizeAmountCents(input.amountCents),
     description: input.description?.trim() || null,
     expense_date: input.expenseDate,
-    is_shared: input.isShared,
   };
 
   const { data, error } = await supabase
@@ -1090,7 +1088,6 @@ export async function updateExpense(
   if (typeof input.categoryId === 'string') payload.category_id = input.categoryId;
   if (typeof input.paidByProfileId === 'string') payload.paid_by_profile_id = input.paidByProfileId;
   if (typeof input.expenseDate === 'string') payload.expense_date = input.expenseDate;
-  if (typeof input.isShared === 'boolean') payload.is_shared = input.isShared;
 
   const { data, error } = await supabase
     .from('expenses')

@@ -136,7 +136,6 @@ export type Database = {
           expense_date: string
           household_id: string
           id: string
-          is_shared: boolean
           paid_by_profile_id: string
           updated_at: string
         }
@@ -149,7 +148,6 @@ export type Database = {
           expense_date?: string
           household_id: string
           id?: string
-          is_shared?: boolean
           paid_by_profile_id: string
           updated_at?: string
         }
@@ -162,7 +160,6 @@ export type Database = {
           expense_date?: string
           household_id?: string
           id?: string
-          is_shared?: boolean
           paid_by_profile_id?: string
           updated_at?: string
         }
