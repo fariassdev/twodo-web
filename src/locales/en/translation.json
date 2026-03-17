@@ -291,7 +291,6 @@
       "noteMaxLength": "Note must be 200 characters or less."
     },
     "date": "Date",
-    "addExpense": "Add expense",
     "editExpense": "Edit expense",
     "saveExpense": "Save expense",
     "deleteExpense": "Delete expense",

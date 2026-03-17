@@ -294,7 +294,6 @@
       "noteMaxLength": "La nota debe tener 200 caracteres o menos."
     },
     "date": "Fecha",
-    "addExpense": "Añadir gasto",
     "editExpense": "Editar gasto",
     "saveExpense": "Guardar gasto",
     "deleteExpense": "Eliminar gasto",

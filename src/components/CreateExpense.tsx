@@ -104,9 +104,20 @@ export default function CreateExpense() {
           icon: 'arrow_back',
           onClick: () => navigate({ to: '/expenses' }),
         }}
+        rightSlot={(
+          <button
+            aria-label={t('cta.save')}
+            className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
+            disabled={!canSubmit || createExpenseMutation.isPending}
+            onClick={handleSave}
+            type="button"
+          >
+            {createExpenseMutation.isPending ? t('common.saving') : t('cta.save')}
+          </button>
+        )}
       />
 
-      <main className="mx-auto max-w-md px-4 pb-48 pt-6">
+      <main className="mx-auto max-w-md px-4 pb-12 pt-6">
         {actionError && (
           <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
             {actionError}
@@ -218,19 +229,6 @@ export default function CreateExpense() {
         />
         {errors.expenseDate && <p className="mt-2 text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
       </main>
-
-      <div className="fixed bottom-24 left-0 right-0 px-4">
-        <div className="mx-auto max-w-md">
-          <button
-            className="h-14 w-full rounded-2xl bg-primary text-2xl font-bold text-background-dark shadow-xl shadow-primary/25 disabled:opacity-40"
-            disabled={!canSubmit || createExpenseMutation.isPending}
-            onClick={handleSave}
-            type="button"
-          >
-            {createExpenseMutation.isPending ? t('common.saving') : t('expenses.addExpense')}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
