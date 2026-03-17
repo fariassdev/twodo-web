@@ -285,6 +285,14 @@
     "splitShared": "50/50",
     "splitOnlyMe": "Solo yo",
     "personalExpenseHint": "Este gasto no afectará al balance compartido.",
+    "validation": {
+      "amountRequired": "Introduce un importe.",
+      "amountPositive": "El importe debe ser mayor que cero.",
+      "categoryRequired": "Selecciona una categoría.",
+      "paidByRequired": "Selecciona quién pagó.",
+      "dateRequired": "Selecciona una fecha.",
+      "noteMaxLength": "La nota debe tener 200 caracteres o menos."
+    },
     "date": "Fecha",
     "addExpense": "Añadir gasto",
     "editExpense": "Editar gasto",
@@ -407,6 +415,11 @@
     "inviteExpired": "Invitación expirada",
     "inviteExpiredDesc": "Esta invitación ya no es válida. Pide a tu pareja que genere una nueva.",
     "inviteAlreadyUsed": "Invitación ya utilizada",
-    "householdFull": "Este hogar ya está completo"
+    "householdFull": "Este hogar ya está completo",
+    "validation": {
+      "codeMinLength": "El código debe tener al menos 4 caracteres.",
+      "codeMaxLength": "El código debe tener como máximo 16 caracteres.",
+      "codeFormat": "El código solo puede contener letras y números."
+    }
   }
 }

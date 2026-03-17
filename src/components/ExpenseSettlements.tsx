@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
@@ -9,6 +11,7 @@ import {
   useSettlementsHistoryQuery,
 } from '../lib/queryHooks';
 import { centsToCurrency } from '../lib/expenseUtils';
+import { settlementFormSchema, type SettlementFormValues } from '../lib/schemas';
 
 export default function ExpenseSettlements() {
   const { t, i18n } = useTranslation();
@@ -18,7 +21,16 @@ export default function ExpenseSettlements() {
   const settlementsQuery = useSettlementsHistoryQuery();
   const createSettlementMutation = useCreateSettlementMutation();
 
-  const [note, setNote] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<SettlementFormValues>({
+    resolver: zodResolver(settlementFormSchema),
+    defaultValues: { note: '' },
+  });
+
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -28,19 +40,19 @@ export default function ExpenseSettlements() {
 
   const canSettle = balance?.direction === 'you_owe' && (balance?.amountCents ?? 0) > 0;
 
-  async function handleSettle() {
+  const handleSettle = handleSubmit(async ({ note }) => {
     if (!canSettle) return;
 
     setActionError(null);
     try {
       await createSettlementMutation.mutateAsync({ note });
-      setNote('');
+      reset({ note: '' });
       setSheetOpen(false);
     } catch (error) {
       console.error('Create settlement error:', error);
       setActionError(t('queryState.mutationError'));
     }
-  }
+  });
 
   if (balanceQuery.isPending || settlementsQuery.isPending) {
     return (
@@ -72,10 +84,11 @@ export default function ExpenseSettlements() {
             </p>
             <input
               className="mt-4 h-12 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-sm text-slate-100 placeholder:text-slate-500"
+              maxLength={200}
               placeholder={t('expenses.settlement.notePlaceholder')}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
+              {...register('note')}
             />
+            {errors.note && <p className="mt-2 text-xs text-red-400">{t(errors.note.message!)}</p>}
             <button
               className="mt-5 h-12 w-full rounded-2xl bg-primary text-lg font-bold text-background-dark disabled:opacity-50"
               disabled={createSettlementMutation.isPending}

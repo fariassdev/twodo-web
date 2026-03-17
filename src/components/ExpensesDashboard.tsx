@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,6 +12,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { centsToCurrency } from '../lib/expenseUtils';
 import { queryKeys } from '../lib/queryKeys';
 import { useAuthScope, useCreateSettlementMutation, useExpensesDashboardQuery } from '../lib/queryHooks';
+import { settlementFormSchema, type SettlementFormValues } from '../lib/schemas';
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
@@ -17,11 +20,21 @@ export default function ExpensesDashboard() {
   const queryClient = useQueryClient();
   const isOnline = useOnlineStatus();
   const { householdId, profileId } = useAuthScope();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<SettlementFormValues>({
+    resolver: zodResolver(settlementFormSchema),
+    defaultValues: { note: '' },
+  });
+
   const dashboardQuery = useExpensesDashboardQuery();
   const createSettlementMutation = useCreateSettlementMutation();
 
   const [isSettlementSheetOpen, setSettlementSheetOpen] = useState(false);
-  const [settlementNote, setSettlementNote] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
   const dashboardData = dashboardQuery.data;
@@ -43,19 +56,19 @@ export default function ExpensesDashboard() {
 
   const canSettle = balance?.direction === 'you_owe' && balance.amountCents > 0;
 
-  async function handleConfirmSettlement() {
+  const handleConfirmSettlement = handleSubmit(async ({ note }) => {
     if (!canSettle) return;
 
     setActionError(null);
     try {
-      await createSettlementMutation.mutateAsync({ note: settlementNote });
+      await createSettlementMutation.mutateAsync({ note });
       setSettlementSheetOpen(false);
-      setSettlementNote('');
+      reset({ note: '' });
     } catch (error) {
       console.error('Settlement error:', error);
       setActionError(t('queryState.mutationError'));
     }
-  }
+  });
 
   function retryQuery() {
     if (!householdId || !profileId) return;
@@ -96,10 +109,11 @@ export default function ExpensesDashboard() {
             </label>
             <input
               className="mt-2 h-12 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-sm text-slate-100 placeholder:text-slate-500"
+              maxLength={200}
               placeholder={t('expenses.settlement.notePlaceholder')}
-              value={settlementNote}
-              onChange={(event) => setSettlementNote(event.target.value)}
+              {...register('note')}
             />
+            {errors.note && <p className="mt-2 text-xs text-red-400">{t(errors.note.message!)}</p>}
 
             <button
               className="mt-5 h-12 w-full rounded-2xl bg-primary text-lg font-bold text-background-dark shadow-lg shadow-primary/20 disabled:opacity-50"

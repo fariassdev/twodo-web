@@ -282,6 +282,14 @@
     "splitShared": "Split 50/50",
     "splitOnlyMe": "Only me",
     "personalExpenseHint": "This expense will not affect the shared balance.",
+    "validation": {
+      "amountRequired": "Enter an amount.",
+      "amountPositive": "Amount must be greater than zero.",
+      "categoryRequired": "Select a category.",
+      "paidByRequired": "Select who paid.",
+      "dateRequired": "Select a date.",
+      "noteMaxLength": "Note must be 200 characters or less."
+    },
     "date": "Date",
     "addExpense": "Add expense",
     "editExpense": "Edit expense",
@@ -404,6 +412,11 @@
     "inviteExpired": "Invite expired",
     "inviteExpiredDesc": "This invitation is no longer valid. Ask your partner for a new one.",
     "inviteAlreadyUsed": "Invite already used",
-    "householdFull": "This household is already full"
+    "householdFull": "This household is already full",
+    "validation": {
+      "codeMinLength": "Invite code must have at least 4 characters.",
+      "codeMaxLength": "Invite code must have at most 16 characters.",
+      "codeFormat": "Invite code can only contain letters and numbers."
+    }
   }
 }

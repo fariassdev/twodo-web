@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
@@ -8,6 +10,7 @@ import {
   useExpenseCategoriesQuery,
   useProfilesQuery,
 } from '../lib/queryHooks';
+import { expenseFormSchema, type ExpenseFormValues } from '../lib/schemas';
 
 function parseAmountToCents(raw: string): number {
   const normalized = raw.replace(',', '.').trim();
@@ -21,6 +24,24 @@ export default function CreateExpense() {
   const navigate = useNavigate();
   const { profileId } = useAuthScope();
 
+  const {
+    register,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema),
+    defaultValues: {
+      amountInput: '',
+      description: '',
+      categoryId: '',
+      paidByProfileId: '',
+      isShared: true,
+      expenseDate: new Date().toISOString().slice(0, 10),
+    },
+  });
+
   const categoriesQuery = useExpenseCategoriesQuery();
   const profilesQuery = useProfilesQuery();
   const createExpenseMutation = useCreateExpenseMutation();
@@ -28,42 +49,43 @@ export default function CreateExpense() {
   const categories = categoriesQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
-  const [amountInput, setAmountInput] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [paidByProfileId, setPaidByProfileId] = useState<string>('');
-  const [isShared, setIsShared] = useState(true);
-  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const amountInput = watch('amountInput');
+  const selectedCategoryId = watch('categoryId');
+  const paidByProfileId = watch('paidByProfileId');
+  const isShared = watch('isShared');
+  const expenseDate = watch('expenseDate');
+
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCategoryId && categories.length > 0) {
-      setSelectedCategoryId(categories[0].id);
+      setValue('categoryId', categories[0].id, { shouldValidate: true });
     }
-  }, [categories, selectedCategoryId]);
+  }, [categories, selectedCategoryId, setValue]);
 
   useEffect(() => {
     if (!paidByProfileId && profiles.length > 0) {
       const defaultPayer = profiles.find((profile) => profile.id === profileId) ?? profiles[0];
-      setPaidByProfileId(defaultPayer.id);
+      setValue('paidByProfileId', defaultPayer.id, { shouldValidate: true });
     }
-  }, [paidByProfileId, profileId, profiles]);
+  }, [paidByProfileId, profileId, profiles, setValue]);
 
   const amountCents = useMemo(() => parseAmountToCents(amountInput), [amountInput]);
   const canSubmit = amountCents > 0 && Boolean(selectedCategoryId) && Boolean(paidByProfileId) && Boolean(expenseDate);
 
-  async function handleSave() {
-    if (!canSubmit) return;
+  const handleSave = handleSubmit(async (values) => {
+    const parsedAmountCents = parseAmountToCents(values.amountInput);
+    if (parsedAmountCents <= 0) return;
 
     setActionError(null);
     try {
       const created = await createExpenseMutation.mutateAsync({
-        amountCents,
-        categoryId: selectedCategoryId,
-        paidByProfileId,
-        description,
-        expenseDate,
-        isShared,
+        amountCents: parsedAmountCents,
+        categoryId: values.categoryId,
+        paidByProfileId: values.paidByProfileId,
+        description: values.description,
+        expenseDate: values.expenseDate,
+        isShared: values.isShared,
       });
 
       navigate({ to: '/expenses/$expenseId', params: { expenseId: created.id } });
@@ -71,10 +93,10 @@ export default function CreateExpense() {
       console.error('Create expense error:', error);
       setActionError(t('queryState.mutationError'));
     }
-  }
+  });
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen">
       <TopBar
         title={t('expenses.newExpense')}
         leftAction={{
@@ -84,7 +106,7 @@ export default function CreateExpense() {
         }}
       />
 
-      <main className="mx-auto max-w-md px-4 pt-6">
+      <main className="mx-auto max-w-md px-4 pb-48 pt-6">
         {actionError && (
           <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
             {actionError}
@@ -100,10 +122,10 @@ export default function CreateExpense() {
               className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-slate-100 focus:outline-none"
               inputMode="decimal"
               placeholder="0.00"
-              value={amountInput}
-              onChange={(event) => setAmountInput(event.target.value)}
+              {...register('amountInput')}
             />
           </div>
+          {errors.amountInput && <p className="mt-2 text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
         </div>
 
         <label className="mt-6 block text-sm font-semibold uppercase tracking-wide text-slate-300">
@@ -112,8 +134,7 @@ export default function CreateExpense() {
         <input
           className="mt-2 h-14 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-base text-slate-100 placeholder:text-slate-500"
           placeholder={t('expenses.descriptionPlaceholder')}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          {...register('description')}
         />
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.category')}</p>
@@ -130,7 +151,7 @@ export default function CreateExpense() {
                     ? 'border-primary bg-primary text-background-dark'
                     : 'border-primary/20 bg-primary/5 text-slate-300'
                 }`}
-                onClick={() => setSelectedCategoryId(category.id)}
+                onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
                 type="button"
               >
                 <span className="material-symbols-outlined text-base">{category.icon}</span>
@@ -139,6 +160,7 @@ export default function CreateExpense() {
             );
           })}
         </div>
+        {errors.categoryId && <p className="mt-2 text-xs text-red-400">{t(errors.categoryId.message!)}</p>}
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.paidBy')}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
@@ -150,7 +172,7 @@ export default function CreateExpense() {
                 className={`h-12 rounded-xl text-sm font-bold transition-colors ${
                   active ? 'bg-primary text-background-dark' : 'text-slate-300'
                 }`}
-                onClick={() => setPaidByProfileId(profile.id)}
+                onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
                 type="button"
               >
                 {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
@@ -158,6 +180,7 @@ export default function CreateExpense() {
             );
           })}
         </div>
+        {errors.paidByProfileId && <p className="mt-2 text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.splitTitle')}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
@@ -165,7 +188,7 @@ export default function CreateExpense() {
             className={`h-12 rounded-xl text-sm font-bold transition-colors ${
               isShared ? 'bg-primary text-background-dark' : 'text-slate-300'
             }`}
-            onClick={() => setIsShared(true)}
+            onClick={() => setValue('isShared', true)}
             type="button"
           >
             {t('expenses.splitShared')}
@@ -174,7 +197,7 @@ export default function CreateExpense() {
             className={`h-12 rounded-xl text-sm font-bold transition-colors ${
               !isShared ? 'bg-primary text-background-dark' : 'text-slate-300'
             }`}
-            onClick={() => setIsShared(false)}
+            onClick={() => setValue('isShared', false)}
             type="button"
           >
             {t('expenses.splitOnlyMe')}
@@ -191,9 +214,9 @@ export default function CreateExpense() {
         <input
           className="mt-2 h-14 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-base text-slate-100"
           type="date"
-          value={expenseDate}
-          onChange={(event) => setExpenseDate(event.target.value)}
+          {...register('expenseDate')}
         />
+        {errors.expenseDate && <p className="mt-2 text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
       </main>
 
       <div className="fixed bottom-24 left-0 right-0 px-4">

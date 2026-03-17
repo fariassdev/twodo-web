@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
@@ -12,6 +14,7 @@ import {
   useUpdateExpenseMutation,
 } from '../lib/queryHooks';
 import { centsToCurrency } from '../lib/expenseUtils';
+import { expenseFormSchema, type ExpenseFormValues } from '../lib/schemas';
 
 function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2);
@@ -38,26 +41,43 @@ export default function ExpenseDetails() {
 
   const expense = expenseQuery.data;
 
+  const {
+    register,
+    watch,
+    setValue,
+    reset,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema),
+    defaultValues: {
+      amountInput: '',
+      description: '',
+      categoryId: '',
+      paidByProfileId: '',
+      isShared: true,
+      expenseDate: '',
+    },
+  });
+
   const [isEditing, setIsEditing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const [amountInput, setAmountInput] = useState('');
-  const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [paidByProfileId, setPaidByProfileId] = useState('');
-  const [expenseDate, setExpenseDate] = useState('');
-  const [isShared, setIsShared] = useState(true);
+  const amountInput = watch('amountInput');
+  const isShared = watch('isShared');
 
   const amountCents = useMemo(() => inputToCents(amountInput), [amountInput]);
 
   function loadForm() {
     if (!expense) return;
-    setAmountInput(centsToInput(expense.amount_cents));
-    setDescription(expense.description ?? '');
-    setCategoryId(expense.category_id);
-    setPaidByProfileId(expense.paid_by_profile_id);
-    setExpenseDate(expense.expense_date);
-    setIsShared(expense.is_shared);
+    reset({
+      amountInput: centsToInput(expense.amount_cents),
+      description: expense.description ?? '',
+      categoryId: expense.category_id,
+      paidByProfileId: expense.paid_by_profile_id,
+      expenseDate: expense.expense_date,
+      isShared: expense.is_shared,
+    });
   }
 
   async function handleDelete() {
@@ -74,20 +94,23 @@ export default function ExpenseDetails() {
     }
   }
 
-  async function handleSave() {
-    if (!expense || amountCents <= 0) return;
+  const handleSave = handleSubmit(async (values) => {
+    if (!expense) return;
+
+    const parsedAmountCents = inputToCents(values.amountInput);
+    if (parsedAmountCents <= 0) return;
 
     setActionError(null);
     try {
       await updateExpenseMutation.mutateAsync({
         expenseId: expense.id,
         input: {
-          amountCents,
-          description,
-          categoryId,
-          paidByProfileId,
-          expenseDate,
-          isShared,
+          amountCents: parsedAmountCents,
+          description: values.description,
+          categoryId: values.categoryId,
+          paidByProfileId: values.paidByProfileId,
+          expenseDate: values.expenseDate,
+          isShared: values.isShared,
         },
       });
 
@@ -96,7 +119,7 @@ export default function ExpenseDetails() {
       console.error('Update expense error:', error);
       setActionError(t('queryState.mutationError'));
     }
-  }
+  });
 
   if (expenseQuery.isPending) {
     return (
@@ -195,19 +218,17 @@ export default function ExpenseDetails() {
             <input
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
               inputMode="decimal"
-              value={amountInput}
-              onChange={(event) => setAmountInput(event.target.value)}
+              {...register('amountInput')}
             />
+            {errors.amountInput && <p className="text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
             <input
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
               placeholder={t('expenses.descriptionPlaceholder')}
+              {...register('description')}
             />
             <select
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
+              {...register('categoryId')}
             >
               {(categoriesQuery.data ?? []).map((category) => (
                 <option key={category.id} value={category.id}>
@@ -215,10 +236,10 @@ export default function ExpenseDetails() {
                 </option>
               ))}
             </select>
+            {errors.categoryId && <p className="text-xs text-red-400">{t(errors.categoryId.message!)}</p>}
             <select
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              value={paidByProfileId}
-              onChange={(event) => setPaidByProfileId(event.target.value)}
+              {...register('paidByProfileId')}
             >
               {(profilesQuery.data ?? []).map((profile) => (
                 <option key={profile.id} value={profile.id}>
@@ -226,23 +247,24 @@ export default function ExpenseDetails() {
                 </option>
               ))}
             </select>
+            {errors.paidByProfileId && <p className="text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
             <input
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
               type="date"
-              value={expenseDate}
-              onChange={(event) => setExpenseDate(event.target.value)}
+              {...register('expenseDate')}
             />
+            {errors.expenseDate && <p className="text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
             <div className="grid grid-cols-2 gap-2 rounded-xl border border-primary/20 bg-background-dark p-1">
               <button
                 className={`h-10 rounded-lg text-sm font-semibold ${isShared ? 'bg-primary text-background-dark' : 'text-slate-300'}`}
-                onClick={() => setIsShared(true)}
+                onClick={() => setValue('isShared', true)}
                 type="button"
               >
                 {t('expenses.splitShared')}
               </button>
               <button
                 className={`h-10 rounded-lg text-sm font-semibold ${!isShared ? 'bg-primary text-background-dark' : 'text-slate-300'}`}
-                onClick={() => setIsShared(false)}
+                onClick={() => setValue('isShared', false)}
                 type="button"
               >
                 {t('expenses.splitOnlyMe')}
@@ -276,6 +298,7 @@ export default function ExpenseDetails() {
             <button
               className="h-14 w-full rounded-2xl bg-primary text-2xl font-bold text-background-dark"
               onClick={() => {
+                setActionError(null);
                 loadForm();
                 setIsEditing(true);
               }}

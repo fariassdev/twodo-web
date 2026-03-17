@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,6 +16,12 @@ import {
 } from '../lib/queryHooks';
 import type { HouseholdInviteResult } from '../lib/types';
 import { supabase } from '../lib/supabase';
+import {
+  partnerInviteCodeFormSchema,
+  partnerInviteEmailFormSchema,
+  type PartnerInviteCodeFormValues,
+  type PartnerInviteEmailFormValues,
+} from '../lib/schemas';
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
 
@@ -25,15 +33,42 @@ export default function ConnectPartner() {
   const signOutMutation = useSignOutMutation();
   const existingInviteLoadKeyRef = useRef<string | null>(null);
 
+  const {
+    register: registerManualCode,
+    handleSubmit: handleSubmitManualCode,
+    watch: watchManualCode,
+    setValue: setManualCodeValue,
+    formState: { errors: manualCodeErrors },
+  } = useForm<PartnerInviteCodeFormValues>({
+    resolver: zodResolver(partnerInviteCodeFormSchema),
+    defaultValues: {
+      code: '',
+    },
+  });
+
+  const {
+    register: registerEmail,
+    handleSubmit: handleSubmitEmail,
+    watch: watchEmail,
+    setValue: setEmailValue,
+    formState: { errors: emailErrors },
+  } = useForm<PartnerInviteEmailFormValues>({
+    resolver: zodResolver(partnerInviteEmailFormSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
   const [view, setView] = useState<View>('initial');
   const [inviteData, setInviteData] = useState<HouseholdInviteResult | null>(null);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
-  const [manualCode, setManualCode] = useState('');
-  const [emailInput, setEmailInput] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'code'>('none');
   const [error, setError] = useState<string | null>(null);
+
+  const manualCode = watchManualCode('code');
+  const emailInput = watchEmail('email');
 
   const createMutation = useCreateHouseholdAndInviteMutation();
   const getOrCreateInviteMutation = useGetOrCreateHouseholdInviteMutation();
@@ -140,20 +175,21 @@ export default function ConnectPartner() {
     }
   }
 
-  async function handleSendEmail() {
-    if (!emailInput || !inviteData) return;
+  const handleSendEmail = handleSubmitEmail(async ({ email }) => {
+    if (!inviteData) return;
+
     setError(null);
     try {
       await sendEmailMutation.mutateAsync({
         inviteCode: inviteData.invite_code,
-        email: emailInput,
+        email: email.trim(),
         senderName: profile?.name ?? 'Someone',
       });
       setEmailSent(true);
     } catch {
       setError(t('partner.emailError'));
     }
-  }
+  });
 
   async function handleShareLink() {
     if (!inviteData) return;
@@ -182,11 +218,11 @@ export default function ConnectPartner() {
     setCopiedState('code');
   }
 
-  function handleEnterCode() {
-    if (!manualCode.trim()) return;
-    setPendingCode(manualCode.trim().toUpperCase());
+  const handleEnterCode = handleSubmitManualCode(({ code }) => {
+    const normalizedCode = code.trim().toUpperCase();
+    setPendingCode(normalizedCode);
     setView('join-confirm');
-  }
+  });
 
   async function handleRetryLoadInvite() {
     if (!householdId || !profileId) return;
@@ -305,12 +341,16 @@ export default function ConnectPartner() {
 
         <input
           type="text"
+          {...registerManualCode('code')}
           value={manualCode}
-          onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+          onChange={(event) => {
+            setManualCodeValue('code', event.target.value.toUpperCase(), { shouldDirty: true, shouldValidate: true });
+          }}
           placeholder="ABCD1234"
           maxLength={8}
           className="w-full h-14 rounded-2xl border border-primary/30 bg-primary/5 px-4 text-center text-lg font-mono tracking-widest text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary/60 mb-4"
         />
+        {manualCodeErrors.code && <p className="-mt-2 mb-3 text-xs text-red-400">{t(manualCodeErrors.code.message!)}</p>}
 
         <button
           onClick={handleEnterCode}
@@ -372,12 +412,17 @@ export default function ConnectPartner() {
             <span className="material-symbols-outlined text-slate-500 text-lg">mail</span>
             <input
               type="email"
+              {...registerEmail('email')}
               value={emailInput}
-              onChange={(e) => { setEmailInput(e.target.value); setEmailSent(false); }}
+              onChange={(event) => {
+                setEmailValue('email', event.target.value, { shouldDirty: true, shouldValidate: true });
+                setEmailSent(false);
+              }}
               placeholder={t('partner.emailPlaceholder')}
               className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
             />
           </div>
+          {emailErrors.email && <p className="mb-3 text-xs text-red-400">{t(emailErrors.email.message!)}</p>}
 
           <button
             onClick={handleSendEmail}

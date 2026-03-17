@@ -101,3 +101,54 @@ export const entryFormSchema = z
   );
 
 export type EntryFormValues = z.infer<typeof entryFormSchema>;
+
+// ─── Expenses (Create / Edit) ────────────────────────────────────────────────
+
+function parseExpenseAmountToCents(raw: string): number {
+  const normalized = raw.replace(',', '.').trim();
+  const amount = Number.parseFloat(normalized);
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  return Math.round(amount * 100);
+}
+
+export const expenseFormSchema = z.object({
+  amountInput: z
+    .string()
+    .trim()
+    .min(1, 'expenses.validation.amountRequired')
+    .refine((value) => parseExpenseAmountToCents(value) > 0, 'expenses.validation.amountPositive'),
+  description: z.string(),
+  categoryId: z.string().min(1, 'expenses.validation.categoryRequired'),
+  paidByProfileId: z.string().min(1, 'expenses.validation.paidByRequired'),
+  isShared: z.boolean(),
+  expenseDate: z.string().trim().min(1, 'expenses.validation.dateRequired'),
+});
+
+export type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+
+export const settlementFormSchema = z.object({
+  note: z.string().max(200, 'expenses.validation.noteMaxLength'),
+});
+
+export type SettlementFormValues = z.infer<typeof settlementFormSchema>;
+
+export const partnerInviteCodeFormSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(4, 'partner.validation.codeMinLength')
+    .max(16, 'partner.validation.codeMaxLength')
+    .regex(/^[A-Za-z0-9]+$/, 'partner.validation.codeFormat'),
+});
+
+export type PartnerInviteCodeFormValues = z.infer<typeof partnerInviteCodeFormSchema>;
+
+export const partnerInviteEmailFormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'auth.validation.requiredFields')
+    .email('auth.validation.invalidEmail'),
+});
+
+export type PartnerInviteEmailFormValues = z.infer<typeof partnerInviteEmailFormSchema>;
