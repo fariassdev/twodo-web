@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
-import ExpenseListItem from './expenses/ExpenseListItem';
+import ExpensesActivityFeed from './expenses/ExpensesActivityFeed';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { centsToCurrency } from '../lib/expenseUtils';
-import { queryKeys } from '../lib/queryKeys';
-import { useAuthScope, useCreateSettlementMutation, useExpensesDashboardQuery } from '../lib/queryHooks';
+import {
+  useAuthScope,
+  useCreateSettlementMutation,
+  useExpensesActivityFeedInfiniteQuery,
+  useExpensesDashboardQuery,
+} from '../lib/queryHooks';
 import { settlementFormSchema, type SettlementFormValues } from '../lib/schemas';
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const isOnline = useOnlineStatus();
-  const { householdId, profileId } = useAuthScope();
+  const { profileId } = useAuthScope();
 
   const {
     register,
@@ -32,6 +34,7 @@ export default function ExpensesDashboard() {
   });
 
   const dashboardQuery = useExpensesDashboardQuery();
+  const activityQuery = useExpensesActivityFeedInfiniteQuery(20);
   const createSettlementMutation = useCreateSettlementMutation();
 
   const [isSettlementSheetOpen, setSettlementSheetOpen] = useState(false);
@@ -39,10 +42,13 @@ export default function ExpensesDashboard() {
 
   const dashboardData = dashboardQuery.data;
   const balance = dashboardData?.balance;
-  const recentExpenses = dashboardData?.recentExpenses ?? [];
+  const activityItems = useMemo(
+    () => activityQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [activityQuery.data],
+  );
 
-  const isFetching = dashboardQuery.isFetching;
-  const isStale = dashboardQuery.isStale;
+  const isFetching = dashboardQuery.isFetching || activityQuery.isFetching;
+  const isStale = dashboardQuery.isStale || activityQuery.isStale;
 
   const amountLabel = centsToCurrency(balance?.amountCents ?? 0, i18n.language);
   const counterpartyName = balance?.counterpartyProfile?.name ?? t('expenses.partnerFallback');
@@ -71,11 +77,10 @@ export default function ExpensesDashboard() {
   });
 
   function retryQuery() {
-    if (!householdId || !profileId) return;
-    void queryClient.refetchQueries({ queryKey: queryKeys.expenses.dashboard(householdId, profileId) });
+    void Promise.all([dashboardQuery.refetch(), activityQuery.refetch()]);
   }
 
-  if (dashboardQuery.isPending) {
+  if (dashboardQuery.isPending || activityQuery.isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -83,7 +88,7 @@ export default function ExpensesDashboard() {
     );
   }
 
-  if (dashboardQuery.isError && !dashboardData) {
+  if ((dashboardQuery.isError && !dashboardData) || (activityQuery.isError && activityItems.length === 0)) {
     return <QueryErrorState onRetry={retryQuery} />;
   }
 
@@ -191,7 +196,7 @@ export default function ExpensesDashboard() {
 
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-4xl font-bold tracking-tight text-slate-100">{t('expenses.recentExpenses')}</h3>
+            <h3 className="text-4xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
             <button
               className="text-sm font-bold text-primary"
               onClick={() => navigate({ to: '/expenses/list' })}
@@ -201,23 +206,24 @@ export default function ExpensesDashboard() {
             </button>
           </div>
 
-          {recentExpenses.length === 0 ? (
+          {activityItems.length === 0 ? (
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center text-sm text-slate-300">
               {t('expenses.emptyFirstExpense')}
             </div>
           ) : (
-            <div className="space-y-3">
-              {recentExpenses.map((expense) => (
-                <div key={expense.id}>
-                  <ExpenseListItem
-                    currentProfileId={profileId}
-                    expense={expense}
-                    locale={i18n.language}
-                    onClick={() => navigate({ to: '/expenses/$expenseId', params: { expenseId: expense.id } })}
-                  />
-                </div>
-              ))}
-            </div>
+            <ExpensesActivityFeed
+              currentProfileId={profileId}
+              hasNextPage={activityQuery.hasNextPage}
+              isFetchingNextPage={activityQuery.isFetchingNextPage}
+              items={activityItems}
+              locale={i18n.language}
+              onLoadMore={() => {
+                if (activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
+                  void activityQuery.fetchNextPage();
+                }
+              }}
+              onExpenseClick={(expenseId) => navigate({ to: '/expenses/$expenseId', params: { expenseId } })}
+            />
           )}
         </section>
       </main>

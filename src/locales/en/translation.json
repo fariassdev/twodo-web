@@ -335,7 +335,8 @@
       "notePlaceholder": "e.g. Bank transfer March",
       "confirmButton": "Confirm settlement",
       "onlyDebtorHint": "Only the member who owes can confirm a settlement.",
-      "paidTo": "{{from}} paid {{to}}"
+      "paidTo": "{{from}} paid {{to}}",
+      "feedStatus": "Settled"
     }
   },
   "taskDetails": {

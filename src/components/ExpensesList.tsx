@@ -4,9 +4,11 @@ import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import QueryErrorState from './ui/QueryErrorState';
 import ExpenseListItem from './expenses/ExpenseListItem';
+import ExpensesActivityFeed from './expenses/ExpensesActivityFeed';
 import { formatMonthHeading, groupExpensesByMonth } from '../lib/expenseUtils';
 import {
   useAuthScope,
+  useExpensesActivityFeedInfiniteQuery,
   useExpenseCategoriesQuery,
   useExpensesListQuery,
   useProfilesQuery,
@@ -76,15 +78,23 @@ export default function ExpensesList() {
     setIsDateRangeOpen(false);
   };
 
-  const expensesQuery = useExpensesListQuery(filters);
+  const expensesQuery = useExpensesListQuery(filters, { enabled: hasActiveFilters });
+  const activityQuery = useExpensesActivityFeedInfiniteQuery(20, { enabled: !hasActiveFilters });
 
   const expenses = expensesQuery.data ?? [];
   const groups = groupExpensesByMonth(expenses);
+  const activityItems = useMemo(
+    () => activityQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [activityQuery.data],
+  );
   const emptySubtitle = hasActiveFilters
     ? t('expenses.emptyNoResultsSubtitle')
     : t('expenses.emptyFirstExpense');
 
-  if (expensesQuery.isPending) {
+  const isPending = hasActiveFilters ? expensesQuery.isPending : activityQuery.isPending;
+  const isError = hasActiveFilters ? expensesQuery.isError : activityQuery.isError;
+
+  if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -92,8 +102,8 @@ export default function ExpensesList() {
     );
   }
 
-  if (expensesQuery.isError) {
-    return <QueryErrorState onRetry={() => expensesQuery.refetch()} />;
+  if (isError) {
+    return <QueryErrorState onRetry={() => (hasActiveFilters ? expensesQuery.refetch() : activityQuery.refetch())} />;
   }
 
   return (
@@ -204,7 +214,14 @@ export default function ExpensesList() {
                 onChange={(event) => {
                   const nextTo = event.target.value;
                   setToDate(nextTo);
-                  if (fromDate && nextTo < fromDate) {
+                  feat(expenses): add combined activity feed with infinite scroll
+                  
+                  - Add unified expenses+settlements activity feed query and types
+                  - Introduce useExpensesActivityFeedInfiniteQuery hook (useInfiniteQuery)
+                  - Add ExpensesActivityFeed component with day grouping + load-more sentinel
+                  - Update ExpensesDashboard and ExpensesList to use mixed feed (20 items/page)
+                  - Preserve existing filters behavior (hide settlements when filters active)
+                  - Add i18n keys for settlement feed status                  if (fromDate && nextTo < fromDate) {
                     setFromDate(nextTo);
                   }
                 }}
@@ -213,7 +230,7 @@ export default function ExpensesList() {
           </div>
         )}
 
-        {groups.length === 0 ? (
+        {(hasActiveFilters ? groups.length === 0 : activityItems.length === 0) ? (
           <div className="mt-10 flex flex-col items-center px-2 text-center">
             <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]">
               <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">receipt_long</span>
@@ -248,25 +265,41 @@ export default function ExpensesList() {
           </div>
         ) : (
           <div className="mt-6 space-y-7">
-            {groups.map((group) => (
-              <section key={group.month}>
-                <h2 className="mb-3 text-sm font-black tracking-[0.2em] text-slate-400">
-                  {formatMonthHeading(group.month, i18n.language)}
-                </h2>
-                <div className="space-y-3">
-                  {group.items.map((expense) => (
-                    <div key={expense.id}>
-                      <ExpenseListItem
-                        currentProfileId={profileId}
-                        expense={expense}
-                        locale={i18n.language}
-                        onClick={() => navigate({ to: '/expenses/$expenseId', params: { expenseId: expense.id } })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+            {hasActiveFilters ? (
+              groups.map((group) => (
+                <section key={group.month}>
+                  <h2 className="mb-3 text-sm font-black tracking-[0.2em] text-slate-400">
+                    {formatMonthHeading(group.month, i18n.language)}
+                  </h2>
+                  <div className="space-y-3">
+                    {group.items.map((expense) => (
+                      <div key={expense.id}>
+                        <ExpenseListItem
+                          currentProfileId={profileId}
+                          expense={expense}
+                          locale={i18n.language}
+                          onClick={() => navigate({ to: '/expenses/$expenseId', params: { expenseId: expense.id } })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))
+            ) : (
+              <ExpensesActivityFeed
+                currentProfileId={profileId}
+                hasNextPage={activityQuery.hasNextPage}
+                isFetchingNextPage={activityQuery.isFetchingNextPage}
+                items={activityItems}
+                locale={i18n.language}
+                onLoadMore={() => {
+                  if (activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
+                    void activityQuery.fetchNextPage();
+                  }
+                }}
+                onExpenseClick={(expenseId) => navigate({ to: '/expenses/$expenseId', params: { expenseId } })}
+              />
+            )}
           </div>
         )}
       </main>

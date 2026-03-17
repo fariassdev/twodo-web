@@ -47,6 +47,7 @@ export const queryKeys = {
       ['expenses', 'dashboard', householdId, profileId] as const,
     balance: (householdId: string, profileId: string) =>
       ['expenses', 'balance', householdId, profileId] as const,
+    feed: (householdId: string) => ['expenses', 'feed', householdId] as const,
     recent: (householdId: string) => ['expenses', 'recent', householdId] as const,
     list: (householdId: string, signature: string) =>
       ['expenses', 'list', householdId, signature] as const,

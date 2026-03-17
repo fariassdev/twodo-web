@@ -7,6 +7,7 @@ type ExpenseListItemProps = {
   expense: ExpenseWithDetails;
   locale: string;
   currentProfileId: string | null;
+  showWhenLabel?: boolean;
   onClick?: () => void | Promise<void>;
 };
 
@@ -14,6 +15,7 @@ export default function ExpenseListItem({
   expense,
   locale,
   currentProfileId,
+  showWhenLabel = true,
   onClick,
 }: ExpenseListItemProps): React.ReactElement {
   const { t } = useTranslation();
@@ -80,7 +82,9 @@ export default function ExpenseListItem({
           <p className={`text-sm font-semibold ${expense.is_shared ? 'text-primary' : 'text-slate-400'}`}>
             {impactLabel}
           </p>
-          <p className="text-xs uppercase tracking-wide text-slate-400">{whenLabel}</p>
+          {showWhenLabel ? (
+            <p className="text-xs uppercase tracking-wide text-slate-400">{whenLabel}</p>
+          ) : null}
         </div>
       </div>
     </article>

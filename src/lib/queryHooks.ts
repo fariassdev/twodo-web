@@ -1,5 +1,6 @@
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -24,6 +25,7 @@ import {
   deleteTasksAfter,
   getExpenseBalanceSnapshot,
   getExpenseById,
+  getExpensesActivityFeedPage,
   getExpenseCategories,
   getExpensesDashboard,
   getExpensesList,
@@ -51,6 +53,7 @@ import {
   updateExpense,
   updateTask,
   type CreateExpenseInput,
+  type ExpenseActivityFeedPage,
   type ExpenseBalanceSnapshot,
   type ExpenseDashboardData,
   type ExpenseFilters,
@@ -423,6 +426,26 @@ function findExpenseInCache(
       const maybeDashboard = data as ExpenseDashboardData;
       const found = maybeDashboard.recentExpenses.find((expense) => expense.id === expenseId);
       if (found) return found;
+      continue;
+    }
+
+    if (typeof data === 'object' && data !== null && 'pages' in data) {
+      const maybeInfinite = data as { pages?: Array<{ items?: unknown[] }> };
+
+      for (const page of maybeInfinite.pages ?? []) {
+        const items = page.items ?? [];
+        for (const item of items) {
+          if (!item || typeof item !== 'object' || !('type' in item)) continue;
+          const maybeFeedItem = item as {
+            type?: string;
+            expense?: ExpenseWithDetails;
+          };
+
+          if (maybeFeedItem.type === 'expense' && maybeFeedItem.expense?.id === expenseId) {
+            return maybeFeedItem.expense;
+          }
+        }
+      }
     }
   }
 
@@ -1282,16 +1305,32 @@ export function useExpenseBalanceSnapshotQuery() {
   });
 }
 
-export function useExpensesListQuery(filters: ExpenseFilters = {}) {
+export function useExpensesActivityFeedInfiniteQuery(pageSize = 20, options?: { enabled?: boolean }) {
+  const householdId = useCurrentHouseholdId();
+  const isEnabled = options?.enabled ?? true;
+
+  return useInfiniteQuery<ExpenseActivityFeedPage>({
+    queryKey: householdId ? queryKeys.expenses.feed(householdId) : disabledKey('expenses', 'feed'),
+    queryFn: ({ pageParam }) =>
+      getExpensesActivityFeedPage(householdId as string, pageSize, Number(pageParam ?? 0)),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.pageIndex + 1 : undefined),
+    enabled: Boolean(householdId) && isEnabled,
+    staleTime: 30000,
+  });
+}
+
+export function useExpensesListQuery(filters: ExpenseFilters = {}, options?: { enabled?: boolean }) {
   const householdId = useCurrentHouseholdId();
   const signature = useMemo(() => getExpenseFiltersSignature(filters), [filters]);
+  const isEnabled = options?.enabled ?? true;
 
   return useQuery<ExpenseWithDetails[]>({
     queryKey: householdId
       ? queryKeys.expenses.list(householdId, signature)
       : disabledKey('expenses', 'list', signature),
     queryFn: () => getExpensesList(householdId as string, filters),
-    enabled: Boolean(householdId),
+    enabled: Boolean(householdId) && isEnabled,
     placeholderData: keepPreviousData,
   });
 }

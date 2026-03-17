@@ -338,7 +338,8 @@
       "notePlaceholder": "Ej. Bizum marzo",
       "confirmButton": "Confirmar liquidación",
       "onlyDebtorHint": "Solo quien debe puede confirmar una liquidación.",
-      "paidTo": "{{from}} pagó a {{to}}"
+      "paidTo": "{{from}} pagó a {{to}}",
+      "feedStatus": "Liquidado"
     }
   },
   "taskDetails": {

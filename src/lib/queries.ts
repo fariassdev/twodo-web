@@ -813,6 +813,33 @@ export interface SettlementWithDetails extends Settlement {
   created_by_profile?: Profile | null;
 }
 
+export interface ExpenseActivityFeedExpenseItem {
+  type: 'expense';
+  id: string;
+  activity_day: string;
+  activity_at: string;
+  created_at: string;
+  expense: ExpenseWithDetails;
+}
+
+export interface ExpenseActivityFeedSettlementItem {
+  type: 'settlement';
+  id: string;
+  activity_day: string;
+  activity_at: string;
+  created_at: string;
+  settlement: SettlementWithDetails;
+}
+
+export type ExpenseActivityFeedItem = ExpenseActivityFeedExpenseItem | ExpenseActivityFeedSettlementItem;
+
+export interface ExpenseActivityFeedPage {
+  items: ExpenseActivityFeedItem[];
+  pageIndex: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
 function normalizeAmountCents(amountCents: number): number {
   return Math.max(1, Math.round(amountCents));
 }
@@ -822,6 +849,22 @@ async function mapExpensesWithDetails(expenses: Expense[], householdId: string):
 
   const [categories, profiles] = await Promise.all([getExpenseCategories(), getProfiles(householdId)]);
 
+  const categoryMap = new Map(categories.map((category) => [category.id, category]));
+  const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
+
+  return expenses.map((expense) => ({
+    ...expense,
+    category: categoryMap.get(expense.category_id) ?? null,
+    paid_by_profile: profileMap.get(expense.paid_by_profile_id) ?? null,
+    created_by_profile: profileMap.get(expense.created_by_profile_id) ?? null,
+  }));
+}
+
+function mapExpensesWithLookups(
+  expenses: Expense[],
+  categories: ExpenseCategory[],
+  profiles: Profile[],
+): ExpenseWithDetails[] {
   const categoryMap = new Map(categories.map((category) => [category.id, category]));
   const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
 
@@ -1086,6 +1129,94 @@ export async function getSettlementsHistory(householdId: string): Promise<Settle
 
   if (error) throw error;
   return mapSettlementsWithDetails(data ?? [], profiles);
+}
+
+function toEpoch(value: string): number {
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+export async function getExpensesActivityFeedPage(
+  householdId: string,
+  pageSize = 20,
+  pageIndex = 0,
+): Promise<ExpenseActivityFeedPage> {
+  const normalizedPageSize = Math.max(1, Math.floor(pageSize));
+  const normalizedPageIndex = Math.max(0, Math.floor(pageIndex));
+  const endIndex = (normalizedPageIndex + 1) * normalizedPageSize;
+  const fetchLimit = endIndex + 1;
+
+  const [
+    { data: expenseRows, error: expensesError },
+    { data: settlementRows, error: settlementsError },
+    categories,
+    profiles,
+  ] = await Promise.all([
+    supabase
+      .from('expenses')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('expense_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(fetchLimit),
+    supabase
+      .from('settlements')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('settled_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(fetchLimit),
+    getExpenseCategories(),
+    getProfiles(householdId),
+  ]);
+
+  if (expensesError) throw expensesError;
+  if (settlementsError) throw settlementsError;
+
+  const mappedExpenses = mapExpensesWithLookups(expenseRows ?? [], categories, profiles);
+  const mappedSettlements = mapSettlementsWithDetails(settlementRows ?? [], profiles);
+
+  const combined: ExpenseActivityFeedItem[] = [
+    ...mappedExpenses.map((expense) => ({
+      type: 'expense' as const,
+      id: expense.id,
+      activity_day: expense.expense_date,
+      activity_at: `${expense.expense_date}T00:00:00`,
+      created_at: expense.created_at,
+      expense,
+    })),
+    ...mappedSettlements.map((settlement) => ({
+      type: 'settlement' as const,
+      id: settlement.id,
+      activity_day: settlement.settled_at.slice(0, 10),
+      activity_at: settlement.settled_at,
+      created_at: settlement.created_at,
+      settlement,
+    })),
+  ].sort((left, right) => {
+    const byActivity = toEpoch(right.activity_at) - toEpoch(left.activity_at);
+    if (byActivity !== 0) return byActivity;
+
+    const byCreatedAt = toEpoch(right.created_at) - toEpoch(left.created_at);
+    if (byCreatedAt !== 0) return byCreatedAt;
+
+    if (left.type !== right.type) {
+      return left.type === 'settlement' ? -1 : 1;
+    }
+
+    return right.id.localeCompare(left.id);
+  });
+
+  const startIndex = normalizedPageIndex * normalizedPageSize;
+
+  return {
+    items: combined.slice(startIndex, endIndex),
+    pageIndex: normalizedPageIndex,
+    pageSize: normalizedPageSize,
+    hasMore: combined.length > endIndex,
+  };
 }
 
 export async function createSettlement(
