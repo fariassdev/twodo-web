@@ -197,7 +197,7 @@ export default function ExpensesDashboard() {
             )}
 
             {balance?.direction === 'settled' && (
-              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-primary/80">
+              <div className="mt-2 flex items-center gap-2 text-sm font-bold text-primary/80">
                 <span className="material-symbols-outlined !text-lg">done_all</span>
                 {t('expenses.balance.settledSubtitle')}
               </div>
@@ -207,7 +207,7 @@ export default function ExpensesDashboard() {
 
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-4xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
 
           </div>
 
