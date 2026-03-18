@@ -189,13 +189,7 @@ export default function ExpensesDashboard() {
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-4xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
-            <button
-              className="text-sm font-bold text-primary"
-              onClick={() => navigate({ to: '/expenses/list' })}
-              type="button"
-            >
-              {t('expenses.viewAll')}
-            </button>
+
           </div>
 
           {activityItems.length === 0 ? (
