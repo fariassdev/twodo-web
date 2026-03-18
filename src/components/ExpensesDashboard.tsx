@@ -192,7 +192,7 @@ export default function ExpensesDashboard() {
                 type="button"
               >
                 <span className="material-symbols-outlined filled-icon">payments</span>
-                {t('expenses.settleUp')}
+                {t('expenses.settleDebt')}
               </button>
             )}
 
