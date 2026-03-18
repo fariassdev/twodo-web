@@ -44,37 +44,3 @@ end $$;
 create unique index if not exists profiles_auth_user_id_unique_idx
   on public.profiles (auth_user_id)
   where auth_user_id is not null;
-
--- Seed initial household and map current hardcoded profiles.
-insert into public.households (name)
-select 'Bubis'
-where not exists (
-  select 1
-  from public.households h
-  where lower(h.name) = 'bubis'
-);
-
-with bubis as (
-  select h.id
-  from public.households h
-  where lower(h.name) = 'bubis'
-  limit 1
-)
-insert into public.household_members (household_id, profile_id, role)
-select
-  b.id,
-  p.id,
-  case
-    when p.id = 'a1111111-1111-1111-1111-111111111111' then 'admin'
-    else 'member'
-  end
-from bubis b
-join public.profiles p
-  on p.id in (
-    'a1111111-1111-1111-1111-111111111111',
-    'b2222222-2222-2222-2222-222222222222'
-  )
-on conflict (profile_id)
-do update set
-  household_id = excluded.household_id,
-  role = excluded.role;
