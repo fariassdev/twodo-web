@@ -321,13 +321,14 @@
     "balance": {
       "theyOweYou": "{{name}} owes you",
       "youOwe": "You owe {{name}}",
-      "settled": "You're all settled up",
-      "settledSubtitle": "No pending debt right now."
+      "settled": "You're all settled up 🎉",
+      "settledSubtitle": "Enjoy the peace of mind"
     },
     "settlement": {
       "title": "Settle balance",
       "closeSheet": "Close settlement sheet",
       "confirmTransfer": "Confirm you transferred {{amount}} to {{name}}.",
+      "confirmReceipt": "Confirm you received {{amount}} from {{name}}.",
       "noteOptional": "Optional note",
       "notePlaceholder": "e.g. Bank transfer March",
       "confirmButton": "Confirm settlement",

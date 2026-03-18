@@ -267,7 +267,7 @@
     "recentExpenses": "Gastos recientes",
     "viewAll": "Ver todos",
     "currentBalance": "Balance actual",
-    "settleUp": "Saldar",
+    "settleUp": "Saldar deuda",
     "historyTitle": "Historial",
     "emptyFirstExpense": "Añade vuestro primer gasto compartido.",
     "emptyFiltered": "No hay gastos con estos filtros.",
@@ -324,13 +324,14 @@
     "balance": {
       "theyOweYou": "{{name}} te debe",
       "youOwe": "Debes a {{name}}",
-      "settled": "Estáis en paz",
-      "settledSubtitle": "No hay deudas pendientes ahora mismo."
+      "settled": "Estáis en paz 🎉",
+      "settledSubtitle": "Disfruta de la tranquilidad"
     },
     "settlement": {
       "title": "Saldar balance",
       "closeSheet": "Cerrar modal de liquidación",
       "confirmTransfer": "Confirma que transferiste {{amount}} a {{name}}.",
+      "confirmReceipt": "Confirma que recibiste {{amount}} de {{name}}.",
       "noteOptional": "Nota opcional",
       "notePlaceholder": "Ej. Bizum marzo",
       "confirmButton": "Confirmar liquidación",

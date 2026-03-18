@@ -106,7 +106,9 @@ export default function ExpensesDashboard() {
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
             <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
             <p className="mt-2 text-sm text-slate-300">
-              {t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
+              {balance?.direction === 'you_are_owed'
+                ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
+                : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
             </p>
 
             <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -163,27 +165,44 @@ export default function ExpensesDashboard() {
           </p>
         )}
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-primary/25 bg-gradient-to-br from-[#0f4539] to-[#0b251f] p-6 shadow-xl shadow-black/20">
-          <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full bg-primary/20 blur-2xl" />
-          <p className="text-sm uppercase tracking-widest text-primary/80">{t('expenses.currentBalance')}</p>
-          <h2 className="mt-2 text-5xl font-black leading-tight text-slate-100">{amountLabel}</h2>
-          <p className="mt-2 text-3xl font-bold text-slate-100">{balanceHeadline}</p>
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-[#102620] p-7 shadow-2xl shadow-black/40 border border-primary/10">
+          <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -bottom-10 -right-6 opacity-[0.07] pointer-events-none">
+            <span className="material-symbols-outlined !text-[12rem] select-none">
+              {balance?.direction === 'settled' ? 'check_circle' : 'account_balance_wallet'}
+            </span>
+          </div>
 
-          {balance?.direction === 'you_owe' && (
-            <button
-              className="mt-6 h-14 w-full rounded-2xl bg-primary text-2xl font-bold text-background-dark shadow-lg shadow-primary/30"
-              onClick={() => setSettlementSheetOpen(true)}
-              type="button"
-            >
-              {t('expenses.settleUp')}
-            </button>
-          )}
-
-          {balance?.direction === 'settled' && (
-            <p className="mt-5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-              {t('expenses.balance.settledSubtitle')}
+          <div className="relative z-10">
+            <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-primary/60">
+              {t('expenses.currentBalance')}
             </p>
-          )}
+            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-white`}>
+              {balanceHeadline}
+            </h2>
+
+            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-slate-400' : 'text-primary'}`}>
+              {amountLabel}
+            </p>
+
+            {balance?.direction !== 'settled' && (
+              <button
+                className="mt-8 flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-primary text-xl font-bold text-[#102620] shadow-lg shadow-primary/20 transition-transform active:scale-[0.98]"
+                onClick={() => setSettlementSheetOpen(true)}
+                type="button"
+              >
+                <span className="material-symbols-outlined filled-icon">payments</span>
+                {t('expenses.settleUp')}
+              </button>
+            )}
+
+            {balance?.direction === 'settled' && (
+              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-primary/80">
+                <span className="material-symbols-outlined !text-lg">done_all</span>
+                {t('expenses.balance.settledSubtitle')}
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="mt-8">

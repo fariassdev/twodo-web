@@ -1233,14 +1233,17 @@ export async function createSettlement(
 ): Promise<SettlementWithDetails> {
   const balance = await getExpenseBalanceSnapshot(scope.householdId, scope.profileId);
 
-  if (balance.direction !== 'you_owe' || !balance.counterpartyProfile) {
-    throw new Error('Only the debtor can create a settlement');
+  if (balance.direction === 'settled' || !balance.counterpartyProfile) {
+    throw new Error('Cannot create a settlement when the balance is zero.');
   }
+
+  const payerId = balance.direction === 'you_owe' ? scope.profileId : balance.counterpartyProfile.id;
+  const receiverId = balance.direction === 'you_owe' ? balance.counterpartyProfile.id : scope.profileId;
 
   const payload = {
     household_id: scope.householdId,
-    paid_by_profile_id: scope.profileId,
-    paid_to_profile_id: balance.counterpartyProfile.id,
+    paid_by_profile_id: payerId,
+    paid_to_profile_id: receiverId,
     created_by_profile_id: scope.profileId,
     amount_cents: balance.amountCents,
     note: input.note?.trim() || null,
