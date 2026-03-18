@@ -173,7 +173,7 @@ export default function ExpensesDashboard() {
             </span>
           </div>
 
-          <div className="relative z-10">
+          <div className="relative">
             <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-primary/60">
               {t('expenses.currentBalance')}
             </p>
