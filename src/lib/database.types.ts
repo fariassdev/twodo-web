@@ -737,6 +737,7 @@ export type Database = {
         Args: { p_date: string; p_recurrence_id: string }
         Returns: undefined
       }
+      f_unaccent: { Args: { value: string }; Returns: string }
       get_counterparty_profile: {
         Args: { p_household_id: string; p_profile_id: string }
         Returns: string
@@ -751,15 +752,33 @@ export type Database = {
         Args: { p_household_id: string; p_profile_id: string }
         Returns: boolean
       }
-      swap_tasks: {
+      search_expenses: {
         Args: {
+          p_category_id?: string
+          p_from_date?: string
           p_household_id: string
-          p_my_profile_id: string
-          p_my_task_id: string
-          p_partner_profile_id: string
-          p_partner_task_id: string
+          p_paid_by_profile_id?: string
+          p_search_term: string
+          p_to_date?: string
         }
-        Returns: undefined
+        Returns: {
+          amount_cents: number
+          category_id: string
+          created_at: string
+          created_by_profile_id: string
+          description: string | null
+          expense_date: string
+          household_id: string
+          id: string
+          paid_by_profile_id: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "expenses"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {

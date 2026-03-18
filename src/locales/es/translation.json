@@ -267,8 +267,8 @@
     "recentExpenses": "Gastos recientes",
     "viewAll": "Ver todos",
     "currentBalance": "Balance actual",
-    "settleUp": "Saldar",
-    "historyTitle": "Historial",
+    "settleUp": "Deuda saldada",
+    "historyTitle": "Gastos recientes",
     "emptyFirstExpense": "Añade vuestro primer gasto compartido.",
     "emptyFiltered": "No hay gastos con estos filtros.",
     "amount": "Importe",
@@ -300,7 +300,10 @@
     "meWithName": "Yo ({{name}})",
     "today": "Hoy",
     "yesterday": "Ayer",
+    "openSearch": "Abrir buscador de gastos",
     "searchExpensesPlaceholder": "Buscar gastos...",
+    "searchLoading": "Buscando gastos...",
+    "clearSearch": "Limpiar búsqueda",
     "filterCategory": "Categoría",
     "filterPaidBy": "Pagado por",
     "filterAllCategories": "Todas las categorías",
@@ -321,13 +324,14 @@
     "balance": {
       "theyOweYou": "{{name}} te debe",
       "youOwe": "Debes a {{name}}",
-      "settled": "Estáis en paz",
-      "settledSubtitle": "No hay deudas pendientes ahora mismo."
+      "settled": "Estáis en paz 🎉",
+      "settledSubtitle": "Disfruta de la tranquilidad"
     },
     "settlement": {
       "title": "Saldar balance",
       "closeSheet": "Cerrar modal de liquidación",
       "confirmTransfer": "Confirma que transferiste {{amount}} a {{name}}.",
+      "confirmReceipt": "Confirma que recibiste {{amount}} de {{name}}.",
       "noteOptional": "Nota opcional",
       "notePlaceholder": "Ej. Bizum marzo",
       "confirmButton": "Confirmar liquidación",

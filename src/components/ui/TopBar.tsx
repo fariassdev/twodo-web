@@ -82,7 +82,7 @@ export default function TopBar({
     () =>
       cx(
         sticky && 'sticky top-0',
-        'z-10 border-b border-primary/10 bg-background-dark/80 backdrop-blur-md',
+        'z-30 border-b border-primary/10 bg-background-dark/80 backdrop-blur-md',
         containerClassName,
       ),
     [sticky, containerClassName],
