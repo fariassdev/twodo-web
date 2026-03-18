@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ExpenseActivityFeedItem } from '../../lib/queries';
 import { centsToCurrency, toRelativeExpenseDate } from '../../lib/expenseUtils';
+import type { ExpenseWithDetails } from '../../lib/types';
 import ExpenseListItem from './ExpenseListItem';
 
-type ExpensesActivityFeedProps = {
-  items: ExpenseActivityFeedItem[];
+type ExpensesListProps = {
+  items?: ExpenseActivityFeedItem[];
+  expenses?: ExpenseWithDetails[];
   locale: string;
   currentProfileId: string | null;
   hasNextPage?: boolean;
@@ -36,19 +38,34 @@ function groupItemsByDay(items: ExpenseActivityFeedItem[]): GroupedItems[] {
   return grouped;
 }
 
-export default function ExpensesActivityFeed({
-  items,
+export default function ExpensesList({
+  items = [],
+  expenses = [],
   locale,
   currentProfileId,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
   onExpenseClick,
-}: ExpensesActivityFeedProps): React.ReactElement {
+}: ExpensesListProps): React.ReactElement {
   const { t } = useTranslation();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const groups = useMemo(() => groupItemsByDay(items), [items]);
+  const effectiveItems = useMemo(() => {
+    if (items.length > 0) return items;
+    if (expenses.length === 0) return [];
+
+    return expenses.map((expense) => ({
+      type: 'expense' as const,
+      id: expense.id,
+      activity_day: expense.expense_date,
+      activity_at: `${expense.expense_date}T00:00:00`,
+      created_at: expense.created_at,
+      expense,
+    }));
+  }, [items, expenses]);
+
+  const groups = useMemo(() => groupItemsByDay(effectiveItems), [effectiveItems]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;

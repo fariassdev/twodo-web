@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
-import ExpensesActivityFeed from './expenses/ExpensesActivityFeed';
+import ExpensesList from './expenses/ExpensesList';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { centsToCurrency } from '../lib/expenseUtils';
 import {
@@ -203,7 +203,7 @@ export default function ExpensesDashboard() {
               {t('expenses.emptyFirstExpense')}
             </div>
           ) : (
-            <ExpensesActivityFeed
+            <ExpensesList
               currentProfileId={profileId}
               hasNextPage={activityQuery.hasNextPage}
               isFetchingNextPage={activityQuery.isFetchingNextPage}

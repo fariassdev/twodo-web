@@ -3,11 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import QueryErrorState from './ui/QueryErrorState';
-import ExpenseListItem from './expenses/ExpenseListItem';
-import ExpensesActivityFeed from './expenses/ExpensesActivityFeed';
+import ExpensesList from './expenses/ExpensesList';
 import {
-  formatMonthHeading,
-  groupExpensesByMonth,
   includesNormalizedText,
   normalizeSearchText,
 } from '../lib/expenseUtils';
@@ -77,7 +74,7 @@ function buildExpensesListSearch(params: {
   return search;
 }
 
-export default function ExpensesList() {
+export default function ExpensesListPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Partial<ExpensesListSearch>;
@@ -253,7 +250,7 @@ export default function ExpensesList() {
     if (!normalizedInputSearch) return expenses;
     return expenses.filter((expense) => includesNormalizedText(expense.description, normalizedInputSearch));
   }, [expenses, normalizedInputSearch]);
-  const groups = groupExpensesByMonth(visibleExpenses);
+
   const activityItems = useMemo(
     () => activityQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [activityQuery.data],
@@ -408,7 +405,7 @@ export default function ExpensesList() {
           </div>
         )}
 
-        {(hasActiveFilters ? groups.length === 0 : activityItems.length === 0) ? (
+        {(hasActiveFilters ? visibleExpenses.length === 0 : activityItems.length === 0) ? (
           <div className="mt-10 flex flex-col items-center px-2 text-center">
             <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]">
               <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">receipt_long</span>
@@ -442,54 +439,27 @@ export default function ExpensesList() {
             )}
           </div>
         ) : (
-          <div className="mt-6 space-y-7">
-            {hasActiveFilters ? (
-              groups.map((group) => (
-                <section key={group.month}>
-                  <h2 className="mb-3 text-sm font-black tracking-[0.2em] text-slate-400">
-                    {formatMonthHeading(group.month, i18n.language)}
-                  </h2>
-                  <div className="space-y-3">
-                    {group.items.map((expense) => (
-                      <div key={expense.id}>
-                        <ExpenseListItem
-                          currentProfileId={profileId}
-                          expense={expense}
-                          locale={i18n.language}
-                          onClick={() =>
-                            navigate({
-                              to: '/expenses/$expenseId',
-                              params: { expenseId: expense.id },
-                              search: detailSearchFromList,
-                            })
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))
-            ) : (
-              <ExpensesActivityFeed
-                currentProfileId={profileId}
-                hasNextPage={activityQuery.hasNextPage}
-                isFetchingNextPage={activityQuery.isFetchingNextPage}
-                items={activityItems}
-                locale={i18n.language}
-                onLoadMore={() => {
-                  if (activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
-                    void activityQuery.fetchNextPage();
-                  }
-                }}
-                onExpenseClick={(expenseId) =>
-                  navigate({
-                    to: '/expenses/$expenseId',
-                    params: { expenseId },
-                    search: detailSearchFromList,
-                  })
+          <div className="mt-6">
+            <ExpensesList
+              currentProfileId={profileId}
+              expenses={hasActiveFilters ? visibleExpenses : undefined}
+              hasNextPage={!hasActiveFilters ? activityQuery.hasNextPage : undefined}
+              isFetchingNextPage={!hasActiveFilters ? activityQuery.isFetchingNextPage : undefined}
+              items={!hasActiveFilters ? activityItems : undefined}
+              locale={i18n.language}
+              onLoadMore={() => {
+                if (!hasActiveFilters && activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
+                  void activityQuery.fetchNextPage();
                 }
-              />
-            )}
+              }}
+              onExpenseClick={(expenseId) =>
+                navigate({
+                  to: '/expenses/$expenseId',
+                  params: { expenseId },
+                  search: detailSearchFromList,
+                })
+              }
+            />
           </div>
         )}
       </main>
