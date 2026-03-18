@@ -299,7 +299,8 @@ export default function ExpensesList() {
           <input
             className="h-12 w-full rounded-2xl border border-slate-700/45 bg-slate-900/75 pl-11 pr-12 text-base text-slate-100 outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
             placeholder={t('expenses.searchExpensesPlaceholder')}
-            type="search"
+            type="text"
+            inputMode="search"
             value={inputSearchText}
             onChange={(event) => handleSearchChange(event.target.value)}
           />
