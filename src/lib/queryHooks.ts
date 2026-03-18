@@ -77,6 +77,7 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
+import { normalizeSearchText } from './expenseUtils';
 import type {
   AuthContext,
   ExpenseCategory,
@@ -267,10 +268,12 @@ async function invalidateTaskMutationGraph(
 }
 
 function getExpenseFiltersSignature(filters: ExpenseFilters = {}): string {
+  const normalizedSearchText = filters.searchText ? normalizeSearchText(filters.searchText) : null;
+
   return JSON.stringify({
     categoryId: filters.categoryId ?? null,
     paidByProfileId: filters.paidByProfileId ?? null,
-    searchText: filters.searchText?.trim() ?? null,
+    searchText: normalizedSearchText,
     fromDate: filters.fromDate ?? null,
     toDate: filters.toDate ?? null,
   });

@@ -335,6 +335,38 @@ export const profileRoute = createRoute({
   ),
 });
 
+export interface ExpensesListSearch {
+  q?: string;
+  categoryId?: string;
+  paidByProfileId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface ExpenseDetailsSearch extends ExpensesListSearch {
+  from?: 'dashboard' | 'list';
+}
+
+function readSearchValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : undefined;
+}
+
+function readDateSearchValue(value: unknown): string | undefined {
+  const searchValue = readSearchValue(value);
+  if (!searchValue) return undefined;
+  return /^\d{4}-\d{2}-\d{2}$/.test(searchValue) ? searchValue : undefined;
+}
+
+function readExpenseFromSearch(value: unknown): ExpenseDetailsSearch['from'] {
+  if (value === 'dashboard' || value === 'list') {
+    return value;
+  }
+
+  return undefined;
+}
+
 export const expensesDashboardRoute = createRoute({
   getParentRoute: () => mainLayoutRoute,
   path: '/expenses',
@@ -348,6 +380,13 @@ export const expensesDashboardRoute = createRoute({
 export const expensesListRoute = createRoute({
   getParentRoute: () => mainLayoutRoute,
   path: '/expenses/list',
+  validateSearch: (search: Record<string, unknown>): ExpensesListSearch => ({
+    q: readSearchValue(search?.q),
+    categoryId: readSearchValue(search?.categoryId),
+    paidByProfileId: readSearchValue(search?.paidByProfileId),
+    fromDate: readDateSearchValue(search?.fromDate),
+    toDate: readDateSearchValue(search?.toDate),
+  }),
   component: () => (
     <RouteShell sectionName="expenses-list">
       <ExpensesList />
@@ -416,6 +455,14 @@ export const createExpenseRoute = createRoute({
 export const expenseDetailsRoute = createRoute({
   getParentRoute: () => privateGateRoute,
   path: '/expenses/$expenseId',
+  validateSearch: (search: Record<string, unknown>): ExpenseDetailsSearch => ({
+    from: readExpenseFromSearch(search?.from),
+    q: readSearchValue(search?.q),
+    categoryId: readSearchValue(search?.categoryId),
+    paidByProfileId: readSearchValue(search?.paidByProfileId),
+    fromDate: readDateSearchValue(search?.fromDate),
+    toDate: readDateSearchValue(search?.toDate),
+  }),
   component: () => (
     <RouteShell sectionName="expense-details">
       <ExpenseDetails />

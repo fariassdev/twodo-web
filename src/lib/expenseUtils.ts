@@ -59,3 +59,18 @@ export function toRelativeExpenseDate(
 
   return target.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
+
+export function normalizeSearchText(value: string): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+export function includesNormalizedText(source: string | null | undefined, query: string): boolean {
+  if (!query) return true;
+  if (!source) return false;
+
+  return normalizeSearchText(source).includes(query);
+}

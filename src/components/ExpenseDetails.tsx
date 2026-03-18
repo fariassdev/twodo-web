@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import QueryErrorState from './ui/QueryErrorState';
 import { NumericInput } from './ui/NumericInput';
@@ -16,6 +16,7 @@ import {
 } from '../lib/queryHooks';
 import { centsToCurrency } from '../lib/expenseUtils';
 import { expenseFormSchema, type ExpenseFormValues } from '../lib/schemas';
+import type { ExpenseDetailsSearch, ExpensesListSearch } from '../router';
 
 function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2);
@@ -32,7 +33,43 @@ export default function ExpenseDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { expenseId } = useParams({ strict: false }) as { expenseId: string };
+  const detailSearch = useSearch({ strict: false }) as Partial<ExpenseDetailsSearch>;
   const { profileId } = useAuthScope();
+
+  const listSearch = useMemo<ExpensesListSearch>(() => {
+    const search: ExpensesListSearch = {};
+
+    if (typeof detailSearch.q === 'string' && detailSearch.q.trim().length > 0) {
+      search.q = detailSearch.q.trim();
+    }
+
+    if (typeof detailSearch.categoryId === 'string' && detailSearch.categoryId.trim().length > 0) {
+      search.categoryId = detailSearch.categoryId.trim();
+    }
+
+    if (typeof detailSearch.paidByProfileId === 'string' && detailSearch.paidByProfileId.trim().length > 0) {
+      search.paidByProfileId = detailSearch.paidByProfileId.trim();
+    }
+
+    if (typeof detailSearch.fromDate === 'string' && detailSearch.fromDate.trim().length > 0) {
+      search.fromDate = detailSearch.fromDate.trim();
+    }
+
+    if (typeof detailSearch.toDate === 'string' && detailSearch.toDate.trim().length > 0) {
+      search.toDate = detailSearch.toDate.trim();
+    }
+
+    return search;
+  }, [detailSearch.categoryId, detailSearch.fromDate, detailSearch.paidByProfileId, detailSearch.q, detailSearch.toDate]);
+
+  const goBackToExpenses = () => {
+    if (detailSearch.from === 'list') {
+      navigate({ to: '/expenses/list', search: listSearch });
+      return;
+    }
+
+    navigate({ to: '/expenses' });
+  };
 
   const expenseQuery = useExpenseByIdQuery(expenseId);
   const categoriesQuery = useExpenseCategoriesQuery();
@@ -86,7 +123,7 @@ export default function ExpenseDetails() {
     setActionError(null);
     try {
       await deleteExpenseMutation.mutateAsync(expense.id);
-      navigate({ to: '/expenses/list' });
+      goBackToExpenses();
     } catch (error) {
       console.error('Delete expense error:', error);
       setActionError(t('queryState.mutationError'));
@@ -135,7 +172,7 @@ export default function ExpenseDetails() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <p className="text-sm text-slate-300">{t('expenses.notFound')}</p>
-        <button className="font-semibold text-primary" onClick={() => navigate({ to: '/expenses' })} type="button">
+        <button className="font-semibold text-primary" onClick={goBackToExpenses} type="button">
           {t('taskDetails.back')}
         </button>
       </div>
@@ -154,7 +191,7 @@ export default function ExpenseDetails() {
         leftAction={{
           ariaLabel: t('topBar.back'),
           icon: 'arrow_back',
-          onClick: () => navigate({ to: '/expenses/list' }),
+          onClick: goBackToExpenses,
         }}
         rightSlot={(
           <button

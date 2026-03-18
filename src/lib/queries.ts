@@ -998,6 +998,24 @@ export async function getExpensesList(
   householdId: string,
   filters: ExpenseFilters = {},
 ): Promise<ExpenseWithDetails[]> {
+  const searchText = filters.searchText?.trim();
+  const fromDate = filters.fromDate?.trim();
+  const toDate = filters.toDate?.trim();
+
+  if (searchText) {
+    const { data, error } = await supabase.rpc('search_expenses', {
+      p_household_id: householdId,
+      p_search_term: searchText,
+      p_category_id: filters.categoryId || undefined,
+      p_paid_by_profile_id: filters.paidByProfileId || undefined,
+      p_from_date: fromDate || undefined,
+      p_to_date: toDate || undefined,
+    });
+
+    if (error) throw error;
+    return mapExpensesWithDetails(data ?? [], householdId);
+  }
+
   let query = supabase
     .from('expenses')
     .select('*')
@@ -1011,17 +1029,10 @@ export async function getExpensesList(
     query = query.eq('paid_by_profile_id', filters.paidByProfileId);
   }
 
-  const searchText = filters.searchText?.trim();
-  if (searchText) {
-    query = query.ilike('description', `%${searchText}%`);
-  }
-
-  const fromDate = filters.fromDate?.trim();
   if (fromDate) {
     query = query.gte('expense_date', fromDate);
   }
 
-  const toDate = filters.toDate?.trim();
   if (toDate) {
     query = query.lte('expense_date', toDate);
   }

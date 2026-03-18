@@ -1,11 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
 import QueryErrorState from './ui/QueryErrorState';
 import ExpenseListItem from './expenses/ExpenseListItem';
 import ExpensesActivityFeed from './expenses/ExpensesActivityFeed';
-import { formatMonthHeading, groupExpensesByMonth } from '../lib/expenseUtils';
+import {
+  formatMonthHeading,
+  groupExpensesByMonth,
+  includesNormalizedText,
+  normalizeSearchText,
+} from '../lib/expenseUtils';
 import {
   useAuthScope,
   useExpensesActivityFeedInfiniteQuery,
@@ -13,6 +18,7 @@ import {
   useExpensesListQuery,
   useProfilesQuery,
 } from '../lib/queryHooks';
+import type { ExpensesListSearch } from '../router';
 
 function formatDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -32,57 +38,222 @@ function getDefaultDateRange(): { fromDate: string; toDate: string } {
   };
 }
 
+function isValidDateInputValue(value: string | undefined): value is string {
+  if (!value) return false;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function buildExpensesListSearch(params: {
+  q: string;
+  categoryId: string;
+  paidByProfileId: string;
+  fromDate: string;
+  toDate: string;
+  defaultDateRange: { fromDate: string; toDate: string };
+}): ExpensesListSearch {
+  const search: ExpensesListSearch = {};
+  const queryValue = params.q.trim();
+
+  if (queryValue) {
+    search.q = queryValue;
+  }
+
+  if (params.categoryId !== 'all') {
+    search.categoryId = params.categoryId;
+  }
+
+  if (params.paidByProfileId !== 'all') {
+    search.paidByProfileId = params.paidByProfileId;
+  }
+
+  if (params.fromDate !== params.defaultDateRange.fromDate) {
+    search.fromDate = params.fromDate;
+  }
+
+  if (params.toDate !== params.defaultDateRange.toDate) {
+    search.toDate = params.toDate;
+  }
+
+  return search;
+}
+
 export default function ExpensesList() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as Partial<ExpensesListSearch>;
   const { profileId } = useAuthScope();
   const defaultDateRange = useMemo(() => getDefaultDateRange(), []);
+  const initialSearchText = searchParams.q ?? '';
+  const initialFromDate = isValidDateInputValue(searchParams.fromDate)
+    ? searchParams.fromDate
+    : defaultDateRange.fromDate;
+  const initialToDate = isValidDateInputValue(searchParams.toDate)
+    ? searchParams.toDate
+    : defaultDateRange.toDate;
 
   const categoriesQuery = useExpenseCategoriesQuery();
   const profilesQuery = useProfilesQuery();
 
-  const [categoryId, setCategoryId] = useState<string>('all');
-  const [paidByProfileId, setPaidByProfileId] = useState<string>('all');
-  const [searchText, setSearchText] = useState<string>('');
-  const [fromDate, setFromDate] = useState<string>(defaultDateRange.fromDate);
-  const [toDate, setToDate] = useState<string>(defaultDateRange.toDate);
+  const [categoryId, setCategoryId] = useState<string>(searchParams.categoryId ?? 'all');
+  const [paidByProfileId, setPaidByProfileId] = useState<string>(searchParams.paidByProfileId ?? 'all');
+  const [inputSearchText, setInputSearchText] = useState<string>(initialSearchText);
+  const [serverSearchText, setServerSearchText] = useState<string>(initialSearchText);
+  const [fromDate, setFromDate] = useState<string>(initialFromDate);
+  const [toDate, setToDate] = useState<string>(initialToDate);
   const [isDateRangeOpen, setIsDateRangeOpen] = useState<boolean>(false);
+  const [isSearchDebouncing, setIsSearchDebouncing] = useState<boolean>(false);
+
+  const normalizedInputSearch = useMemo(() => normalizeSearchText(inputSearchText), [inputSearchText]);
+  const normalizedServerSearch = useMemo(() => normalizeSearchText(serverSearchText), [serverSearchText]);
+
+  useEffect(() => {
+    if (normalizedInputSearch === normalizedServerSearch) {
+      setIsSearchDebouncing(false);
+      return;
+    }
+
+    setIsSearchDebouncing(true);
+    const timeoutId = window.setTimeout(() => {
+      setServerSearchText(inputSearchText);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [inputSearchText, normalizedInputSearch, normalizedServerSearch]);
+
+  const updateListSearchInUrl = useCallback(
+    (
+      overrides: Partial<{
+        q: string;
+        categoryId: string;
+        paidByProfileId: string;
+        fromDate: string;
+        toDate: string;
+      }> = {},
+    ) => {
+      const nextSearch = buildExpensesListSearch({
+        q: overrides.q ?? inputSearchText,
+        categoryId: overrides.categoryId ?? categoryId,
+        paidByProfileId: overrides.paidByProfileId ?? paidByProfileId,
+        fromDate: overrides.fromDate ?? fromDate,
+        toDate: overrides.toDate ?? toDate,
+        defaultDateRange,
+      });
+
+      navigate({
+        to: '/expenses/list',
+        search: nextSearch,
+        replace: true,
+      });
+    },
+    [categoryId, defaultDateRange, fromDate, inputSearchText, navigate, paidByProfileId, toDate],
+  );
+
+  const listSearchParams = useMemo(
+    () =>
+      buildExpensesListSearch({
+        q: inputSearchText,
+        categoryId,
+        paidByProfileId,
+        fromDate,
+        toDate,
+        defaultDateRange,
+      }),
+    [categoryId, defaultDateRange, fromDate, inputSearchText, paidByProfileId, toDate],
+  );
+
+  const detailSearchFromList = useMemo(
+    () => ({ from: 'list' as const, ...listSearchParams }),
+    [listSearchParams],
+  );
+
+  const handleSearchChange = (value: string) => {
+    setInputSearchText(value);
+    updateListSearchInUrl({ q: value });
+  };
+
+  const clearSearchText = () => {
+    setInputSearchText('');
+    setServerSearchText('');
+    setIsSearchDebouncing(false);
+    updateListSearchInUrl({ q: '' });
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    updateListSearchInUrl({ categoryId: value });
+  };
+
+  const handlePaidByProfileChange = (value: string) => {
+    setPaidByProfileId(value);
+    updateListSearchInUrl({ paidByProfileId: value });
+  };
+
+  const handleFromDateChange = (nextFromDate: string) => {
+    const resolvedToDate = toDate && nextFromDate > toDate ? nextFromDate : toDate;
+    setFromDate(nextFromDate);
+    setToDate(resolvedToDate);
+    updateListSearchInUrl({ fromDate: nextFromDate, toDate: resolvedToDate });
+  };
+
+  const handleToDateChange = (nextToDate: string) => {
+    const resolvedFromDate = fromDate && nextToDate < fromDate ? nextToDate : fromDate;
+    setToDate(nextToDate);
+    setFromDate(resolvedFromDate);
+    updateListSearchInUrl({ fromDate: resolvedFromDate, toDate: nextToDate });
+  };
 
   const hasActiveFilters = useMemo(
     () =>
       categoryId !== 'all' ||
       paidByProfileId !== 'all' ||
-      searchText.trim().length > 0 ||
+      inputSearchText.trim().length > 0 ||
       fromDate !== defaultDateRange.fromDate ||
       toDate !== defaultDateRange.toDate,
-    [categoryId, defaultDateRange.fromDate, defaultDateRange.toDate, fromDate, paidByProfileId, searchText, toDate],
+    [
+      categoryId,
+      defaultDateRange.fromDate,
+      defaultDateRange.toDate,
+      fromDate,
+      inputSearchText,
+      paidByProfileId,
+      toDate,
+    ],
   );
 
   const filters = useMemo(
     () => ({
       categoryId: categoryId === 'all' ? undefined : categoryId,
       paidByProfileId: paidByProfileId === 'all' ? undefined : paidByProfileId,
-      searchText: searchText.trim() || undefined,
+      searchText: serverSearchText.trim() || undefined,
       fromDate: fromDate || undefined,
       toDate: toDate || undefined,
     }),
-    [categoryId, fromDate, paidByProfileId, searchText, toDate],
+    [categoryId, fromDate, paidByProfileId, serverSearchText, toDate],
   );
 
   const clearAllFilters = () => {
     setCategoryId('all');
     setPaidByProfileId('all');
-    setSearchText('');
+    setInputSearchText('');
+    setServerSearchText('');
     setFromDate(defaultDateRange.fromDate);
     setToDate(defaultDateRange.toDate);
     setIsDateRangeOpen(false);
+    setIsSearchDebouncing(false);
+    navigate({ to: '/expenses/list', search: {}, replace: true });
   };
 
   const expensesQuery = useExpensesListQuery(filters, { enabled: hasActiveFilters });
   const activityQuery = useExpensesActivityFeedInfiniteQuery(20, { enabled: !hasActiveFilters });
 
   const expenses = expensesQuery.data ?? [];
-  const groups = groupExpensesByMonth(expenses);
+  const visibleExpenses = useMemo(() => {
+    if (!normalizedInputSearch) return expenses;
+    return expenses.filter((expense) => includesNormalizedText(expense.description, normalizedInputSearch));
+  }, [expenses, normalizedInputSearch]);
+  const groups = groupExpensesByMonth(visibleExpenses);
   const activityItems = useMemo(
     () => activityQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [activityQuery.data],
@@ -91,8 +262,11 @@ export default function ExpensesList() {
     ? t('expenses.emptyNoResultsSubtitle')
     : t('expenses.emptyFirstExpense');
 
-  const isPending = hasActiveFilters ? expensesQuery.isPending : activityQuery.isPending;
-  const isError = hasActiveFilters ? expensesQuery.isError : activityQuery.isError;
+  const hasSearchText = inputSearchText.trim().length > 0;
+  const isSearchLoading = hasSearchText && (isSearchDebouncing || expensesQuery.isFetching);
+
+  const isPending = hasActiveFilters ? expensesQuery.isPending && !expensesQuery.data : activityQuery.isPending;
+  const isError = hasActiveFilters ? expensesQuery.isError && !expensesQuery.data : activityQuery.isError;
 
   if (isPending) {
     return (
@@ -123,12 +297,30 @@ export default function ExpensesList() {
             search
           </span>
           <input
-            className="h-12 w-full rounded-2xl border border-slate-700/45 bg-slate-900/75 pl-11 pr-4 text-base text-slate-100 outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+            className="h-12 w-full rounded-2xl border border-slate-700/45 bg-slate-900/75 pl-11 pr-12 text-base text-slate-100 outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
             placeholder={t('expenses.searchExpensesPlaceholder')}
             type="search"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
+            value={inputSearchText}
+            onChange={(event) => handleSearchChange(event.target.value)}
           />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            {isSearchLoading ? (
+              <span
+                aria-label={t('expenses.searchLoading')}
+                className="block h-5 w-5 animate-spin rounded-full border-2 border-primary/80 border-t-transparent"
+                role="status"
+              />
+            ) : hasSearchText ? (
+              <button
+                aria-label={t('expenses.clearSearch')}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-700/50 hover:text-slate-100"
+                onClick={clearSearchText}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -139,7 +331,7 @@ export default function ExpensesList() {
             <select
               className="h-11 w-full appearance-none rounded-full border border-primary/25 bg-[#10223d]/75 pl-10 pr-9 text-sm font-semibold text-slate-100 outline-none"
               value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
+              onChange={(event) => handleCategoryChange(event.target.value)}
             >
               <option value="all">{t('expenses.filterCategory')}</option>
               {(categoriesQuery.data ?? []).map((category) => (
@@ -160,7 +352,7 @@ export default function ExpensesList() {
             <select
               className="h-11 w-full appearance-none rounded-full border border-primary/25 bg-[#10223d]/75 pl-10 pr-9 text-sm font-semibold text-slate-100 outline-none"
               value={paidByProfileId}
-              onChange={(event) => setPaidByProfileId(event.target.value)}
+              onChange={(event) => handlePaidByProfileChange(event.target.value)}
             >
               <option value="all">{t('expenses.filterPaidBy')}</option>
               {(profilesQuery.data ?? []).map((profile) => (
@@ -195,11 +387,7 @@ export default function ExpensesList() {
                 type="date"
                 value={fromDate}
                 onChange={(event) => {
-                  const nextFrom = event.target.value;
-                  setFromDate(nextFrom);
-                  if (toDate && nextFrom > toDate) {
-                    setToDate(nextFrom);
-                  }
+                  handleFromDateChange(event.target.value);
                 }}
               />
             </label>
@@ -212,11 +400,7 @@ export default function ExpensesList() {
                 type="date"
                 value={toDate}
                 onChange={(event) => {
-                  const nextTo = event.target.value;
-                  setToDate(nextTo);
-                  if (fromDate && nextTo < fromDate) {
-                    setFromDate(nextTo);
-                  }
+                  handleToDateChange(event.target.value);
                 }}
               />
             </label>
@@ -271,7 +455,13 @@ export default function ExpensesList() {
                           currentProfileId={profileId}
                           expense={expense}
                           locale={i18n.language}
-                          onClick={() => navigate({ to: '/expenses/$expenseId', params: { expenseId: expense.id } })}
+                          onClick={() =>
+                            navigate({
+                              to: '/expenses/$expenseId',
+                              params: { expenseId: expense.id },
+                              search: detailSearchFromList,
+                            })
+                          }
                         />
                       </div>
                     ))}
@@ -290,7 +480,13 @@ export default function ExpensesList() {
                     void activityQuery.fetchNextPage();
                   }
                 }}
-                onExpenseClick={(expenseId) => navigate({ to: '/expenses/$expenseId', params: { expenseId } })}
+                onExpenseClick={(expenseId) =>
+                  navigate({
+                    to: '/expenses/$expenseId',
+                    params: { expenseId },
+                    search: detailSearchFromList,
+                  })
+                }
               />
             )}
           </div>

@@ -142,18 +142,16 @@ export default function ExpensesDashboard() {
       <TopBar
         title={t('expenses.dashboardTitle')}
         titleIcon="payments"
-        rightMenu={{
-          ariaLabel: t('topBar.openMenu'),
-          closeAriaLabel: t('topBar.closeMenu'),
-          items: [
-            {
-              id: 'view-all-expenses',
-              icon: 'receipt_long',
-              label: t('expenses.viewAll'),
-              onClick: () => navigate({ to: '/expenses/list' }),
-            },
-          ],
-        }}
+        rightSlot={(
+          <button
+            aria-label={t('expenses.openSearch')}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-100 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            onClick={() => navigate({ to: '/expenses/list' })}
+            type="button"
+          >
+            <span className="material-symbols-outlined">search</span>
+          </button>
+        )}
       />
 
       <main className="mx-auto max-w-md px-4 pt-5">
@@ -216,7 +214,13 @@ export default function ExpensesDashboard() {
                   void activityQuery.fetchNextPage();
                 }
               }}
-              onExpenseClick={(expenseId) => navigate({ to: '/expenses/$expenseId', params: { expenseId } })}
+              onExpenseClick={(expenseId) =>
+                navigate({
+                  to: '/expenses/$expenseId',
+                  params: { expenseId },
+                  search: { from: 'dashboard' },
+                })
+              }
             />
           )}
         </section>
