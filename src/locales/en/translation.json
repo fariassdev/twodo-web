@@ -159,6 +159,7 @@
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Next 7 days",
     "balanceScoreText": "You are carrying a balanced load",
+    "balanceBadge": "BALANCE SCORE",
     "balanceScoreImbalance": "The load is leaning to one side",
     "viewMore": "View more",
     "timeBlocks": {

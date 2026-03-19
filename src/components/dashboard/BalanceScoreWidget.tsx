@@ -84,7 +84,7 @@ export default function BalanceScoreWidget() {
         <div className="flex items-center gap-2 mb-1.5">
           <div className={`w-1.5 h-1.5 rounded-full ${colorClass.includes('emerald') ? 'bg-emerald-400' : colorClass.includes('rose') ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
           <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
-            ESTADO DE CARGA
+            {t('dashboard.balanceBadge')}
           </span>
         </div>
         <p className="text-[15px] font-medium text-white leading-tight pr-4">

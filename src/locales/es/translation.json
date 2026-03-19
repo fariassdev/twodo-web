@@ -159,6 +159,7 @@
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Próximos 7 días",
     "balanceScoreText": "Lleváis una carga equilibrada entre ambos",
+    "balanceBadge": "REPARTO DE CARGA",
     "balanceScoreImbalance": "La carga recae más sobre uno de los dos",
     "viewMore": "Ver más",
     "timeBlocks": {
