@@ -165,7 +165,10 @@
     }
   },
   "entryCreate": {
-    "title": "New Entry"
+    "title": "New Entry",
+    "subtitle": "What would you like to add to the hearth?",
+    "continue": "Continue",
+    "selectTask": "Select Task"
   },
   "entryEdit": {
     "title": "Edit Entry",

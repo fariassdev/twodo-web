@@ -6,9 +6,21 @@ import type { CreateTaskInput } from '../lib/queries';
 import type { Profile, TaskCatalogItem } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
-import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../lib/schemas';
+import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../lib/schemas';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
+
+type Step = 'type-select' | 'catalog' | 'form';
+
+const CATEGORY_ICONS: Record<string, string> = {
+  trash: '🗑️',
+  cleaning: '🧹',
+  bathroom: '🚿',
+  kitchen: '🍳',
+  shopping: '🛒',
+  laundry: '🧺',
+  other: '📦',
+};
 
 export default function CreateEntry() {
   const { t, i18n } = useTranslation();
@@ -20,6 +32,8 @@ export default function CreateEntry() {
   const initialStartTime = searchParams?.startTime || '';
   const initialEndTime = searchParams?.endTime || '';
 
+  const [step, setStep] = useState<Step>('type-select');
+  const [selectedType, setSelectedType] = useState<'task' | 'event'>(initialType);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<TaskCatalogItem | null>(null);
 
@@ -71,8 +85,8 @@ export default function CreateEntry() {
     const endTime = getValues('endTime');
     if (!endTime || endTime <= startTime) {
       const [hStr, mStr] = startTime.split(':');
-      const h = parseInt(hStr, 10);
-      const m = parseInt(mStr, 10);
+      const h = Number.parseInt(hStr, 10);
+      const m = Number.parseInt(mStr, 10);
       const total = h * 60 + m + 30;
       let newEnd = '';
       if (total >= 24 * 60 - 1) {
@@ -94,13 +108,21 @@ export default function CreateEntry() {
   const catalog: TaskCatalogItem[] = catalogQuery.data ?? [];
   const saving = createTasksMutation.isPending;
 
-  const filteredCatalog = useMemo(() => {
-    if (!catalogSearch.trim()) return catalog;
-    const q = catalogSearch.toLowerCase();
-    return catalog.filter(item => {
-      const name = i18n.language === 'es' ? item.name_es : item.name_en;
-      return name.toLowerCase().includes(q);
+  // Group catalog by category
+  const catalogByCategory = useMemo((): Record<string, TaskCatalogItem[]> => {
+    const filtered = catalogSearch.trim()
+      ? catalog.filter(item => {
+          const name = i18n.language === 'es' ? item.name_es : item.name_en;
+          return name.toLowerCase().includes(catalogSearch.toLowerCase());
+        })
+      : catalog;
+
+    const groups: Record<string, TaskCatalogItem[]> = {};
+    filtered.forEach(item => {
+      if (!groups[item.category]) groups[item.category] = [];
+      groups[item.category].push(item);
     });
+    return groups;
   }, [catalog, catalogSearch, i18n.language]);
 
   useEffect(() => {
@@ -109,19 +131,50 @@ export default function CreateEntry() {
     }
   }, [profiles, assignedTo]);
 
+  function handleContinueFromTypeSelect() {
+    setValue('type', selectedType);
+    if (selectedType === 'task') {
+      setStep('catalog');
+    } else {
+      setStep('form');
+    }
+  }
+
   function handleCatalogSelect(item: TaskCatalogItem) {
     setSelectedCatalogItem(item);
     const name = i18n.language === 'es' ? item.name_es : item.name_en;
     setValue('title', name);
     setValue('effortLevel', item.default_effort_level as EffortLevel);
-    setValue('category', item.category);
+    setValue('category', item.category as TaskCategory);
     setValue('catalogTaskId', item.id);
+    if (item.default_time_of_day) {
+      setValue('timeOfDay', item.default_time_of_day as TimeOfDay);
+    }
     setCatalogSearch('');
+    setStep('form');
   }
 
   function handleCustomTask() {
     setSelectedCatalogItem(null);
     setValue('catalogTaskId', undefined);
+    setValue('title', '');
+    setValue('effortLevel', 'M');
+    setValue('timeOfDay', 'anytime');
+    setValue('category', 'other');
+    setStep('form');
+  }
+
+  function handleBackFromCatalog() {
+    setStep('type-select');
+    setCatalogSearch('');
+  }
+
+  function handleBackFromForm() {
+    if (type === 'task') {
+      setStep('catalog');
+    } else {
+      setStep('type-select');
+    }
   }
 
   async function onSubmit(data: EntryFormValues) {
@@ -205,15 +258,183 @@ export default function CreateEntry() {
   const pillActiveClass = 'bg-background-dark shadow-sm text-primary';
   const pillInactiveClass = 'text-primary/60';
 
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 1 — TYPE SELECTOR
+  // ═══════════════════════════════════════════════════════════════
+  if (step === 'type-select') {
+    return (
+      <div className="flex flex-col min-h-screen bg-background-dark">
+        {/* Spacer to push content down like a bottom sheet */}
+        <div className="flex-1" />
+
+        <div className="flex flex-col items-center px-6 pb-10 pt-6 bg-background-dark/95 backdrop-blur-sm rounded-t-3xl border-t border-primary/10 relative">
+          {/* Handle bar */}
+          <div className="w-12 h-1.5 rounded-full bg-primary/30 mb-8" />
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+            {t('entryCreate.title')}
+          </h2>
+          <p className="text-sm text-primary/60 mb-8">
+            {t('entryCreate.subtitle')}
+          </p>
+
+          {/* Type Cards */}
+          <div className="flex gap-4 w-full max-w-xs mb-10">
+            {/* Task Card */}
+            <button
+              type="button"
+              onClick={() => setSelectedType('task')}
+              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 ${
+                selectedType === 'task'
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                selectedType === 'task' ? 'bg-primary/20' : 'bg-primary/10'
+              }`}>
+                <span className="material-symbols-outlined text-primary text-3xl">check_circle</span>
+              </div>
+              <span className={`text-base font-bold ${selectedType === 'task' ? 'text-slate-100' : 'text-primary/70'}`}>
+                {t('entryForm.typeTask')}
+              </span>
+            </button>
+
+            {/* Event Card */}
+            <button
+              type="button"
+              onClick={() => setSelectedType('event')}
+              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 relative ${
+                selectedType === 'event'
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                selectedType === 'event' ? 'bg-primary/20' : 'bg-primary/10'
+              }`}>
+                <span className="material-symbols-outlined text-primary/70 text-3xl">calendar_today</span>
+              </div>
+              <span className={`text-base font-bold ${selectedType === 'event' ? 'text-slate-100' : 'text-primary/70'}`}>
+                {t('entryForm.typeEvent')}
+              </span>
+            </button>
+          </div>
+
+          {/* Continue button */}
+          <button
+            type="button"
+            onClick={handleContinueFromTypeSelect}
+            className="w-full max-w-xs h-14 rounded-2xl bg-primary text-background-dark font-bold text-base flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+          >
+            {t('entryCreate.continue')}
+            <span className="material-symbols-outlined text-xl">arrow_forward</span>
+          </button>
+
+          {/* Cancel */}
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            className="mt-4 text-sm text-primary/50 hover:text-primary/80 transition-colors"
+          >
+            {t('cta.cancel')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 2 — TASK CATALOG
+  // ═══════════════════════════════════════════════════════════════
+  if (step === 'catalog') {
+    return (
+      <div className="flex flex-col min-h-screen bg-background-dark">
+        <TopBar
+          title={t('entryCreate.selectTask')}
+          leftAction={{
+            ariaLabel: t('topBar.back'),
+            icon: 'arrow_back',
+            onClick: handleBackFromCatalog,
+          }}
+        />
+
+        <div className="flex flex-col gap-4 px-4 py-4 max-w-md mx-auto w-full flex-1">
+          {/* Search bar */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-4 top-4 text-primary/40">search</span>
+            <input
+              className={`${inputClass} !pl-12`}
+              placeholder={t('entryForm.catalogSearch')}
+              type="text"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Catalog grouped by category */}
+          <div className="flex flex-col gap-5 pb-4 overflow-y-auto flex-1">
+            {(Object.entries(catalogByCategory) as [string, TaskCatalogItem[]][]).map(([cat, items]) => (
+              <div key={cat} className="flex flex-col gap-2">
+                {/* Category header */}
+                <div className="flex items-center gap-2 px-1 pt-1">
+                  <span className="text-base">{CATEGORY_ICONS[cat] || '📦'}</span>
+                  <span className="text-xs font-bold text-primary/50 uppercase tracking-wider">
+                    {t(`entryForm.categories.${cat}` as const)}
+                  </span>
+                </div>
+
+                {/* Category items */}
+                {items.map(item => {
+                  const name = i18n.language === 'es' ? item.name_es : item.name_en;
+                  const points = EFFORT_POINTS[item.default_effort_level as EffortLevel] ?? 0;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleCatalogSelect(item)}
+                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all text-left active:scale-[0.98]"
+                    >
+                      <span className="text-xl w-8 text-center shrink-0">{item.icon}</span>
+                      <span className="flex-1 text-slate-100 text-sm font-medium truncate">{name}</span>
+                      <span className="text-xs font-bold text-primary/80 bg-primary/15 px-2.5 py-1 rounded-lg shrink-0 whitespace-nowrap">
+                        {item.default_effort_level} · {points}pts
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Create custom task */}
+            <button
+              type="button"
+              onClick={handleCustomTask}
+              className="flex items-center gap-3 px-4 py-4 mt-2 rounded-xl border border-dashed border-primary/30 hover:bg-primary/5 transition-all active:scale-[0.98]"
+            >
+              <span className="text-xl w-8 text-center">✏️</span>
+              <span className="flex-1 text-sm font-semibold text-primary/80">{t('entryForm.createCustomTask')}</span>
+              <span className="material-symbols-outlined text-primary/40 text-xl">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 3 — FORM (Task or Event)
+  // ═══════════════════════════════════════════════════════════════
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
       <TopBar
         title={t('entryCreate.title')}
         titleIcon="edit_note"
         leftAction={{
-          ariaLabel: t('topBar.close'),
-          icon: 'close',
-          onClick: () => router.history.back(),
+          ariaLabel: t('topBar.back'),
+          icon: 'arrow_back',
+          onClick: handleBackFromForm,
         }}
         rightSlot={(
           <button
@@ -229,67 +450,25 @@ export default function CreateEntry() {
       />
 
       <div className="flex flex-col gap-6 px-4 py-4 max-w-md mx-auto w-full">
-        {/* ── Type Selector ── */}
-        <div className="flex flex-col gap-3 mb-1">
-          <p className={labelClass}>{t('entryForm.type')}</p>
-          <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'task' ? pillActiveClass : pillInactiveClass}`}>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">check_circle</span>
-                <span className="truncate">{t('entryForm.typeTask')}</span>
-              </div>
-              <input className="invisible w-0" type="radio" value="task" {...register('type')} />
-            </label>
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? pillActiveClass : pillInactiveClass}`}>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">calendar_today</span>
-                <span className="truncate">{t('entryForm.typeEvent')}</span>
-              </div>
-              <input className="invisible w-0" type="radio" value="event" {...register('type')} />
-            </label>
-          </div>
-        </div>
-
-        {/* ── Task Catalog (only for tasks) ── */}
-        {type === 'task' && !selectedCatalogItem && (
-          <div className="flex flex-col gap-3">
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-4 text-primary/40">search</span>
-              <input
-                className={`${inputClass} !pl-12`}
-                placeholder={t('entryForm.catalogSearch')}
-                type="text"
-                value={catalogSearch}
-                onChange={(e) => setCatalogSearch(e.target.value)}
-              />
+        {/* ── Selected catalog item badge ── */}
+        {type === 'task' && selectedCatalogItem && (
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/10">
+            <span className="text-xl">{selectedCatalogItem.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-slate-100 text-sm font-semibold truncate">
+                {i18n.language === 'es' ? selectedCatalogItem.name_es : selectedCatalogItem.name_en}
+              </p>
+              <p className="text-primary/60 text-xs">
+                {t(`entryForm.categories.${selectedCatalogItem.category}` as const)}
+              </p>
             </div>
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
-              {filteredCatalog.map(item => {
-                const name = i18n.language === 'es' ? item.name_es : item.name_en;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleCatalogSelect(item)}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all text-left"
-                  >
-                    <span className="text-xl">{item.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-slate-100 text-sm font-medium truncate">{name}</p>
-                      <p className="text-primary/60 text-xs">{t(`entryForm.categories.${item.category}` as const)} · {t(`entryForm.effortLevels.${item.default_effort_level}` as const)}</p>
-                    </div>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={handleCustomTask}
-                className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 hover:bg-primary/5 transition-all"
-              >
-                <span className="material-symbols-outlined text-primary/60">add_circle</span>
-                <span className="text-sm font-medium text-primary/80">{t('entryForm.createCustomTask')}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => { setSelectedCatalogItem(null); setStep('catalog'); }}
+              className="text-primary/50 hover:text-primary/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
           </div>
         )}
 
@@ -305,17 +484,15 @@ export default function CreateEntry() {
           {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
         </label>
 
-        {/* ── Date + Effort Level (tasks) ── */}
-        <div className={`grid gap-4 ${type === 'task' ? 'grid-cols-1' : 'grid-cols-1'}`}>
-          <label className="flex flex-col">
-            <p className={labelClass}>{t('entryForm.date')}</p>
-            <input
-              className={inputClass}
-              type="date"
-              {...register('date')}
-            />
-          </label>
-        </div>
+        {/* ── Date ── */}
+        <label className="flex flex-col">
+          <p className={labelClass}>{t('entryForm.date')}</p>
+          <input
+            className={inputClass}
+            type="date"
+            {...register('date')}
+          />
+        </label>
 
         {/* ── Effort Level (task only) ── */}
         {type === 'task' && (

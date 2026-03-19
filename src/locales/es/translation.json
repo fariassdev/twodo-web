@@ -165,7 +165,10 @@
     }
   },
   "entryCreate": {
-    "title": "Nueva entrada"
+    "title": "Nueva entrada",
+    "subtitle": "¿Qué quieres añadir al hogar?",
+    "continue": "Continuar",
+    "selectTask": "Seleccionar tarea"
   },
   "entryEdit": {
     "title": "Editar tarea",
@@ -207,7 +210,7 @@
       "other": "Otros"
     },
     "catalogSearch": "Buscar tarea...",
-    "createCustomTask": "Crear tarea propia",
+    "createCustomTask": "Crear tarea personalizada",
     "selectFromCatalog": "O elige del catálogo",
     "location": "Ubicación",
     "locationPlaceholder": "Ej.: Mercadona, Casa...",
