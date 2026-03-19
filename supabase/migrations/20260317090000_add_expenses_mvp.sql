@@ -467,20 +467,21 @@ with check (
   and created_by_profile_id = public.current_profile_id()
 );
 
-insert into public.expense_categories (key, name_es, name_en, icon, sort_order)
+insert into public.expense_categories (id, key, name_es, name_en, icon, sort_order)
 values
-  ('groceries', 'Supermercado', 'Groceries', 'shopping_cart', 1),
-  ('dining', 'Restaurantes', 'Dining out', 'restaurant', 2),
-  ('home', 'Hogar', 'Home', 'home', 3),
-  ('transport', 'Transporte', 'Transport', 'directions_car', 4),
-  ('health', 'Salud', 'Health', 'local_hospital', 5),
-  ('entertainment', 'Ocio', 'Entertainment', 'movie', 6),
-  ('travel', 'Viajes', 'Travel', 'flight', 7),
-  ('subscriptions', 'Suscripciones', 'Subscriptions', 'subscriptions', 8),
-  ('gifts', 'Regalos', 'Gifts', 'redeem', 9),
-  ('other', 'Otros', 'Other', 'category', 10)
+  ('733c4f3e-449d-49d0-9828-af4bdaaa31e9', 'groceries', 'Supermercado', 'Groceries', 'shopping_cart', 1),
+  ('e8f69403-0a8f-448c-a4bb-3ed686afb562', 'dining', 'Restaurantes', 'Dining out', 'restaurant', 2),
+  ('85b1c276-d459-449b-ac04-4c4ba2a5a4fa', 'home', 'Hogar', 'Home', 'home', 3),
+  ('aeff0d3a-46ab-4aaa-af7c-fd7e24839cee', 'transport', 'Transporte', 'Transport', 'directions_car', 4),
+  ('974a0b95-f9a7-4d0b-adb6-35a3e57f36ca', 'health', 'Salud', 'Health', 'local_hospital', 5),
+  ('53b23ddf-9752-4a8a-aa5f-6bbb306c18a3', 'entertainment', 'Ocio', 'Entertainment', 'movie', 6),
+  ('0b95e251-9d39-4431-93dc-e0e1fa42b940', 'travel', 'Viajes', 'Travel', 'flight', 7),
+  ('8aca2df5-2f86-417c-ad18-db3e23e87496', 'subscriptions', 'Suscripciones', 'Subscriptions', 'subscriptions', 8),
+  ('a4a19989-a155-4315-b357-96469c51ab47', 'gifts', 'Regalos', 'Gifts', 'redeem', 9),
+  ('f12a2580-0621-4d31-b877-2792956d5318', 'other', 'Otros', 'Other', 'category', 10)
 on conflict (key)
 do update set
+  id = excluded.id,
   name_es = excluded.name_es,
   name_en = excluded.name_en,
   icon = excluded.icon,

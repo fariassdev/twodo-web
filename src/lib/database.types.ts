@@ -557,6 +557,48 @@ export type Database = {
           },
         ]
       }
+      task_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          default_effort_level: string
+          default_points: number
+          default_time_of_day: string | null
+          icon: string
+          id: string
+          key: string
+          name_en: string
+          name_es: string
+          sort_order: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_effort_level: string
+          default_points: number
+          default_time_of_day?: string | null
+          icon: string
+          id?: string
+          key: string
+          name_en: string
+          name_es: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_effort_level?: string
+          default_points?: number
+          default_time_of_day?: string | null
+          icon?: string
+          id?: string
+          key?: string
+          name_en?: string
+          name_es?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       task_completions: {
         Row: {
           completed_at: string
@@ -610,11 +652,14 @@ export type Database = {
         Row: {
           assigned_to: string | null
           assignment_type: string
+          catalog_task_id: string | null
+          category: string | null
           created_at: string
           created_by: string | null
           date: string | null
           deleted_at: string | null
           description: string | null
+          effort_level: string | null
           end_time: string | null
           frequency: string | null
           household_id: string
@@ -627,6 +672,7 @@ export type Database = {
           recurrence_id: string | null
           start_time: string | null
           status: string
+          time_of_day: string | null
           title: string
           type: string
           updated_at: string
@@ -634,11 +680,14 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           assignment_type?: string
+          catalog_task_id?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           date?: string | null
           deleted_at?: string | null
           description?: string | null
+          effort_level?: string | null
           end_time?: string | null
           frequency?: string | null
           household_id: string
@@ -651,6 +700,7 @@ export type Database = {
           recurrence_id?: string | null
           start_time?: string | null
           status?: string
+          time_of_day?: string | null
           title: string
           type?: string
           updated_at?: string
@@ -658,11 +708,14 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           assignment_type?: string
+          catalog_task_id?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           date?: string | null
           deleted_at?: string | null
           description?: string | null
+          effort_level?: string | null
           end_time?: string | null
           frequency?: string | null
           household_id?: string
@@ -675,6 +728,7 @@ export type Database = {
           recurrence_id?: string | null
           start_time?: string | null
           status?: string
+          time_of_day?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -685,6 +739,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_catalog_task_id_fkey"
+            columns: ["catalog_task_id"]
+            isOneToOne: false
+            referencedRelation: "task_catalog"
             referencedColumns: ["id"]
           },
           {

@@ -12,12 +12,14 @@ export const queryKeys = {
   tasks: {
     all: ['tasks'] as const,
     today: (householdId: string) => ['tasks', 'today', householdId] as const,
+    overdue: (householdId: string) => ['tasks', 'overdue', householdId] as const,
     upcoming: (householdId: string) => ['tasks', 'upcoming', householdId] as const,
     month: (year: number, month: number, includeDeleted: boolean, householdId: string) =>
       ['tasks', 'month', year, month, includeDeleted ? 'withDeleted' : 'active', householdId] as const,
 
     detail: (taskId: string, householdId: string) =>
       ['tasks', 'detail', taskId, householdId] as const,
+    catalog: () => ['tasks', 'catalog'] as const,
   },
   calendar: {
     all: ['calendar'] as const,

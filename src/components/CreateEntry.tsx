@@ -1,17 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateTasksMutation, useProfilesQuery } from '../lib/queryHooks';
+import { useCreateTasksMutation, useProfilesQuery, useTaskCatalogQuery } from '../lib/queryHooks';
 import type { CreateTaskInput } from '../lib/queries';
-import type { Profile } from '../lib/types';
+import type { Profile, TaskCatalogItem } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
-import { entryFormSchema, type EntryFormValues } from '../lib/schemas';
+import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../lib/schemas';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 
+type Step = 'type-select' | 'catalog' | 'form';
+
+const CATEGORY_ICONS: Record<string, string> = {
+  trash: '🗑️',
+  cleaning: '🧹',
+  bathroom: '🚿',
+  kitchen: '🍳',
+  shopping: '🛒',
+  laundry: '🧺',
+  other: '📦',
+};
+
 export default function CreateEntry() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const router = useRouter();
   const searchParams = useSearch({ strict: false }) as { date?: string; type?: 'task' | 'event'; startTime?: string; endTime?: string };
@@ -19,6 +31,11 @@ export default function CreateEntry() {
   const initialType = searchParams?.type === 'event' ? 'event' : 'task';
   const initialStartTime = searchParams?.startTime || '';
   const initialEndTime = searchParams?.endTime || '';
+
+  const [step, setStep] = useState<Step>('type-select');
+  const [selectedType, setSelectedType] = useState<'task' | 'event'>(initialType);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState<TaskCatalogItem | null>(null);
 
   const {
     register,
@@ -32,8 +49,11 @@ export default function CreateEntry() {
     defaultValues: {
       title: '',
       date: initialDate || new Date().toISOString().split('T')[0],
-      points: 10,
-      priority: 'critical',
+      effortLevel: 'M',
+      urgency: 'normal',
+      timeOfDay: 'anytime',
+      category: 'other',
+      catalogTaskId: undefined,
       isRecurring: false,
       frequency: 'weekly',
       type: initialType,
@@ -48,7 +68,10 @@ export default function CreateEntry() {
   });
 
   const type = watch('type');
-  const priority = watch('priority');
+  const effortLevel = watch('effortLevel');
+  const urgency = watch('urgency');
+  const timeOfDay = watch('timeOfDay');
+  const category = watch('category');
   const isRecurring = watch('isRecurring');
   const frequency = watch('frequency');
   const assignmentCategory = watch('assignmentCategory');
@@ -62,9 +85,9 @@ export default function CreateEntry() {
     const endTime = getValues('endTime');
     if (!endTime || endTime <= startTime) {
       const [hStr, mStr] = startTime.split(':');
-      const h = parseInt(hStr, 10);
-      const m = parseInt(mStr, 10);
-      let total = h * 60 + m + 30;
+      const h = Number.parseInt(hStr, 10);
+      const m = Number.parseInt(mStr, 10);
+      const total = h * 60 + m + 30;
       let newEnd = '';
       if (total >= 24 * 60 - 1) {
         newEnd = '23:59';
@@ -78,16 +101,81 @@ export default function CreateEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
+  const catalogQuery = useTaskCatalogQuery();
   const createTasksMutation = useCreateTasksMutation();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
+  const catalog: TaskCatalogItem[] = catalogQuery.data ?? [];
   const saving = createTasksMutation.isPending;
+
+  // Group catalog by category
+  const catalogByCategory = useMemo((): Record<string, TaskCatalogItem[]> => {
+    const filtered = catalogSearch.trim()
+      ? catalog.filter(item => {
+          const name = i18n.language === 'es' ? item.name_es : item.name_en;
+          return name.toLowerCase().includes(catalogSearch.toLowerCase());
+        })
+      : catalog;
+
+    const groups: Record<string, TaskCatalogItem[]> = {};
+    filtered.forEach(item => {
+      if (!groups[item.category]) groups[item.category] = [];
+      groups[item.category].push(item);
+    });
+    return groups;
+  }, [catalog, catalogSearch, i18n.language]);
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo) {
       setValue('assignedTo', profiles[0].id);
     }
   }, [profiles, assignedTo]);
+
+  function handleContinueFromTypeSelect() {
+    setValue('type', selectedType);
+    if (selectedType === 'task') {
+      setStep('catalog');
+    } else {
+      setStep('form');
+    }
+  }
+
+  function handleCatalogSelect(item: TaskCatalogItem) {
+    setSelectedCatalogItem(item);
+    const name = i18n.language === 'es' ? item.name_es : item.name_en;
+    setValue('title', name);
+    setValue('effortLevel', item.default_effort_level as EffortLevel);
+    setValue('category', item.category as TaskCategory);
+    setValue('catalogTaskId', item.id);
+    if (item.default_time_of_day) {
+      setValue('timeOfDay', item.default_time_of_day as TimeOfDay);
+    }
+    setCatalogSearch('');
+    setStep('form');
+  }
+
+  function handleCustomTask() {
+    setSelectedCatalogItem(null);
+    setValue('catalogTaskId', undefined);
+    setValue('title', '');
+    setValue('effortLevel', 'M');
+    setValue('timeOfDay', 'anytime');
+    setValue('category', 'other');
+    setStep('form');
+  }
+
+  function handleBackFromCatalog() {
+    setStep('type-select');
+    setCatalogSearch('');
+  }
+
+  function handleBackFromForm() {
+    if (type === 'task') {
+      setStep('catalog');
+    } else {
+      setStep('type-select');
+    }
+  }
 
   async function onSubmit(data: EntryFormValues) {
     try {
@@ -97,19 +185,22 @@ export default function CreateEntry() {
           ? 'anyone'
           : (data.isRotating ? 'strict_rotation' : 'individual');
 
-      const baseInput = {
+      const baseInput: Omit<CreateTaskInput, 'date' | 'recurrence_id'> = {
         title: data.title.trim(),
         description: data.description.trim() || undefined,
         type: data.type,
-        priority: data.type === 'task' ? data.priority : 'flexible',
-        points: data.type === 'task' ? data.points : 0,
+        priority: data.type === 'task' ? data.urgency : 'normal',
+        effort_level: data.type === 'task' ? data.effortLevel as EffortLevel : undefined,
+        time_of_day: data.type === 'task' ? data.timeOfDay as TimeOfDay : undefined,
+        category: data.type === 'task' ? data.category : undefined,
+        catalog_task_id: data.type === 'task' ? data.catalogTaskId || null : null,
         is_recurring: data.isRecurring,
         frequency: data.isRecurring ? data.frequency : null,
         assignment_type: finalAssignmentType,
         assigned_to: data.assignmentCategory === 'individual' ? data.assignedTo : undefined,
-        location: data.location.trim() || undefined,
-        start_time: data.startTime || undefined,
-        end_time: data.endTime || undefined,
+        location: data.type === 'event' ? (data.location.trim() || undefined) : undefined,
+        start_time: data.type === 'event' ? (data.startTime || undefined) : undefined,
+        end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
       };
 
       let inputs: CreateTaskInput[] = [];
@@ -117,7 +208,7 @@ export default function CreateEntry() {
       if (data.isRecurring && data.frequency && data.date) {
         const recurrenceId = crypto.randomUUID();
         const baseDate = new Date(data.date);
-        let instancesCount = data.frequency === 'daily' ? 365 : data.frequency === 'weekly' ? 52 : 12;
+        const instancesCount = data.frequency === 'daily' ? 365 : data.frequency === 'weekly' ? 52 : 12;
 
         let currentAssignedTo = data.assignedTo;
 
@@ -162,15 +253,188 @@ export default function CreateEntry() {
     }
   }
 
+  const inputClass = 'flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal';
+  const labelClass = 'text-slate-100 text-sm font-semibold leading-normal pb-2';
+  const pillActiveClass = 'bg-background-dark shadow-sm text-primary';
+  const pillInactiveClass = 'text-primary/60';
+
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 1 — TYPE SELECTOR
+  // ═══════════════════════════════════════════════════════════════
+  if (step === 'type-select') {
+    return (
+      <div className="flex flex-col min-h-screen bg-background-dark">
+        {/* Spacer to push content down like a bottom sheet */}
+        <div className="flex-1" />
+
+        <div className="flex flex-col items-center px-6 pb-10 pt-6 bg-background-dark/95 backdrop-blur-sm rounded-t-3xl border-t border-primary/10 relative">
+          {/* Handle bar */}
+          <div className="w-12 h-1.5 rounded-full bg-primary/30 mb-8" />
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+            {t('entryCreate.title')}
+          </h2>
+          <p className="text-sm text-primary/60 mb-8">
+            {t('entryCreate.subtitle')}
+          </p>
+
+          {/* Type Cards */}
+          <div className="flex gap-4 w-full max-w-xs mb-10">
+            {/* Task Card */}
+            <button
+              type="button"
+              onClick={() => setSelectedType('task')}
+              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 ${
+                selectedType === 'task'
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                selectedType === 'task' ? 'bg-primary/20' : 'bg-primary/10'
+              }`}>
+                <span className="material-symbols-outlined text-primary text-3xl">check_circle</span>
+              </div>
+              <span className={`text-base font-bold ${selectedType === 'task' ? 'text-slate-100' : 'text-primary/70'}`}>
+                {t('entryForm.typeTask')}
+              </span>
+            </button>
+
+            {/* Event Card */}
+            <button
+              type="button"
+              onClick={() => setSelectedType('event')}
+              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 relative ${
+                selectedType === 'event'
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                selectedType === 'event' ? 'bg-primary/20' : 'bg-primary/10'
+              }`}>
+                <span className="material-symbols-outlined text-primary/70 text-3xl">calendar_today</span>
+              </div>
+              <span className={`text-base font-bold ${selectedType === 'event' ? 'text-slate-100' : 'text-primary/70'}`}>
+                {t('entryForm.typeEvent')}
+              </span>
+            </button>
+          </div>
+
+          {/* Continue button */}
+          <button
+            type="button"
+            onClick={handleContinueFromTypeSelect}
+            className="w-full max-w-xs h-14 rounded-2xl bg-primary text-background-dark font-bold text-base flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+          >
+            {t('entryCreate.continue')}
+            <span className="material-symbols-outlined text-xl">arrow_forward</span>
+          </button>
+
+          {/* Cancel */}
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            className="mt-4 text-sm text-primary/50 hover:text-primary/80 transition-colors"
+          >
+            {t('cta.cancel')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 2 — TASK CATALOG
+  // ═══════════════════════════════════════════════════════════════
+  if (step === 'catalog') {
+    return (
+      <div className="flex flex-col min-h-screen bg-background-dark">
+        <TopBar
+          title={t('entryCreate.selectTask')}
+          leftAction={{
+            ariaLabel: t('topBar.back'),
+            icon: 'arrow_back',
+            onClick: handleBackFromCatalog,
+          }}
+        />
+
+        <div className="flex flex-col gap-4 px-4 py-4 max-w-md mx-auto w-full flex-1">
+          {/* Search bar */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-4 top-4 text-primary/40">search</span>
+            <input
+              className={`${inputClass} !pl-12`}
+              placeholder={t('entryForm.catalogSearch')}
+              type="text"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Catalog grouped by category */}
+          <div className="flex flex-col gap-5 pb-4 overflow-y-auto flex-1">
+            {(Object.entries(catalogByCategory) as [string, TaskCatalogItem[]][]).map(([cat, items]) => (
+              <div key={cat} className="flex flex-col gap-2">
+                {/* Category header */}
+                <div className="flex items-center gap-2 px-1 pt-1">
+                  <span className="text-base">{CATEGORY_ICONS[cat] || '📦'}</span>
+                  <span className="text-xs font-bold text-primary/50 uppercase tracking-wider">
+                    {t(`entryForm.categories.${cat}` as const)}
+                  </span>
+                </div>
+
+                {/* Category items */}
+                {items.map(item => {
+                  const name = i18n.language === 'es' ? item.name_es : item.name_en;
+                  const points = EFFORT_POINTS[item.default_effort_level as EffortLevel] ?? 0;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleCatalogSelect(item)}
+                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all text-left active:scale-[0.98]"
+                    >
+                      <span className="text-xl w-8 text-center shrink-0">{item.icon}</span>
+                      <span className="flex-1 text-slate-100 text-sm font-medium truncate">{name}</span>
+                      <span className="text-xs font-bold text-primary/80 bg-primary/15 px-2.5 py-1 rounded-lg shrink-0 whitespace-nowrap">
+                        {item.default_effort_level} · {points}pts
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Create custom task */}
+            <button
+              type="button"
+              onClick={handleCustomTask}
+              className="flex items-center gap-3 px-4 py-4 mt-2 rounded-xl border border-dashed border-primary/30 hover:bg-primary/5 transition-all active:scale-[0.98]"
+            >
+              <span className="text-xl w-8 text-center">✏️</span>
+              <span className="flex-1 text-sm font-semibold text-primary/80">{t('entryForm.createCustomTask')}</span>
+              <span className="material-symbols-outlined text-primary/40 text-xl">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  STEP 3 — FORM (Task or Event)
+  // ═══════════════════════════════════════════════════════════════
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
       <TopBar
         title={t('entryCreate.title')}
         titleIcon="edit_note"
         leftAction={{
-          ariaLabel: t('topBar.close'),
-          icon: 'close',
-          onClick: () => router.history.back(),
+          ariaLabel: t('topBar.back'),
+          icon: 'arrow_back',
+          onClick: handleBackFromForm,
         }}
         rightSlot={(
           <button
@@ -186,10 +450,33 @@ export default function CreateEntry() {
       />
 
       <div className="flex flex-col gap-6 px-4 py-4 max-w-md mx-auto w-full">
+        {/* ── Selected catalog item badge ── */}
+        {type === 'task' && selectedCatalogItem && (
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/10">
+            <span className="text-xl">{selectedCatalogItem.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-slate-100 text-sm font-semibold truncate">
+                {i18n.language === 'es' ? selectedCatalogItem.name_es : selectedCatalogItem.name_en}
+              </p>
+              <p className="text-primary/60 text-xs">
+                {t(`entryForm.categories.${selectedCatalogItem.category}` as const)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setSelectedCatalogItem(null); setStep('catalog'); }}
+              className="text-primary/50 hover:text-primary/80 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        )}
+
+        {/* ── Task Name ── */}
         <label className="flex flex-col w-full">
-          <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.planName')}</p>
+          <p className={labelClass}>{t('entryForm.planName')}</p>
           <input
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
+            className={inputClass}
             placeholder={t('entryForm.planNamePlaceholder')}
             type="text"
             {...register('title')}
@@ -197,75 +484,101 @@ export default function CreateEntry() {
           {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
         </label>
 
-        <div className={`grid gap-4 ${type === 'task' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.date')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="date"
-              {...register('date')}
-            />
-          </label>
-          {type === 'task' && (
-            <label className="flex flex-col">
-              <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.points')}</p>
-              <input
-                className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-                placeholder={t('entryForm.pointsPlaceholder')}
-                type="number"
-                {...register('points', { valueAsNumber: true })}
-              />
-            </label>
-          )}
-        </div>
-        <div className="grid gap-4 grid-cols-2">
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.startTime')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="time"
-              placeholder={t('entryForm.startTimePlaceholder')}
-              {...register('startTime')}
-            />
-          </label>
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.endTime')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="time"
-              placeholder={t('entryForm.endTimePlaceholder')}
-              {...register('endTime')}
-            />
-          </label>
-        </div>
-        {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
-
-        <label className="flex flex-col w-full">
-          <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>
+        {/* ── Date ── */}
+        <label className="flex flex-col">
+          <p className={labelClass}>{t('entryForm.date')}</p>
           <input
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
-            placeholder={t('entryForm.locationPlaceholder')}
-            type="text"
-            {...register('location')}
+            className={inputClass}
+            type="date"
+            {...register('date')}
           />
         </label>
 
+        {/* ── Effort Level (task only) ── */}
         {type === 'task' && (
           <div className="flex flex-col gap-3">
-            <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.priority')}</p>
+            <p className={labelClass}>{t('entryForm.effort')}</p>
             <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'critical' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-                <span className="truncate">{t('entryForm.priorityCritical')}</span>
-                <input className="invisible w-0" type="radio" value="critical" {...register('priority')} />
+              {EFFORT_LEVELS.map(level => (
+                <label key={level} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${effortLevel === level ? pillActiveClass : pillInactiveClass}`}>
+                  <span className="truncate">{t(`entryForm.effortLevels.${level}` as const)}</span>
+                  <input className="invisible w-0" type="radio" value={level} {...register('effortLevel')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Time of Day (task only) ── */}
+        {type === 'task' && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.timeOfDay')}</p>
+            <div className="grid grid-cols-4 gap-2">
+              {TIME_OF_DAY_OPTIONS.map(tod => (
+                <label key={tod} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${timeOfDay === tod ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                  <span className="truncate text-center">{t(`entryForm.timeOfDayOptions.${tod}` as const)}</span>
+                  <input className="invisible w-0 absolute" type="radio" value={tod} {...register('timeOfDay')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Category (task only, when custom) ── */}
+        {type === 'task' && !selectedCatalogItem && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.category')}</p>
+            <div className="grid grid-cols-4 gap-2">
+              {TASK_CATEGORIES.map(cat => (
+                <label key={cat} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${category === cat ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                  <span className="truncate text-center">{t(`entryForm.categories.${cat}` as const)}</span>
+                  <input className="invisible w-0 absolute" type="radio" value={cat} {...register('category')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Urgency (task only) ── */}
+        {type === 'task' && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.urgency')}</p>
+            <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
+              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'normal' ? pillActiveClass : pillInactiveClass}`}>
+                <span className="truncate">{t('entryForm.urgencyNormal')}</span>
+                <input className="invisible w-0" type="radio" value="normal" {...register('urgency')} />
               </label>
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'flexible' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-                <span className="truncate">{t('entryForm.priorityFlexible')}</span>
-                <input className="invisible w-0" type="radio" value="flexible" {...register('priority')} />
+              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'high' ? pillActiveClass : pillInactiveClass}`}>
+                <span className="truncate">{t('entryForm.urgencyHigh')}</span>
+                <input className="invisible w-0" type="radio" value="high" {...register('urgency')} />
               </label>
             </div>
           </div>
         )}
 
+        {/* ── Event-only fields ── */}
+        {type === 'event' && (
+          <>
+            <div className="grid gap-4 grid-cols-2">
+              <label className="flex flex-col">
+                <p className={labelClass}>{t('entryForm.startTime')}</p>
+                <input className={inputClass} type="time" placeholder={t('entryForm.startTimePlaceholder')} {...register('startTime')} />
+              </label>
+              <label className="flex flex-col">
+                <p className={labelClass}>{t('entryForm.endTime')}</p>
+                <input className={inputClass} type="time" placeholder={t('entryForm.endTimePlaceholder')} {...register('endTime')} />
+              </label>
+            </div>
+            {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
+
+            <label className="flex flex-col w-full">
+              <p className={labelClass}>{t('entryForm.location')}</p>
+              <input className={inputClass} placeholder={t('entryForm.locationPlaceholder')} type="text" {...register('location')} />
+            </label>
+          </>
+        )}
+
+        {/* ── Recurring ── */}
         <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -282,7 +595,7 @@ export default function CreateEntry() {
               <p className="text-slate-100 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
               <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
-                  <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
+                  <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? pillActiveClass : pillInactiveClass}`}>
                     <span className="truncate">{t(`entryForm.frequencyOptions.${f}`)}</span>
                     <input className="invisible w-0" type="radio" value={f} {...register('frequency')} />
                   </label>
@@ -292,28 +605,9 @@ export default function CreateEntry() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 mb-1">
-          <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.type')}</p>
-          <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'task' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">check_circle</span>
-                <span className="truncate">{t('entryForm.typeTask')}</span>
-              </div>
-              <input className="invisible w-0" type="radio" value="task" {...register('type')} />
-            </label>
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">calendar_today</span>
-                <span className="truncate">{t('entryForm.typeEvent')}</span>
-              </div>
-              <input className="invisible w-0" type="radio" value="event" {...register('type')} />
-            </label>
-          </div>
-        </div>
-
+        {/* ── Assignment ── */}
         <div className="flex flex-col gap-3">
-          <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.assignmentType')}</p>
+          <p className={labelClass}>{t('entryForm.assignmentType')}</p>
           <div className="flex flex-col gap-3">
             <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'team_work' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
               <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
@@ -363,14 +657,14 @@ export default function CreateEntry() {
 
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-sm font-semibold text-primary/80">{t('entryForm.makeRotating')}</span>
-                    <label 
+                    <label
                       title={!isRecurring ? t('entryForm.rotatingDisabledHint') : ''}
                       className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${!isRecurring ? 'opacity-50 !cursor-not-allowed' : ''} ${isRotating ? 'justify-end bg-primary' : 'bg-primary/20'}`}
                     >
                       <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
-                      <input 
-                        className="invisible absolute" 
-                        type="checkbox" 
+                      <input
+                        className="invisible absolute"
+                        type="checkbox"
                         disabled={!isRecurring}
                         {...register('isRotating')}
                       />
@@ -382,10 +676,11 @@ export default function CreateEntry() {
           </div>
         </div>
 
+        {/* ── Description ── */}
         <label className="flex flex-col w-full pb-8">
           <div className="flex items-center gap-2 pb-2">
             <span className="material-symbols-outlined text-primary text-sm">description</span>
-            <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.description')}</p>
+            <p className={labelClass}>{t('entryForm.description')}</p>
           </div>
           <textarea
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"

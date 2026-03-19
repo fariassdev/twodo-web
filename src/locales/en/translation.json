@@ -154,10 +154,21 @@
     "viewCalendar": "View calendar",
     "noUpcomingEvents": "No upcoming events",
     "noDateMonth": "---",
-    "noDateDay": "--"
+    "noDateDay": "--",
+    "overdueSection": "Pending from other days",
+    "overdueSectionCount": "({{count}})",
+    "timeBlocks": {
+      "morning": "🌅 Morning",
+      "afternoon": "☀️ Afternoon",
+      "evening": "🌙 Evening",
+      "anytime": "📌 Anytime"
+    }
   },
   "entryCreate": {
-    "title": "New Entry"
+    "title": "New Entry",
+    "subtitle": "What would you like to add to the hearth?",
+    "continue": "Continue",
+    "selectTask": "Select Task"
   },
   "entryEdit": {
     "title": "Edit Entry",
@@ -170,18 +181,47 @@
     "planName": "Plan Name",
     "planNamePlaceholder": "e.g., Grocery Shopping",
     "date": "Date",
-    "points": "Points",
-    "pointsPlaceholder": "50",
+    "effort": "Effort Level",
+    "effortLevels": {
+      "S": "S · 2pts",
+      "M": "M · 4pts",
+      "L": "L · 8pts",
+      "XL": "XL · 16pts"
+    },
+    "timeOfDay": "Time of Day",
+    "timeOfDayOptions": {
+      "morning": "🌅 Morning",
+      "afternoon": "☀️ Afternoon",
+      "evening": "🌙 Evening",
+      "anytime": "📌 Any"
+    },
+    "urgency": "Urgency",
+    "urgencyNormal": "Normal",
+    "urgencyHigh": "High",
+    "category": "Category",
+    "categoryPlaceholder": "Select category",
+    "categories": {
+      "trash": "Trash",
+      "cleaning": "Cleaning",
+      "bathroom": "Bathroom",
+      "kitchen": "Kitchen",
+      "shopping": "Shopping",
+      "laundry": "Laundry",
+      "other": "Other"
+    },
+    "catalogSearch": "Search task...",
+    "createCustomTask": "Create custom task",
+    "selectFromCatalog": "Or pick from catalog",
     "location": "Location",
     "locationPlaceholder": "e.g., Grocery store, Home...",
     "startTime": "Start time",
     "startTimePlaceholder": "e.g., 14:00",
     "endTime": "End time",
     "endTimePlaceholder": "e.g., 15:00",
-    "timeError": "End time can’t be earlier than start time.",
-    "priority": "Priority",
-    "priorityCritical": "Critical",
-    "priorityFlexible": "Flexible",
+    "timeError": "End time can't be earlier than start time.",
+    "validation": {
+      "titleRequired": "Plan name is required."
+    },
     "recurring": "Recurring",
     "recurringDescription": "Repeat this task automatically",
     "frequency": "Frequency",
@@ -342,7 +382,9 @@
     "status": {
       "pending": "Pending",
       "completed": "Completed",
-      "postponed": "Postponed"
+      "postponed": "Postponed",
+      "expired": "Expired",
+      "overdue": "Overdue"
     },
     "assignment": {
       "strictRotation": "Strict rotation",

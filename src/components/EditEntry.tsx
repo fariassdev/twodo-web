@@ -12,7 +12,7 @@ import type { UpdateTaskInput, CreateTaskInput } from '../lib/queries';
 import type { Task, Profile } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
-import { entryFormSchema, type EntryFormValues } from '../lib/schemas';
+import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../lib/schemas';
 
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
@@ -35,8 +35,11 @@ export default function EditEntry() {
     defaultValues: {
       title: '',
       date: '',
-      points: 10,
-      priority: 'critical',
+      effortLevel: 'M',
+      urgency: 'normal',
+      timeOfDay: 'anytime',
+      category: 'other',
+      catalogTaskId: undefined,
       isRecurring: false,
       frequency: 'weekly',
       type: 'task',
@@ -51,7 +54,10 @@ export default function EditEntry() {
   });
 
   const type = watch('type');
-  const priority = watch('priority');
+  const effortLevel = watch('effortLevel');
+  const urgency = watch('urgency');
+  const timeOfDay = watch('timeOfDay');
+  const category = watch('category');
   const isRecurring = watch('isRecurring');
   const frequency = watch('frequency');
   const assignmentCategory = watch('assignmentCategory');
@@ -67,7 +73,7 @@ export default function EditEntry() {
       const [hStr, mStr] = startTime.split(':');
       const h = parseInt(hStr, 10);
       const m = parseInt(mStr, 10);
-      let total = h * 60 + m + 30;
+      const total = h * 60 + m + 30;
       let newEnd = '';
       if (total >= 24 * 60 - 1) {
         newEnd = '23:59';
@@ -102,32 +108,46 @@ export default function EditEntry() {
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
+  // Map effort level from points for backwards compatibility
+  function pointsToEffortLevel(points: number): EffortLevel {
+    if (points <= 2) return 'S';
+    if (points <= 4) return 'M';
+    if (points <= 8) return 'L';
+    return 'XL';
+  }
+
   // Populate form when task data loads
   useEffect(() => {
     const task = taskQuery.data;
     if (task) {
       setOriginalTask(task);
-      let category: 'team_work' | 'anyone' | 'individual' = 'team_work';
+      let assignCategory: 'team_work' | 'anyone' | 'individual' = 'team_work';
       let rotating = false;
       if (task.assignment_type === 'team_work') {
-        category = 'team_work';
+        assignCategory = 'team_work';
       } else if (task.assignment_type === 'anyone') {
-        category = 'anyone';
+        assignCategory = 'anyone';
       } else if (task.assignment_type === 'strict_rotation') {
-        category = 'individual';
+        assignCategory = 'individual';
         rotating = true;
       } else {
-        category = 'individual';
+        assignCategory = 'individual';
       }
+
+      const effortLvl = (task.effort_level as EffortLevel) || pointsToEffortLevel(task.points);
+
       reset({
         title: task.title,
         date: task.date || '',
-        points: task.points || 0,
-        priority: task.priority as 'critical' | 'flexible',
+        effortLevel: effortLvl,
+        urgency: (task.priority === 'high' ? 'high' : 'normal') as 'normal' | 'high',
+        timeOfDay: (task.time_of_day || 'anytime') as TimeOfDay,
+        category: task.category || 'other',
+        catalogTaskId: task.catalog_task_id || undefined,
         isRecurring: task.is_recurring,
         frequency: (task.frequency ?? 'weekly') as 'daily' | 'weekly' | 'monthly',
         type: task.type as 'task' | 'event',
-        assignmentCategory: category,
+        assignmentCategory: assignCategory,
         assignedTo: task.assigned_to || '',
         isRotating: rotating,
         description: task.description || '',
@@ -161,16 +181,19 @@ export default function EditEntry() {
         title: data.title.trim(),
         description: data.description.trim() || undefined,
         type: data.type,
-        priority: data.type === 'task' ? data.priority : 'flexible',
+        priority: data.type === 'task' ? data.urgency : 'normal',
         date: data.date || undefined,
-        points: data.type === 'task' ? data.points : 0,
+        effort_level: data.type === 'task' ? data.effortLevel as EffortLevel : undefined,
+        time_of_day: data.type === 'task' ? data.timeOfDay as TimeOfDay : undefined,
+        category: data.type === 'task' ? data.category : undefined,
+        catalog_task_id: data.type === 'task' ? data.catalogTaskId || null : null,
         is_recurring: data.isRecurring,
         frequency: data.isRecurring ? data.frequency : null,
         assignment_type: finalAssignmentType,
         assigned_to: data.assignmentCategory === 'individual' ? data.assignedTo : null,
-        location: data.location.trim() || undefined,
-        start_time: data.startTime || undefined,
-        end_time: data.endTime || undefined,
+        location: data.type === 'event' ? (data.location.trim() || undefined) : undefined,
+        start_time: data.type === 'event' ? (data.startTime || undefined) : undefined,
+        end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
       };
 
       await updateTaskMutation.mutateAsync({ taskId, input });
@@ -183,7 +206,7 @@ export default function EditEntry() {
 
         if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];
-          
+
           let currentDate = new Date(data.date);
           const endDate = new Date(currentDate);
           endDate.setFullYear(endDate.getFullYear() + 1);
@@ -203,16 +226,19 @@ export default function EditEntry() {
               title: data.title.trim(),
               description: data.description.trim() || undefined,
               type: data.type,
-              priority: data.type === 'task' ? data.priority : 'flexible',
+              priority: data.type === 'task' ? data.urgency : 'normal',
               date: currentDate.toISOString().split('T')[0],
-              points: data.type === 'task' ? data.points : 0,
+              effort_level: data.type === 'task' ? data.effortLevel as EffortLevel : undefined,
+              time_of_day: data.type === 'task' ? data.timeOfDay as TimeOfDay : undefined,
+              category: data.type === 'task' ? data.category : undefined,
+              catalog_task_id: data.type === 'task' ? data.catalogTaskId || null : null,
               is_recurring: true,
               frequency: data.frequency,
               assignment_type: finalAssignmentType,
               assigned_to: data.assignmentCategory === 'individual' ? currentAssignedTo : undefined,
-              location: data.location.trim() || undefined,
-              start_time: data.startTime || undefined,
-              end_time: data.endTime || undefined,
+              location: data.type === 'event' ? (data.location.trim() || undefined) : undefined,
+              start_time: data.type === 'event' ? (data.startTime || undefined) : undefined,
+              end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
               recurrence_id: originalTask.recurrence_id,
             });
 
@@ -242,6 +268,12 @@ export default function EditEntry() {
       console.error('Update task error:', err);
     }
   }
+
+  const inputClass = 'flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal';
+  const labelClass = 'text-slate-100 text-sm font-semibold leading-normal pb-2';
+  const pillActiveClass = 'bg-background-dark shadow-sm text-primary';
+  const pillInactiveClass = 'text-primary/60';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background-dark">
@@ -291,86 +323,104 @@ export default function EditEntry() {
       />
 
       <div className="flex flex-col gap-6 px-4 py-4 max-w-md mx-auto w-full">
+        {/* ── Task Name ── */}
         <label className="flex flex-col w-full">
-          <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.planName')}</p>
-          <input
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
-            placeholder={t('entryForm.planNamePlaceholder')}
-            type="text"
-            {...register('title')}
-          />
+          <p className={labelClass}>{t('entryForm.planName')}</p>
+          <input className={inputClass} placeholder={t('entryForm.planNamePlaceholder')} type="text" {...register('title')} />
           {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
         </label>
 
-        <div className={`grid gap-4 ${type === 'task' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.date')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="date"
-              {...register('date')}
-            />
-          </label>
-          {type === 'task' && (
-            <label className="flex flex-col">
-              <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.points')}</p>
-              <input
-                className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-                placeholder={t('entryForm.pointsPlaceholder')}
-                type="number"
-                {...register('points', { valueAsNumber: true })}
-              />
-            </label>
-          )}
-        </div>
-        <div className="grid gap-4 grid-cols-2">
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.startTime')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="time"
-              placeholder={t('entryForm.startTimePlaceholder')}
-              {...register('startTime')}
-            />
-          </label>
-          <label className="flex flex-col">
-            <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.endTime')}</p>
-            <input
-              className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 p-4 text-base font-normal"
-              type="time"
-              placeholder={t('entryForm.endTimePlaceholder')}
-              {...register('endTime')}
-            />
-          </label>
-        </div>
-        {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
-
-        <label className="flex flex-col w-full">
-          <p className="text-slate-100 text-sm font-semibold leading-normal pb-2">{t('entryForm.location')}</p>
-          <input
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal"
-            placeholder={t('entryForm.locationPlaceholder')}
-            type="text"
-            {...register('location')}
-          />
+        {/* ── Date ── */}
+        <label className="flex flex-col">
+          <p className={labelClass}>{t('entryForm.date')}</p>
+          <input className={inputClass} type="date" {...register('date')} />
         </label>
 
+        {/* ── Effort Level (task only) ── */}
         {type === 'task' && (
           <div className="flex flex-col gap-3">
-            <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.priority')}</p>
+            <p className={labelClass}>{t('entryForm.effort')}</p>
             <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'critical' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-                <span className="truncate">{t('entryForm.priorityCritical')}</span>
-                <input className="invisible w-0" type="radio" value="critical" {...register('priority')} />
+              {EFFORT_LEVELS.map(level => (
+                <label key={level} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${effortLevel === level ? pillActiveClass : pillInactiveClass}`}>
+                  <span className="truncate">{t(`entryForm.effortLevels.${level}` as const)}</span>
+                  <input className="invisible w-0" type="radio" value={level} {...register('effortLevel')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Time of Day (task only) ── */}
+        {type === 'task' && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.timeOfDay')}</p>
+            <div className="grid grid-cols-4 gap-2">
+              {TIME_OF_DAY_OPTIONS.map(tod => (
+                <label key={tod} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${timeOfDay === tod ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                  <span className="truncate text-center">{t(`entryForm.timeOfDayOptions.${tod}` as const)}</span>
+                  <input className="invisible w-0 absolute" type="radio" value={tod} {...register('timeOfDay')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Category (task only) ── */}
+        {type === 'task' && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.category')}</p>
+            <div className="grid grid-cols-4 gap-2">
+              {TASK_CATEGORIES.map(cat => (
+                <label key={cat} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${category === cat ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                  <span className="truncate text-center">{t(`entryForm.categories.${cat}` as const)}</span>
+                  <input className="invisible w-0 absolute" type="radio" value={cat} {...register('category')} />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Urgency (task only) ── */}
+        {type === 'task' && (
+          <div className="flex flex-col gap-3">
+            <p className={labelClass}>{t('entryForm.urgency')}</p>
+            <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
+              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'normal' ? pillActiveClass : pillInactiveClass}`}>
+                <span className="truncate">{t('entryForm.urgencyNormal')}</span>
+                <input className="invisible w-0" type="radio" value="normal" {...register('urgency')} />
               </label>
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${priority === 'flexible' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
-                <span className="truncate">{t('entryForm.priorityFlexible')}</span>
-                <input className="invisible w-0" type="radio" value="flexible" {...register('priority')} />
+              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'high' ? pillActiveClass : pillInactiveClass}`}>
+                <span className="truncate">{t('entryForm.urgencyHigh')}</span>
+                <input className="invisible w-0" type="radio" value="high" {...register('urgency')} />
               </label>
             </div>
           </div>
         )}
 
+        {/* ── Event-only fields ── */}
+        {type === 'event' && (
+          <>
+            <div className="grid gap-4 grid-cols-2">
+              <label className="flex flex-col">
+                <p className={labelClass}>{t('entryForm.startTime')}</p>
+                <input className={inputClass} type="time" placeholder={t('entryForm.startTimePlaceholder')} {...register('startTime')} />
+              </label>
+              <label className="flex flex-col">
+                <p className={labelClass}>{t('entryForm.endTime')}</p>
+                <input className={inputClass} type="time" placeholder={t('entryForm.endTimePlaceholder')} {...register('endTime')} />
+              </label>
+            </div>
+            {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
+
+            <label className="flex flex-col w-full">
+              <p className={labelClass}>{t('entryForm.location')}</p>
+              <input className={inputClass} placeholder={t('entryForm.locationPlaceholder')} type="text" {...register('location')} />
+            </label>
+          </>
+        )}
+
+        {/* ── Recurring ── */}
         <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -387,7 +437,7 @@ export default function EditEntry() {
               <p className="text-slate-100 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
               <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
-                  <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
+                  <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? pillActiveClass : pillInactiveClass}`}>
                     <span className="truncate">{t(`entryForm.frequencyOptions.${f}`)}</span>
                     <input className="invisible w-0" type="radio" value={f} {...register('frequency')} />
                   </label>
@@ -397,17 +447,18 @@ export default function EditEntry() {
           )}
         </div>
 
+        {/* ── Type ── */}
         <div className="flex flex-col gap-3 mb-1">
-          <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.type')}</p>
+          <p className={labelClass}>{t('entryForm.type')}</p>
           <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'task' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
+            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'task' ? pillActiveClass : pillInactiveClass}`}>
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">check_circle</span>
                 <span className="truncate">{t('entryForm.typeTask')}</span>
               </div>
               <input className="invisible w-0" type="radio" value="task" {...register('type')} />
             </label>
-            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? 'bg-background-dark shadow-sm text-primary' : 'text-primary/60'}`}>
+            <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${type === 'event' ? pillActiveClass : pillInactiveClass}`}>
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">calendar_today</span>
                 <span className="truncate">{t('entryForm.typeEvent')}</span>
@@ -417,8 +468,9 @@ export default function EditEntry() {
           </div>
         </div>
 
+        {/* ── Assignment ── */}
         <div className="flex flex-col gap-3">
-          <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.assignmentType')}</p>
+          <p className={labelClass}>{t('entryForm.assignmentType')}</p>
           <div className="flex flex-col gap-3">
             <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${assignmentCategory === 'team_work' ? 'border-primary bg-primary/10' : 'border-primary/20 bg-primary/5'}`}>
               <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
@@ -468,14 +520,14 @@ export default function EditEntry() {
 
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-sm font-semibold text-primary/80">{t('entryForm.makeRotating')}</span>
-                    <label 
+                    <label
                       title={!isRecurring ? t('entryForm.rotatingDisabledHint') : ''}
                       className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${!isRecurring ? 'opacity-50 !cursor-not-allowed' : ''} ${isRotating ? 'justify-end bg-primary' : 'bg-primary/20'}`}
                     >
                       <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
-                      <input 
-                        className="invisible absolute" 
-                        type="checkbox" 
+                      <input
+                        className="invisible absolute"
+                        type="checkbox"
                         disabled={!isRecurring}
                         {...register('isRotating')}
                       />
@@ -487,10 +539,11 @@ export default function EditEntry() {
           </div>
         </div>
 
+        {/* ── Description ── */}
         <label className="flex flex-col w-full pb-8">
           <div className="flex items-center gap-2 pb-2">
             <span className="material-symbols-outlined text-primary text-sm">description</span>
-            <p className="text-slate-100 text-sm font-semibold leading-normal">{t('entryForm.description')}</p>
+            <p className={labelClass}>{t('entryForm.description')}</p>
           </div>
           <textarea
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"

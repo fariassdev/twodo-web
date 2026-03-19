@@ -23,6 +23,7 @@ import {
   deleteTask,
   deleteTaskSeries,
   deleteTasksAfter,
+  expireDailyTasks,
   getExpenseBalanceSnapshot,
   getExpenseById,
   getExpensesActivityFeedPage,
@@ -35,12 +36,14 @@ import {
   getLatestLoveNote,
   getLoveNoteForTask,
   getOrCreateHouseholdInvite,
+  getOverdueTasks,
   getPointsBreakdown,
   getProfileById,
   getProfiles,
   getShoppingItems,
   getSettlementsHistory,
   getTaskById,
+  getTaskCatalog,
   getTasksForMonth,
   getTodaysTasks,
   getUpcomingEvents,
@@ -87,6 +90,7 @@ import type {
   Profile,
   ShoppingItem,
   Task,
+  TaskCatalogItem,
 } from './types';
 
 type AuthCredentials = {
@@ -602,8 +606,30 @@ export function useTodaysTasksQuery() {
 
   return useQuery<Task[]>({
     queryKey: householdId ? queryKeys.tasks.today(householdId) : disabledKey('tasks', 'today'),
-    queryFn: () => getTodaysTasks(householdId as string),
+    queryFn: async () => {
+      // Lazily expire daily tasks from past days on each load
+      await expireDailyTasks(householdId as string);
+      return getTodaysTasks(householdId as string);
+    },
     enabled: Boolean(householdId),
+  });
+}
+
+export function useOverdueTasksQuery() {
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<Task[]>({
+    queryKey: householdId ? queryKeys.tasks.overdue(householdId) : disabledKey('tasks', 'overdue'),
+    queryFn: () => getOverdueTasks(householdId as string),
+    enabled: Boolean(householdId),
+  });
+}
+
+export function useTaskCatalogQuery() {
+  return useQuery<TaskCatalogItem[]>({
+    queryKey: queryKeys.tasks.catalog(),
+    queryFn: getTaskCatalog,
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
 }
 
