@@ -96,7 +96,12 @@ export default function Calendar() {
   const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
   const prefetchMonthTasks = usePrefetchMonthTasks();
 
+  const selectedYear = selectedDate.getFullYear();
+  const selectedMonth = selectedDate.getMonth();
+  const selectedMonthTasksQuery = useTasksForMonthQuery(selectedYear, selectedMonth, showDeleted);
+
   const monthTasks = monthTasksQuery.data ?? [];
+  const selectedMonthTasks = selectedMonthTasksQuery.data ?? [];
   const profiles: Profile[] = profilesQuery.data ?? [];
   const profileNameMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.name])), [profiles]);
   const hasQueryError =
@@ -119,7 +124,7 @@ export default function Calendar() {
   }
 
   const dayEntries = useMemo(() => {
-    const filtered = monthTasks
+    const filtered = selectedMonthTasks
       .filter((task) => task.date === selectedStr)
       .filter((task) => {
         if (typeFilter === 'all') return true;

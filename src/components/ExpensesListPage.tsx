@@ -262,10 +262,10 @@ export default function ExpensesListPage() {
   const hasSearchText = inputSearchText.trim().length > 0;
   const isSearchLoading = hasSearchText && (isSearchDebouncing || expensesQuery.isFetching);
 
-  const isPending = hasActiveFilters ? expensesQuery.isPending && !expensesQuery.data : activityQuery.isPending;
+  const isInitialPagePending = !hasActiveFilters && activityQuery.isPending;
   const isError = hasActiveFilters ? expensesQuery.isError && !expensesQuery.data : activityQuery.isError;
 
-  if (isPending) {
+  if (isInitialPagePending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -405,63 +405,82 @@ export default function ExpensesListPage() {
           </div>
         )}
 
-        {(hasActiveFilters ? visibleExpenses.length === 0 : activityItems.length === 0) ? (
-          <div className="mt-10 flex flex-col items-center px-2 text-center">
-            <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]">
-              <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">receipt_long</span>
-              <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-primary/25 bg-slate-900">
-                <span className="material-symbols-outlined text-xl text-primary">search_off</span>
+        {(() => {
+          if (hasActiveFilters && expensesQuery.isPending && !expensesQuery.data) {
+            return (
+              <div className="mt-20 flex flex-col items-center justify-center gap-4 text-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <p className="text-sm font-medium text-slate-400">{t('expenses.searchLoading')}</p>
               </div>
-            </div>
+            );
+          }
 
-            <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-slate-100">
-              {t('expenses.emptyNoResultsTitle')}
-            </h2>
-            <p className="mt-3 max-w-sm text-lg leading-relaxed text-slate-300">{emptySubtitle}</p>
+          const isEmpty = hasActiveFilters ? visibleExpenses.length === 0 : activityItems.length === 0;
 
-            <button
-              className="mt-8 flex h-16 w-full max-w-[22rem] items-center justify-center gap-2 rounded-3xl bg-primary px-6 text-lg font-black text-background-dark shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"
-              onClick={() => navigate({ to: '/expenses/new' })}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-3xl">add</span>
-              <span>{t('expenses.addExpense')}</span>
-            </button>
+          if (isEmpty) {
+            return (
+              <div className="mt-10 flex flex-col items-center px-2 text-center">
+                <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]">
+                  <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">
+                    receipt_long
+                  </span>
+                  <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-primary/25 bg-slate-900">
+                    <span className="material-symbols-outlined text-xl text-primary">search_off</span>
+                  </div>
+                </div>
 
-            {hasActiveFilters && (
-              <button
-                className="mt-5 text-lg font-bold text-primary"
-                onClick={clearAllFilters}
-                type="button"
-              >
-                {t('expenses.clearAllFilters')}
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="mt-6">
-            <ExpensesList
-              currentProfileId={profileId}
-              expenses={hasActiveFilters ? visibleExpenses : undefined}
-              hasNextPage={!hasActiveFilters ? activityQuery.hasNextPage : undefined}
-              isFetchingNextPage={!hasActiveFilters ? activityQuery.isFetchingNextPage : undefined}
-              items={!hasActiveFilters ? activityItems : undefined}
-              locale={i18n.language}
-              onLoadMore={() => {
-                if (!hasActiveFilters && activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
-                  void activityQuery.fetchNextPage();
+                <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-slate-100">
+                  {t('expenses.emptyNoResultsTitle')}
+                </h2>
+                <p className="mt-3 max-w-sm text-lg leading-relaxed text-slate-300">{emptySubtitle}</p>
+
+                <button
+                  className="mt-8 flex h-16 w-full max-w-[22rem] items-center justify-center gap-2 rounded-3xl bg-primary px-6 text-lg font-black text-background-dark shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"
+                  onClick={() => navigate({ to: '/expenses/new' })}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-3xl">add</span>
+                  <span>{t('expenses.addExpense')}</span>
+                </button>
+
+                {hasActiveFilters && (
+                  <button
+                    className="mt-5 text-lg font-bold text-primary"
+                    onClick={clearAllFilters}
+                    type="button"
+                  >
+                    {t('expenses.clearAllFilters')}
+                  </button>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div className="mt-6">
+              <ExpensesList
+                currentProfileId={profileId}
+                expenses={hasActiveFilters ? visibleExpenses : undefined}
+                hasNextPage={!hasActiveFilters ? activityQuery.hasNextPage : undefined}
+                isFetchingNextPage={!hasActiveFilters ? activityQuery.isFetchingNextPage : undefined}
+                items={!hasActiveFilters ? activityItems : undefined}
+                locale={i18n.language}
+                onLoadMore={() => {
+                  if (!hasActiveFilters && activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
+                    void activityQuery.fetchNextPage();
+                  }
+                }}
+                onExpenseClick={(expenseId) =>
+                  navigate({
+                    to: '/expenses/$expenseId',
+                    params: { expenseId },
+                    search: detailSearchFromList,
+                  })
                 }
-              }}
-              onExpenseClick={(expenseId) =>
-                navigate({
-                  to: '/expenses/$expenseId',
-                  params: { expenseId },
-                  search: detailSearchFromList,
-                })
-              }
-            />
-          </div>
-        )}
+              />
+            </div>
+          );
+        })()}
       </main>
     </div>
   );
