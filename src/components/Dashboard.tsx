@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAuthScope,
   useCompleteTaskMutation,
   useLatestLoveNoteQuery,
+  useOverdueTasksQuery,
   useTodaysTasksQuery,
   useUpcomingEventsQuery,
 } from '../lib/queryHooks';
@@ -17,6 +18,15 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate } from '@tanstack/react-router';
 
+const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
+
+const EFFORT_BADGE: Record<string, string> = {
+  S: 'S',
+  M: 'M',
+  L: 'L',
+  XL: 'XL',
+};
+
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -24,14 +34,17 @@ export default function Dashboard() {
   const isOnline = useOnlineStatus();
   const [search, setSearch] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+  const [overdueOpen, setOverdueOpen] = useState(false);
 
   const { profile, householdId } = useAuthScope();
   const todaysTasksQuery = useTodaysTasksQuery();
+  const overdueTasksQuery = useOverdueTasksQuery();
   const upcomingEventsQuery = useUpcomingEventsQuery();
   const latestLoveNoteQuery = useLatestLoveNoteQuery();
   const completeTaskMutation = useCompleteTaskMutation();
 
   const tasks = todaysTasksQuery.data ?? [];
+  const overdueTasks = overdueTasksQuery.data ?? [];
   const events = upcomingEventsQuery.data ?? [];
   const loveNote = latestLoveNoteQuery.data ?? null;
   const loading =
@@ -50,6 +63,33 @@ export default function Dashboard() {
     todaysTasksQuery.isFetching ||
     upcomingEventsQuery.isFetching ||
     latestLoveNoteQuery.isFetching;
+
+  // Group tasks by time of day
+  const tasksByBlock = useMemo(() => {
+    const filtered = search
+      ? tasks.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
+      : tasks;
+
+    const groups: Record<string, Task[]> = {
+      morning: [],
+      afternoon: [],
+      evening: [],
+      anytime: [],
+    };
+
+    for (const task of filtered) {
+      const block = task.time_of_day || 'anytime';
+      if (block in groups) {
+        groups[block].push(task);
+      } else {
+        groups.anytime.push(task);
+      }
+    }
+
+    return groups;
+  }, [tasks, search]);
+
+  const pendingCount = tasks.filter(t => t.status !== 'completed').length;
 
   async function handleComplete(e: React.MouseEvent, taskId: string) {
     e.stopPropagation();
@@ -72,11 +112,6 @@ export default function Dashboard() {
     ]);
   }
 
-  const pendingCount = tasks.length;
-
-  const filteredTasks = search
-    ? tasks.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
-    : tasks;
   const filteredEvents = search
     ? events.filter((e) => e.title.toLowerCase().includes(search.toLowerCase()))
     : events;
@@ -88,12 +123,70 @@ export default function Dashboard() {
     return { month: month.charAt(0).toUpperCase() + month.slice(1), day };
   }
 
-  function getTaskIcon(task: Task) {
-    if (task.location?.toLowerCase().includes('mercadona') || task.title.toLowerCase().includes('compra')) return 'shopping_cart';
-    if (task.title.toLowerCase().includes('limpi') || task.title.toLowerCase().includes('cocina')) return 'cleaning_services';
-    if (task.title.toLowerCase().includes('basura')) return 'delete';
-    if (task.title.toLowerCase().includes('planch')) return 'iron';
-    return 'check_circle';
+  function getCategoryIcon(task: Task) {
+    const cat = task.category;
+    const iconMap: Record<string, string> = {
+      trash: '🗑️',
+      cleaning: '🧹',
+      bathroom: '🚿',
+      kitchen: '🍳',
+      shopping: '🛒',
+      laundry: '👕',
+      other: '📋',
+    };
+    return iconMap[cat || 'other'] || '📋';
+  }
+
+  function renderTaskCard(task: Task) {
+    const isCompleted = task.status === 'completed';
+
+    return (
+      <div
+        key={task.id}
+        className={`flex items-center gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10 shadow-sm cursor-pointer transition-opacity ${isCompleted ? 'opacity-50' : ''}`}
+        onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+      >
+        <div className="flex-shrink-0">
+          {isCompleted ? (
+            <div className="h-6 w-6 rounded-lg border-2 border-primary/30 bg-primary/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-sm">check</span>
+            </div>
+          ) : (
+            <input
+              className="h-6 w-6 rounded-lg border-2 border-primary/30 bg-transparent text-primary focus:ring-primary"
+              type="checkbox"
+              onClick={(e) => handleComplete(e, task.id)}
+            />
+          )}
+        </div>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center gap-2">
+            <p className={`font-semibold text-base leading-tight truncate ${isCompleted ? 'line-through text-slate-500' : ''}`}>{task.title}</p>
+            {task.priority === 'high' && (
+              <span className="text-[10px] px-1.5 py-0.5 font-bold rounded uppercase bg-red-500/10 text-red-500 shrink-0">
+                {t('entryForm.urgencyHigh')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            {task.effort_level && (
+              <span className="text-[10px] px-1.5 py-0.5 font-bold rounded bg-primary/10 text-primary/70">
+                {EFFORT_BADGE[task.effort_level] || task.effort_level}
+              </span>
+            )}
+            {task.category && (
+              <span className="text-xs">{getCategoryIcon(task)}</span>
+            )}
+            {task.description && (
+              <p className="text-slate-400 text-sm truncate">{task.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex-shrink-0 text-primary">
+          <span className="material-symbols-outlined text-sm">chevron_right</span>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -107,6 +200,8 @@ export default function Dashboard() {
   if (hasQueryError && tasks.length === 0 && events.length === 0) {
     return <QueryErrorState onRetry={retryQueries} />;
   }
+
+  const hasAnyTasks = TIME_BLOCKS.some(block => tasksByBlock[block].length > 0);
 
   return (
     <div className="pb-24">
@@ -148,6 +243,7 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* ── Today's Tasks by Time Block ── */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[22px] font-bold tracking-tight">{t('dashboard.todayMissions')}</h2>
@@ -155,45 +251,49 @@ export default function Dashboard() {
               {t('dashboard.pendingCount', { count: pendingCount })}
             </span>
           </div>
-          <div className="space-y-3">
-            {filteredTasks.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-4">
-                {search ? t('dashboard.noTasksFound') : t('dashboard.allDoneToday')}
-              </p>
-            )}
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center gap-4 bg-primary/5 p-4 rounded-xl border border-primary/10 shadow-sm cursor-pointer"
-                onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-              >
-                <div className="flex-shrink-0">
-                  <input
-                    className="h-6 w-6 rounded-lg border-2 border-primary/30 bg-transparent text-primary focus:ring-primary"
-                    type="checkbox"
-                    onClick={(e) => handleComplete(e, task.id)}
-                  />
-                </div>
-                <div className="flex-grow">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-base leading-tight">{task.title}</p>
-                    <span className={`text-[10px] px-1.5 py-0.5 font-bold rounded uppercase ${
-                      task.priority === 'critical'
-                        ? 'bg-red-500/10 text-red-500'
-                        : 'bg-primary/20 text-primary'
-                    }`}>
-                      {task.priority === 'critical' ? t('entryForm.priorityCritical') : t('entryForm.priorityFlexible')}
-                    </span>
-                  </div>
-                  <p className="text-slate-400 text-sm">{task.location || task.description || ''}</p>
-                </div>
-                <div className="flex-shrink-0 text-primary">
-                  <span className="material-symbols-outlined">{getTaskIcon(task)}</span>
+
+          {!hasAnyTasks && (
+            <p className="text-slate-500 text-sm text-center py-4">
+              {search ? t('dashboard.noTasksFound') : t('dashboard.allDoneToday')}
+            </p>
+          )}
+
+          {TIME_BLOCKS.map(block => {
+            const blockTasks = tasksByBlock[block];
+            if (blockTasks.length === 0) return null;
+
+            return (
+              <div key={block} className="mb-5">
+                <h3 className="text-sm font-bold text-primary/80 mb-2">
+                  {t(`dashboard.timeBlocks.${block}` as const)}
+                </h3>
+                <div className="space-y-3">
+                  {blockTasks.map(task => renderTaskCard(task))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </section>
+
+        {/* ── Overdue Tasks ── */}
+        {overdueTasks.length > 0 && (
+          <section className="mb-8">
+            <button
+              type="button"
+              className="flex items-center gap-2 w-full text-left mb-3"
+              onClick={() => setOverdueOpen(!overdueOpen)}
+            >
+              <span className={`material-symbols-outlined text-amber-500 text-sm transition-transform ${overdueOpen ? 'rotate-90' : ''}`}>chevron_right</span>
+              <h2 className="text-base font-bold text-amber-500">{t('dashboard.overdueSection')}</h2>
+              <span className="text-xs font-bold text-amber-500/70">{t('dashboard.overdueSectionCount', { count: overdueTasks.length })}</span>
+            </button>
+            {overdueOpen && (
+              <div className="space-y-3 pl-2 border-l-2 border-amber-500/20">
+                {overdueTasks.map(task => renderTaskCard(task))}
+              </div>
+            )}
+          </section>
+        )}
 
         {loveNote && (
           <section className="mb-8">

@@ -13,7 +13,9 @@ import type {
   ShoppingItem,
   Settlement,
   Task,
+  TaskCatalogItem,
 } from './types';
+import { EFFORT_POINTS, type EffortLevel } from './schemas';
 
 function isNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -241,9 +243,70 @@ export async function getTodaysTasks(householdId: string): Promise<Task[]> {
     .eq('household_id', householdId)
     .eq('date', today)
     .eq('type', 'task')
-    .in('status', ['pending', 'postponed'])
+    .in('status', ['pending', 'postponed', 'completed'])
     .is('deleted_at', null)
     .order('priority', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getOverdueTasks(householdId: string): Promise<Task[]> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('type', 'task')
+    .lt('date', today)
+    .in('status', ['pending', 'postponed', 'overdue'])
+    .is('deleted_at', null)
+    .eq('is_recurring', false)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+
+  // Mark overdue tasks lazily
+  const toMarkOverdue = (data ?? []).filter(t => t.status === 'pending' || t.status === 'postponed');
+  if (toMarkOverdue.length > 0) {
+    const ids = toMarkOverdue.map(t => t.id);
+    await supabase
+      .from('tasks')
+      .update({ status: 'overdue', updated_at: new Date().toISOString() })
+      .in('id', ids)
+      .eq('household_id', householdId);
+
+    // Return with updated status
+    return (data ?? []).map(t =>
+      ids.includes(t.id) ? { ...t, status: 'overdue' } : t
+    );
+  }
+
+  return data ?? [];
+}
+
+export async function expireDailyTasks(householdId: string): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { error } = await supabase
+    .from('tasks')
+    .update({ status: 'expired', updated_at: new Date().toISOString() })
+    .eq('household_id', householdId)
+    .eq('type', 'task')
+    .eq('frequency', 'daily')
+    .lt('date', today)
+    .in('status', ['pending', 'postponed'])
+    .is('deleted_at', null);
+
+  if (error) throw error;
+}
+
+export async function getTaskCatalog(): Promise<TaskCatalogItem[]> {
+  const { data, error } = await supabase
+    .from('task_catalog')
+    .select('*')
+    .order('sort_order', { ascending: true });
 
   if (error) throw error;
   return data ?? [];
@@ -316,9 +379,13 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   type: 'task' | 'event';
-  priority: 'critical' | 'flexible';
+  priority: 'normal' | 'high';
   date?: string;
   points?: number;
+  effort_level?: EffortLevel;
+  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  category?: string;
+  catalog_task_id?: string | null;
   is_recurring: boolean;
   frequency?: 'daily' | 'weekly' | 'monthly' | null;
   recurrence_id?: string | null;
@@ -348,10 +415,16 @@ interface MutationScope {
 export async function createTask(input: CreateTaskInput, scope: MutationScope): Promise<Task> {
   const { householdId, profileId } = scope;
 
+  // Compute points from effort_level for tasks
+  const points = input.type === 'task' && input.effort_level
+    ? EFFORT_POINTS[input.effort_level]
+    : (input.points ?? 10);
+
   const { data, error } = await supabase
     .from('tasks')
     .insert({
       ...input,
+      points,
       household_id: householdId,
       status: 'pending',
       created_by: profileId,
@@ -367,13 +440,20 @@ export async function createTask(input: CreateTaskInput, scope: MutationScope): 
 export async function createTasks(inputs: CreateTaskInput[], scope: MutationScope): Promise<Task[]> {
   const { householdId, profileId } = scope;
 
-  const tasksToInsert = inputs.map((input) => ({
-    ...input,
-    household_id: householdId,
-    status: 'pending',
-    created_by: profileId,
-    assigned_to: resolveAssignedToForInsert(input, profileId),
-  }));
+  const tasksToInsert = inputs.map((input) => {
+    const points = input.type === 'task' && input.effort_level
+      ? EFFORT_POINTS[input.effort_level]
+      : (input.points ?? 10);
+
+    return {
+      ...input,
+      points,
+      household_id: householdId,
+      status: 'pending',
+      created_by: profileId,
+      assigned_to: resolveAssignedToForInsert(input, profileId),
+    };
+  });
 
   const { data, error } = await supabase
     .from('tasks')

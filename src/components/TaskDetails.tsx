@@ -136,11 +136,30 @@ export default function TaskDetails() {
     pending: t('taskDetails.status.pending'),
     completed: t('taskDetails.status.completed'),
     postponed: t('taskDetails.status.postponed'),
+    expired: t('taskDetails.status.expired'),
+    overdue: t('taskDetails.status.overdue'),
   };
 
-  const priorityLabels: Record<string, string> = {
-    critical: t('entryForm.priorityCritical'),
-    flexible: t('entryForm.priorityFlexible'),
+  const urgencyLabels: Record<string, string> = {
+    normal: t('entryForm.urgencyNormal'),
+    high: t('entryForm.urgencyHigh'),
+  };
+
+  const timeOfDayLabels: Record<string, string> = {
+    morning: t('entryForm.timeOfDayOptions.morning'),
+    afternoon: t('entryForm.timeOfDayOptions.afternoon'),
+    evening: t('entryForm.timeOfDayOptions.evening'),
+    anytime: t('entryForm.timeOfDayOptions.anytime'),
+  };
+
+  const categoryLabels: Record<string, string> = {
+    trash: t('entryForm.categories.trash'),
+    cleaning: t('entryForm.categories.cleaning'),
+    bathroom: t('entryForm.categories.bathroom'),
+    kitchen: t('entryForm.categories.kitchen'),
+    shopping: t('entryForm.categories.shopping'),
+    laundry: t('entryForm.categories.laundry'),
+    other: t('entryForm.categories.other'),
   };
 
   const frequencyLabels: Record<string, string> = {
@@ -273,6 +292,8 @@ export default function TaskDetails() {
               <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 task.status === 'completed' ? 'bg-primary/20 text-primary' :
                 task.status === 'postponed' ? 'bg-yellow-500/20 text-yellow-500' :
+                task.status === 'expired' ? 'bg-slate-500/20 text-slate-400' :
+                task.status === 'overdue' ? 'bg-amber-500/20 text-amber-500' :
                 'bg-primary/20 text-primary'
               }`}>
                 {statusLabels[task.status] || task.status}
@@ -290,10 +311,30 @@ export default function TaskDetails() {
           <h1 className="text-3xl font-bold leading-tight mb-4">{task.title}</h1>
 
           <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-              <span className={`material-symbols-outlined text-lg ${task.priority === 'critical' ? 'text-rose-500' : 'text-primary'}`}>priority_high</span>
-              <span className="text-sm font-medium">{priorityLabels[task.priority]}</span>
-            </div>
+            {task.type === 'task' && (
+              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className={`material-symbols-outlined text-lg ${task.priority === 'high' ? 'text-rose-500' : 'text-primary'}`}>priority_high</span>
+                <span className="text-sm font-medium">{urgencyLabels[task.priority] || task.priority}</span>
+              </div>
+            )}
+            {task.type === 'task' && task.effort_level && (
+              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="material-symbols-outlined text-primary text-lg">fitness_center</span>
+                <span className="text-sm font-medium">{t(`entryForm.effortLevels.${task.effort_level}` as const)}</span>
+              </div>
+            )}
+            {task.type === 'task' && task.time_of_day && (
+              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="material-symbols-outlined text-primary text-lg">schedule</span>
+                <span className="text-sm font-medium">{timeOfDayLabels[task.time_of_day] || task.time_of_day}</span>
+              </div>
+            )}
+            {task.type === 'task' && task.category && (
+              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="material-symbols-outlined text-primary text-lg">category</span>
+                <span className="text-sm font-medium">{categoryLabels[task.category] || task.category}</span>
+              </div>
+            )}
             {task.is_recurring && task.frequency && (
               <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
                 <span className="material-symbols-outlined text-primary text-lg">repeat</span>
@@ -318,14 +359,14 @@ export default function TaskDetails() {
             <p className="text-slate-400 mt-4 leading-relaxed">{task.description}</p>
           )}
 
-          {task.location && (
+          {task.type === 'event' && task.location && (
             <div className="flex items-center gap-2 mt-3 text-slate-400">
               <span className="material-symbols-outlined text-primary text-sm">location_on</span>
               <span className="text-sm">{task.location}</span>
             </div>
           )}
 
-          {(task.start_time || task.end_time) && (
+          {task.type === 'event' && (task.start_time || task.end_time) && (
             <div className="flex items-center gap-2 mt-2 text-slate-400">
               <span className="material-symbols-outlined text-primary text-sm">schedule</span>
               <span className="text-sm">
@@ -334,7 +375,7 @@ export default function TaskDetails() {
             </div>
           )}
 
-          {task.status === 'pending' && !task.deleted_at && (
+          {(task.status === 'pending' || task.status === 'overdue') && !task.deleted_at && (
             <div className="flex flex-col gap-3 mt-6 mb-2">
               <button
                 onClick={handleComplete}

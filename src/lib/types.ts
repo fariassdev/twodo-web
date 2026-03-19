@@ -14,6 +14,7 @@ export type Task = Database['public']['Tables']['tasks']['Row'] & {
   last_done_by_profile?: Profile;
 };
 
+export type TaskCatalogItem = Database['public']['Tables']['task_catalog']['Row'];
 export type ShoppingItem = Database['public']['Tables']['shopping_items']['Row'];
 export type Expense = Database['public']['Tables']['expenses']['Row'];
 export type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row'];

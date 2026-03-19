@@ -73,14 +73,43 @@ export const shoppingItemSchema = z.object({
 
 export type ShoppingItemFormValues = z.infer<typeof shoppingItemSchema>;
 
+// ─── Effort Level Helpers ──────────────────────────────────────────────────────
+
+export const EFFORT_LEVELS = ['S', 'M', 'L', 'XL'] as const;
+export type EffortLevel = (typeof EFFORT_LEVELS)[number];
+
+export const EFFORT_POINTS: Record<EffortLevel, number> = {
+  S: 2,
+  M: 4,
+  L: 8,
+  XL: 16,
+};
+
+export const TIME_OF_DAY_OPTIONS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
+export type TimeOfDay = (typeof TIME_OF_DAY_OPTIONS)[number];
+
+export const TASK_CATEGORIES = [
+  'trash',
+  'cleaning',
+  'bathroom',
+  'kitchen',
+  'shopping',
+  'laundry',
+  'other',
+] as const;
+export type TaskCategory = (typeof TASK_CATEGORIES)[number];
+
 // ─── Entry (Create / Edit) ─────────────────────────────────────────────────────
 
 export const entryFormSchema = z
   .object({
     title: z.string().min(1, 'entryForm.validation.titleRequired'),
     date: z.string(),
-    points: z.number().min(0),
-    priority: z.enum(['critical', 'flexible']),
+    effortLevel: z.enum(['S', 'M', 'L', 'XL']),
+    urgency: z.enum(['normal', 'high']),
+    timeOfDay: z.enum(['morning', 'afternoon', 'evening', 'anytime']),
+    category: z.string(),
+    catalogTaskId: z.string().optional(),
     isRecurring: z.boolean(),
     frequency: z.enum(['daily', 'weekly', 'monthly']).nullable(),
     type: z.enum(['task', 'event']),
@@ -88,13 +117,14 @@ export const entryFormSchema = z
     assignedTo: z.string(),
     isRotating: z.boolean(),
     description: z.string(),
+    // Event-only fields (kept for events)
     location: z.string(),
     startTime: z.string(),
     endTime: z.string(),
   })
   .refine(
     (data) => {
-      if (data.startTime && data.endTime && data.endTime < data.startTime) return false;
+      if (data.type === 'event' && data.startTime && data.endTime && data.endTime < data.startTime) return false;
       return true;
     },
     { message: 'entryForm.timeError', path: ['endTime'] },

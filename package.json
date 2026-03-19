@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "update-types": "npx supabase gen types typescript --local > src/lib/database.types.ts",
+    "update-types": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "db:migration:new": "supabase migration new",
+    "db:migration:push": "supabase db push --local --yes",
     "db:reset": "supabase db reset --local --yes",
     "db:sync": "supabase db dump --data-only -s public -f supabase/seed.sql && npm run db:reset"
   },
