@@ -266,15 +266,16 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
     .eq('household_id', householdId)
     .eq('type', 'task')
     .lt('date', today)
-    .in('status', ['pending', 'postponed', 'overdue'])
+    .or(`status.in.(pending,postponed,overdue),and(status.eq.completed,updated_at.gte.${today})`)
     .is('deleted_at', null)
-    .eq('is_recurring', false)
     .order('date', { ascending: true });
 
   if (error) throw error;
 
+  const filteredData = (data ?? []).filter(t => t.frequency !== 'daily');
+
   // Mark overdue tasks lazily
-  const toMarkOverdue = (data ?? []).filter(t => t.status === 'pending' || t.status === 'postponed');
+  const toMarkOverdue = filteredData.filter(t => t.status === 'pending' || t.status === 'postponed');
   if (toMarkOverdue.length > 0) {
     const ids = toMarkOverdue.map(t => t.id);
     await supabase
@@ -284,12 +285,12 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
       .eq('household_id', householdId);
 
     // Return with updated status
-    return (data ?? []).map(t =>
+    return filteredData.map(t =>
       ids.includes(t.id) ? { ...t, status: 'overdue' } : t
     );
   }
 
-  return data ?? [];
+  return filteredData;
 }
 
 export async function getUpcomingTasks(householdId: string, daysLimit: number = 7): Promise<Task[]> {
@@ -306,7 +307,6 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
     .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(*)')
     .eq('household_id', householdId)
     .eq('type', 'task')
-    .neq('frequency', 'daily')
     .neq('status', 'completed')
     .gte('date', todayStr)
     .lte('date', endDateStr)
@@ -314,7 +314,8 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
     .order('date', { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  
+  return (data ?? []).filter(task => task.frequency !== 'daily');
 }
 
 export async function expireDailyTasks(householdId: string): Promise<void> {

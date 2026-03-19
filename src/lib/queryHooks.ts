@@ -237,7 +237,10 @@ async function invalidateTaskMutationGraph(
   }
 
   if (type === 'complete' || type === 'postpone') {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.overdue(householdId) }),
+    ]);
   }
 
   if (taskId) {

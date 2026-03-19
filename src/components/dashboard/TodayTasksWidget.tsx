@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import { Zap, ChevronDown, ChevronUp, History, CheckCircle2 } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
 import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, useProfilesQuery } from '../../lib/queryHooks';
-import type { Profile, Task } from '../../lib/types';
+import type { Task } from '../../lib/types';
 import TaskAvatars from './TaskAvatars';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
@@ -20,6 +20,16 @@ export default function TodayTasksWidget() {
 
   const tasks = todaysTasksQuery.data ?? [];
   const overdueTasks = overdueTasksQuery.data ?? [];
+
+  const sortedOverdueTasks = useMemo(() => {
+    return [...overdueTasks].sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return 1;
+      if (a.status !== 'completed' && b.status === 'completed') return -1;
+      return 0;
+    });
+  }, [overdueTasks]);
+
+  const allOverdueCompleted = overdueTasks.length > 0 && overdueTasks.every(t => t.status === 'completed');
 
   const tasksByBlock = useMemo(() => {
     const groups: Record<string, Task[]> = {
@@ -159,27 +169,39 @@ export default function TodayTasksWidget() {
         <div className="mt-8">
           <div 
             onClick={() => setIsPendingExpanded(!isPendingExpanded)}
-            className="bg-[#2a1a19] rounded-2xl p-4 flex justify-between items-center cursor-pointer text-white/90 border border-red-500/10 transition-colors"
+            className={`rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all border ${
+              allOverdueCompleted 
+                ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-100' 
+                : 'bg-[#2a1a19] border-red-500/10 text-white/90'
+            }`}
           >
             <div className="flex items-center gap-3">
-              <History className="w-5 h-5 text-rose-300" />
-              <span className="font-semibold text-[15px] text-rose-100">{t('dashboard.overdueSection')}</span>
+              {allOverdueCompleted ? (
+                <Check className="w-5 h-5 text-emerald-400" strokeWidth={3} />
+              ) : (
+                <History className="w-5 h-5 text-rose-300" />
+              )}
+              <span className={`font-semibold text-[15px] ${allOverdueCompleted ? 'text-emerald-100' : 'text-rose-100'}`}>
+                {t('dashboard.overdueSection')}
+              </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="bg-[#bb6156] text-[#2a1a19] text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                {overdueTasks.length}
+              <span className={`text-[#2a1a19] text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                allOverdueCompleted ? 'bg-emerald-400' : 'bg-[#bb6156]'
+              }`}>
+                {overdueTasks.filter(t => t.status !== 'completed').length}
               </span>
               {isPendingExpanded ? (
-                <ChevronUp className="w-5 h-5 text-rose-300" />
+                <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
               ) : (
-                <ChevronDown className="w-5 h-5 text-rose-300" />
+                <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
               )}
             </div>
           </div>
           
           {isPendingExpanded && (
             <div className="mt-4">
-              {overdueTasks.map(renderTask)}
+              {sortedOverdueTasks.map(renderTask)}
             </div>
           )}
         </div>
