@@ -234,12 +234,18 @@ export async function updateProfile(id: string, input: UpdateProfileInput): Prom
 }
 
 // Tasks
+const TASK_FULL_QUERY = `
+  *,
+  assigned_profile:profiles!tasks_assigned_to_fkey(*),
+  last_done_by_profile:profiles!tasks_last_done_by_fkey(*)
+`;
+
 export async function getTodaysTasks(householdId: string): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('date', today)
     .eq('type', 'task')
@@ -256,19 +262,20 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
 
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('type', 'task')
     .lt('date', today)
-    .in('status', ['pending', 'postponed', 'overdue'])
+    .or(`status.in.(pending,postponed,overdue),and(status.eq.completed,updated_at.gte.${today})`)
     .is('deleted_at', null)
-    .eq('is_recurring', false)
     .order('date', { ascending: true });
 
   if (error) throw error;
 
+  const filteredData = (data ?? []).filter(t => t.frequency !== 'daily');
+
   // Mark overdue tasks lazily
-  const toMarkOverdue = (data ?? []).filter(t => t.status === 'pending' || t.status === 'postponed');
+  const toMarkOverdue = filteredData.filter(t => t.status === 'pending' || t.status === 'postponed');
   if (toMarkOverdue.length > 0) {
     const ids = toMarkOverdue.map(t => t.id);
     await supabase
@@ -278,12 +285,37 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
       .eq('household_id', householdId);
 
     // Return with updated status
-    return (data ?? []).map(t =>
+    return filteredData.map(t =>
       ids.includes(t.id) ? { ...t, status: 'overdue' } : t
     );
   }
 
-  return data ?? [];
+  return filteredData;
+}
+
+export async function getUpcomingTasks(householdId: string, daysLimit: number = 7): Promise<Task[]> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // start of today
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + daysLimit);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(*)')
+    .eq('household_id', householdId)
+    .eq('type', 'task')
+    .neq('status', 'completed')
+    .gte('date', todayStr)
+    .lte('date', endDateStr)
+    .is('deleted_at', null)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  
+  return (data ?? []).filter(task => task.frequency !== 'daily');
 }
 
 export async function expireDailyTasks(householdId: string): Promise<void> {
@@ -333,10 +365,11 @@ export async function getUpcomingEvents(householdId: string): Promise<Task[]> {
 export async function getTaskById(id: string, householdId: string): Promise<Task | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('id', id)
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<Task | null, { merge: false }>();
 
   if (error) {
     if (isNotFoundError(error)) return null;
@@ -815,6 +848,26 @@ export interface PointsBreakdown {
   taskPoints: number;
   kudosPoints: number;
   totalPoints: number;
+}
+
+export async function getBalanceScore(householdId: string, startDate: string, endDate: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('task_completions')
+    .select('completed_by, points_earned')
+    .eq('household_id', householdId)
+    .gte('completed_at', startDate)
+    .lte('completed_at', endDate);
+
+  if (error) throw error;
+  
+  const score: Record<string, number> = {};
+  data?.forEach(completion => {
+    if (completion.completed_by) {
+      score[completion.completed_by] = (score[completion.completed_by] || 0) + (completion.points_earned || 1);
+    }
+  });
+
+  return score;
 }
 
 export async function getPointsBreakdown(householdId: string, profilesInput?: Profile[]): Promise<PointsBreakdown[]> {
