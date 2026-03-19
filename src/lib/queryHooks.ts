@@ -37,6 +37,7 @@ import {
   getLoveNoteForTask,
   getOrCreateHouseholdInvite,
   getOverdueTasks,
+  getBalanceScore,
   getPointsBreakdown,
   getProfileById,
   getProfiles,
@@ -46,7 +47,7 @@ import {
   getTaskCatalog,
   getTasksForMonth,
   getTodaysTasks,
-  getUpcomingEvents,
+  getUpcomingTasks,
   getWeeklyPulse,
   sendEmailInvite,
   postponeTask,
@@ -633,12 +634,12 @@ export function useTaskCatalogQuery() {
   });
 }
 
-export function useUpcomingEventsQuery() {
+export function useUpcomingTasksQuery(daysLimit: number = 7) {
   const householdId = useCurrentHouseholdId();
 
   return useQuery<Task[]>({
-    queryKey: householdId ? queryKeys.tasks.upcoming(householdId) : disabledKey('tasks', 'upcoming'),
-    queryFn: () => getUpcomingEvents(householdId as string),
+    queryKey: householdId ? queryKeys.tasks.upcoming(householdId, daysLimit) : disabledKey('tasks', 'upcoming'),
+    queryFn: () => getUpcomingTasks(householdId as string, daysLimit),
     enabled: Boolean(householdId),
   });
 }
@@ -741,6 +742,16 @@ export function useEquityBalanceQuery(profiles: Profile[] | undefined) {
       : ['metrics', 'equity', 'disabled'],
     queryFn: () => getEquityBalance(householdId as string, sortedProfiles),
     enabled: Boolean(householdId),
+  });
+}
+
+export function useBalanceScoreQuery(startDate: string, endDate: string) {
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<Record<string, number>>({
+    queryKey: householdId ? queryKeys.metrics.balanceScore(householdId, startDate, endDate) : ['metrics', 'balanceScore', 'disabled'],
+    queryFn: () => getBalanceScore(householdId as string, startDate, endDate),
+    enabled: Boolean(householdId) && Boolean(startDate) && Boolean(endDate),
   });
 }
 

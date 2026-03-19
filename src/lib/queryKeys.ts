@@ -13,7 +13,7 @@ export const queryKeys = {
     all: ['tasks'] as const,
     today: (householdId: string) => ['tasks', 'today', householdId] as const,
     overdue: (householdId: string) => ['tasks', 'overdue', householdId] as const,
-    upcoming: (householdId: string) => ['tasks', 'upcoming', householdId] as const,
+    upcoming: (householdId: string, daysLimit?: number) => ['tasks', 'upcoming', householdId, daysLimit] as const,
     month: (year: number, month: number, includeDeleted: boolean, householdId: string) =>
       ['tasks', 'month', year, month, includeDeleted ? 'withDeleted' : 'active', householdId] as const,
 
@@ -34,6 +34,7 @@ export const queryKeys = {
   },
   metrics: {
     all: ['metrics'] as const,
+    balanceScore: (householdId: string, startDate: string, endDate: string) => ['metrics', 'balanceScore', householdId, startDate, endDate] as const,
     equity: (householdId: string) => ['metrics', 'equity', householdId] as const,
     weeklyPulse: (householdId: string) => ['metrics', 'weeklyPulse', householdId] as const,
     pointsBreakdown: (householdId: string) => ['metrics', 'pointsBreakdown', householdId] as const,

@@ -157,6 +157,10 @@
     "noDateDay": "--",
     "overdueSection": "Pendientes de otros días",
     "overdueSectionCount": "({{count}})",
+    "upcomingTasks": "Próximos 7 días",
+    "balanceScoreText": "Lleváis una carga equilibrada entre ambos",
+    "balanceScoreImbalance": "La carga recae más sobre uno de los dos",
+    "viewMore": "Ver más",
     "timeBlocks": {
       "morning": "🌅 Mañana",
       "afternoon": "☀️ Tarde",

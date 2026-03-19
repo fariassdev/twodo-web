@@ -286,6 +286,31 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
   return data ?? [];
 }
 
+export async function getUpcomingTasks(householdId: string, daysLimit: number = 7): Promise<Task[]> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // start of today
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + daysLimit);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(*)')
+    .eq('household_id', householdId)
+    .eq('type', 'task')
+    .neq('frequency', 'daily')
+    .neq('status', 'completed')
+    .gte('date', todayStr)
+    .lte('date', endDateStr)
+    .is('deleted_at', null)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return (data as unknown as Task[]) ?? [];
+}
+
 export async function expireDailyTasks(householdId: string): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
 
@@ -815,6 +840,26 @@ export interface PointsBreakdown {
   taskPoints: number;
   kudosPoints: number;
   totalPoints: number;
+}
+
+export async function getBalanceScore(householdId: string, startDate: string, endDate: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('task_completions')
+    .select('completed_by, points_earned')
+    .eq('household_id', householdId)
+    .gte('completed_at', startDate)
+    .lte('completed_at', endDate);
+
+  if (error) throw error;
+  
+  const score: Record<string, number> = {};
+  data?.forEach(completion => {
+    if (completion.completed_by) {
+      score[completion.completed_by] = (score[completion.completed_by] || 0) + (completion.points_earned || 1);
+    }
+  });
+
+  return score;
 }
 
 export async function getPointsBreakdown(householdId: string, profilesInput?: Profile[]): Promise<PointsBreakdown[]> {
