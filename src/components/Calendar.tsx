@@ -248,8 +248,8 @@ export default function Calendar() {
     setSheetMode((prev) => (prev === 'collapsed' ? 'expanded' : 'collapsed'));
   }
 
-  const maxSheetHeight = Math.max(320, viewportHeight - 88);
-  const remainingSpace = viewportHeight - calendarHeight - 96; // 80px bottom nav + 16px gap
+  const maxSheetHeight = Math.max(320, viewportHeight - 146); // 66px nav + 72px top bar + 8px margin
+  const remainingSpace = viewportHeight - calendarHeight - 66; // 66px bottom nav, no extra gap
   const collapsedHeight = clamp(
     remainingSpace,
     120,
@@ -417,7 +417,7 @@ export default function Calendar() {
       </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-20 z-20 pointer-events-none">
+      <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
         <div className="mx-auto w-full max-w-md pointer-events-auto">
           <div
             className={`rounded-t-2xl border border-slate-800 bg-slate-900/95 shadow-2xl backdrop-blur-sm transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
