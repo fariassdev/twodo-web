@@ -10,8 +10,8 @@ export type HouseholdMember = Database['public']['Tables']['household_members'][
 };
 
 export type Task = Database['public']['Tables']['tasks']['Row'] & {
-  assigned_profile?: Profile;
-  last_done_by_profile?: Profile;
+  assigned_profile?: Profile | null;
+  last_done_by_profile?: Profile | null;
 };
 
 export type TaskCatalogItem = Database['public']['Tables']['task_catalog']['Row'];

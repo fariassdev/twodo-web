@@ -2,43 +2,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useUpcomingTasksQuery, useProfilesQuery } from '../../lib/queryHooks';
-import type { Profile, Task } from '../../lib/types';
+import type { Task } from '../../lib/types';
+import TaskAvatars from './TaskAvatars';
 
 export default function UpcomingTasksWidget() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: upcomingTasks = [], isPending } = useUpcomingTasksQuery(7);
   const { data: profiles = [] } = useProfilesQuery();
 
   if (isPending || upcomingTasks.length === 0) return null;
-
-  // Render avatars similar to today's widget
-  const renderAvatars = (task: Task) => {
-    let avatarsToShow: Profile[] = [];
-    if (task.assignment_type === 'anyone' || task.assignment_type === 'shared' || !task.assigned_profile) {
-      avatarsToShow = profiles.slice(0, 2);
-    } else if (task.assigned_profile) {
-      avatarsToShow = [task.assigned_profile];
-    }
-    
-    if (avatarsToShow.length === 0) return null;
-    
-    return (
-      <div className="flex -space-x-1.5 ml-2">
-        {avatarsToShow.map((p, i) => (
-          <div key={p.id} className={`w-7 h-7 rounded-full overflow-hidden flex flex-shrink-0 items-center justify-center bg-[#232b27] border-2 border-[#1c221e] z-${10 - i}`}>
-            {p.avatar_url ? (
-              <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[10px] text-emerald-400 font-bold">
-                {p.name?.charAt(0).toUpperCase() || '?'}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   // Group by date
   const groups: Record<string, Task[]> = {};
@@ -51,7 +24,7 @@ export default function UpcomingTasksWidget() {
   const sortedDates = Object.keys(groups).sort();
 
   const formatDate = (dateStr: string) => {
-    if (dateStr === 'unknown') return '';
+    if (dateStr === 'unknown') return { dow: '', day: '' };
     const d = new Date(dateStr + 'T00:00:00');
     const dow = d.toLocaleDateString(i18n.language, { weekday: 'short' }).slice(0, 3).toUpperCase();
     const day = d.getDate();
@@ -61,12 +34,12 @@ export default function UpcomingTasksWidget() {
   return (
     <div className="mt-8 mb-24">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white pr-2 tracking-tight">Próximos 7 días</h2>
+        <h2 className="text-2xl font-bold text-white pr-2 tracking-tight">{t('dashboard.upcomingTasks')}</h2>
       </div>
 
       <div className="flex flex-col gap-2">
         {sortedDates.map((date) => {
-          const { dow, day } = formatDate(date) as { dow: string, day: number };
+          const { dow, day } = formatDate(date);
 
           return groups[date].map((task) => (
             <div
@@ -91,7 +64,7 @@ export default function UpcomingTasksWidget() {
                   navigate({ to: '/profile' });
                 }}
               >
-                {renderAvatars(task)}
+                <TaskAvatars task={task} profiles={profiles} overlap="-space-x-1.5" className="ml-2" />
               </div>
             </div>
           ));

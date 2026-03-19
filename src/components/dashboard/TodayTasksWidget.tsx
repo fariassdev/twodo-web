@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2 } from 'lucide-react';
 import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, useProfilesQuery } from '../../lib/queryHooks';
 import type { Profile, Task } from '../../lib/types';
+import TaskAvatars from './TaskAvatars';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -58,44 +59,18 @@ export default function TodayTasksWidget() {
     }
   };
 
-  const renderAvatars = (task: Task) => {
-    let avatarsToShow: Profile[] = [];
-    if (task.assignment_type === 'anyone' || task.assignment_type === 'shared' || !task.assigned_profile) {
-      avatarsToShow = profiles.slice(0, 2);
-    } else if (task.assigned_profile) {
-      avatarsToShow = [task.assigned_profile];
-    }
-    
-    if (avatarsToShow.length === 0) return null;
-    
-    return (
-      <div className="flex -space-x-2 ml-3">
-        {avatarsToShow.map((p, i) => (
-          <div key={p.id} className={`w-7 h-7 rounded-full overflow-hidden flex flex-shrink-0 items-center justify-center bg-[#2a352f] border-2 border-[#1c221e] z-${10 - i}`}>
-            {p.avatar_url ? (
-              <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[10px] text-[#00ed82] font-bold">
-                {p.name?.charAt(0).toUpperCase() || '?'}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   const renderTask = (task: Task) => {
     const isCompleted = task.status === 'completed';
     const showSize = task.effort_level === 'L' || task.effort_level === 'XL';
     const isHighPriority = task.priority === 'high';
+    const isTeamWork = task.assignment_type === 'team_work' || task.assignment_type === 'anyone';
 
     return (
       <div
         key={task.id}
         onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
         className={`relative flex items-center gap-4 p-4 rounded-2xl border mb-3 cursor-pointer transition-all ${
-          isCompleted ? 'bg-transparent border-transparent opacity-50' : 'bg-[#1c221e] border-white/5 shadow-sm'
+          isCompleted ? 'bg-transparent border-transparent opacity-60' : 'bg-[#1c221e] border-white/5 shadow-sm'
         }`}
       >
         {/* Glow left edge for high priority/morning like the design */}
@@ -107,7 +82,13 @@ export default function TodayTasksWidget() {
           className={`w-[22px] h-[22px] flex items-center justify-center flex-shrink-0 transition-colors ${
             isCompleted ? 'text-emerald-500 bg-transparent' : 'rounded-[6px] border-2 border-[#415047] bg-transparent'
           }`}
-          onClick={(e) => handleComplete(e, task.id)}
+          onClick={(e) => {
+            if (isCompleted) {
+              e.stopPropagation();
+            } else {
+              handleComplete(e, task.id);
+            }
+          }}
         >
           {isCompleted && <CheckCircle2 className="w-6 h-6 fill-emerald-500/20" />}
         </button>
@@ -128,15 +109,18 @@ export default function TodayTasksWidget() {
               </span>
             )}
           </div>
-          {isCompleted && task.last_done_by_profile && (
-            <div className="text-xs text-gray-500 mt-1 font-medium">
-              Completada por {task.last_done_by_profile.name || 'tu pareja'}
+          {isCompleted && (
+            <div className="text-xs text-emerald-500/80 mt-1 font-medium italic">
+              {isTeamWork 
+                ? t('dashboard.completedByBoth') 
+                : t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
+              }
             </div>
           )}
         </div>
 
         <div className="flex items-center flex-shrink-0">
-          {!isCompleted && renderAvatars(task)}
+          <TaskAvatars task={task} profiles={profiles} />
         </div>
       </div>
     );
@@ -145,7 +129,7 @@ export default function TodayTasksWidget() {
   return (
     <div className="mt-6 mb-8 relative">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-white">Hoy</h2>
+        <h2 className="text-2xl font-bold text-white">{t('dashboard.today')}</h2>
       </div>
 
       {TIME_BLOCKS.map(block => {

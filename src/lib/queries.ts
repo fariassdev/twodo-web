@@ -234,12 +234,18 @@ export async function updateProfile(id: string, input: UpdateProfileInput): Prom
 }
 
 // Tasks
+const TASK_FULL_QUERY = `
+  *,
+  assigned_profile:profiles!tasks_assigned_to_fkey(*),
+  last_done_by_profile:profiles!tasks_last_done_by_fkey(*)
+`;
+
 export async function getTodaysTasks(householdId: string): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('date', today)
     .eq('type', 'task')
@@ -256,7 +262,7 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
 
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('type', 'task')
     .lt('date', today)
@@ -308,7 +314,7 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
     .order('date', { ascending: true });
 
   if (error) throw error;
-  return (data as unknown as Task[]) ?? [];
+  return data ?? [];
 }
 
 export async function expireDailyTasks(householdId: string): Promise<void> {
@@ -358,10 +364,11 @@ export async function getUpcomingEvents(householdId: string): Promise<Task[]> {
 export async function getTaskById(id: string, householdId: string): Promise<Task | null> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('id', id)
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<Task | null, { merge: false }>();
 
   if (error) {
     if (isNotFoundError(error)) return null;
