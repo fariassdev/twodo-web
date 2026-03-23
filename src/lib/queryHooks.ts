@@ -44,6 +44,7 @@ import {
   getShoppingItems,
   getSettlementsHistory,
   getTaskById,
+  getTaskCompletions,
   getTaskCatalog,
   getTasksForMonth,
   getTodaysTasks,
@@ -52,6 +53,7 @@ import {
   sendEmailInvite,
   postponeTask,
   togglePurchased,
+  updateTaskCompletionAssignment,
   updateProfile,
   updateQuantity,
   updateExpense,
@@ -63,6 +65,8 @@ import {
   type ExpenseFilters,
   type SettlementWithDetails,
   type CreateTaskInput,
+  type TaskAssignmentOverride,
+  type TaskAssignmentOverrideType,
   type EquityBalance,
   type PointsBreakdown,
   type UpdateProfileInput,
@@ -91,6 +95,7 @@ import type {
   Profile,
   ShoppingItem,
   Task,
+  TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
 
@@ -247,6 +252,7 @@ async function invalidateTaskMutationGraph(
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetail.completions(taskId, householdId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.loveNotes.byTask(taskId, householdId) }),
     ]);
   }
@@ -665,6 +671,19 @@ export function useTaskByIdQuery(taskId: string | undefined) {
   });
 }
 
+export function useTaskCompletionsQuery(taskId: string | undefined) {
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<TaskCompletionWithProfile[]>({
+    queryKey:
+      taskId && householdId
+        ? queryKeys.taskDetail.completions(taskId, householdId)
+        : ['taskDetail', 'completions', 'disabled', taskId ?? 'none'],
+    queryFn: () => getTaskCompletions(taskId as string, householdId as string),
+    enabled: Boolean(taskId && householdId),
+  });
+}
+
 export function useTasksForMonthQuery(year: number, month: number, includeDeleted: boolean) {
   const householdId = useCurrentHouseholdId();
 
@@ -1018,9 +1037,15 @@ export function useDeleteTasksAfterMutation() {
 export function useCompleteTaskMutation() {
   const queryClient = useQueryClient();
 
+  type CompleteTaskVariables = {
+    taskId: string;
+    assignmentOverride?: TaskAssignmentOverride;
+  };
+
   return useMutation({
-    mutationFn: (taskId: string) => completeTask(taskId, getLinkedScopeOrThrow(queryClient)),
-    onMutate: async (taskId) => {
+    mutationFn: ({ taskId, assignmentOverride }: CompleteTaskVariables) =>
+      completeTask(taskId, getLinkedScopeOrThrow(queryClient), assignmentOverride),
+    onMutate: async ({ taskId }) => {
       const { householdId } = getLinkedScopeOrThrow(queryClient);
 
       await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today(householdId) });
@@ -1063,7 +1088,7 @@ export function useCompleteTaskMutation() {
 
       return { householdId, taskDate, previousToday, previousDetail, previousTaskDetail };
     },
-    onError: (_error, taskId, context) => {
+    onError: (_error, { taskId }, context) => {
       if (!context) return;
 
       queryClient.setQueryData(queryKeys.tasks.today(context.householdId), context.previousToday);
@@ -1076,7 +1101,7 @@ export function useCompleteTaskMutation() {
         context.previousTaskDetail,
       );
     },
-    onSuccess: async (_data, taskId, context) => {
+    onSuccess: async (_data, { taskId }, context) => {
       if (!context) return;
 
       await invalidateTaskMutationGraph(queryClient, {
@@ -1085,6 +1110,53 @@ export function useCompleteTaskMutation() {
         taskId,
         taskDate: context.taskDate,
       });
+    },
+  });
+}
+
+export function useUpdateTaskCompletionAssignmentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      assignmentType,
+      assignedTo,
+    }: {
+      taskId: string;
+      assignmentType: TaskAssignmentOverrideType;
+      assignedTo: string[];
+    }) =>
+      updateTaskCompletionAssignment(
+        taskId,
+        assignmentType,
+        assignedTo,
+        getLinkedScopeOrThrow(queryClient),
+      ),
+    onMutate: ({ taskId }) => {
+      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      const taskDate =
+        queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId))?.date ??
+        queryClient.getQueryData<Task | null>(queryKeys.taskDetail.byId(taskId, householdId))?.date ??
+        findTaskInCache(queryClient, householdId, taskId)?.date ??
+        null;
+
+      return { householdId, taskDate, taskId };
+    },
+    onSuccess: async (_data, _variables, context) => {
+      if (!context) return;
+
+      await Promise.all([
+        invalidateTaskMutationGraph(queryClient, {
+          householdId: context.householdId,
+          type: 'complete',
+          taskId: context.taskId,
+          taskDate: context.taskDate,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.taskDetail.completions(context.taskId, context.householdId),
+        }),
+      ]);
     },
   });
 }

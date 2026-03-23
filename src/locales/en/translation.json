@@ -423,6 +423,21 @@
     "currentReward": "Current reward",
     "pointsReward": "+{{points}} Points"
   },
+  "taskCompletion": {
+    "completed": "Task completed",
+    "pointsAssignedTo": "Points assigned to:",
+    "change": "Change",
+    "selectAssignment": "Select point assignment",
+    "defaultAssignment": "Default",
+    "teamWork": "Team work",
+    "individual": "Individual",
+    "anyone": "Anyone",
+    "confirmAssignment": "Confirm assignment",
+    "editAssignment": "Edit point assignment",
+    "saveAssignment": "Save assignment",
+    "assignmentUpdated": "Assignment updated successfully",
+    "currentAssignment": "Current point assignment"
+  },
   "partner": {
     "title": "Connect with Partner",
     "heroTitle": "Start your journey to peace of mind",

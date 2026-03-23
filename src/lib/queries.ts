@@ -13,6 +13,7 @@ import type {
   ShoppingItem,
   Settlement,
   Task,
+  TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
 import { EFFORT_POINTS, type EffortLevel } from './schemas';
@@ -445,6 +446,108 @@ interface MutationScope {
   profileId: string;
 }
 
+export type TaskAssignmentOverrideType = 'team_work' | 'individual' | 'anyone';
+
+export interface TaskAssignmentOverride {
+  type: TaskAssignmentOverrideType;
+  assignedTo?: string[];
+}
+
+function splitPointsAcrossRecipients(totalPoints: number, recipientIds: string[]) {
+  if (recipientIds.length === 0) return [] as Array<{ completed_by: string; points_earned: number }>;
+
+  const pointsPerMember = Math.floor(totalPoints / recipientIds.length);
+  let remainder = totalPoints - pointsPerMember * recipientIds.length;
+
+  return recipientIds.map((recipientId) => {
+    const extraPoint = remainder > 0 ? 1 : 0;
+    remainder = Math.max(0, remainder - 1);
+    return {
+      completed_by: recipientId,
+      points_earned: pointsPerMember + extraPoint,
+    };
+  });
+}
+
+async function resolveAssignmentRecipients(
+  task: Task,
+  scope: MutationScope,
+  assignmentOverride?: TaskAssignmentOverride,
+): Promise<{
+  assignmentType: TaskAssignmentOverrideType | 'strict_rotation';
+  assignedTo: string | null;
+  recipientIds: string[];
+}> {
+  if (assignmentOverride?.type === 'team_work') {
+    const members = await getProfiles(scope.householdId);
+    const recipientIds = members.map((member) => member.id);
+    return {
+      assignmentType: 'team_work',
+      assignedTo: null,
+      recipientIds: recipientIds.length > 0 ? recipientIds : [scope.profileId],
+    };
+  }
+
+  if (assignmentOverride?.type === 'individual') {
+    const selectedProfileId = assignmentOverride.assignedTo?.[0] ?? task.assigned_to ?? scope.profileId;
+    return {
+      assignmentType: 'individual',
+      assignedTo: selectedProfileId,
+      recipientIds: [selectedProfileId],
+    };
+  }
+
+  if (assignmentOverride?.type === 'anyone') {
+    return {
+      assignmentType: 'anyone',
+      assignedTo: null,
+      recipientIds: [scope.profileId],
+    };
+  }
+
+  if (task.assignment_type === 'team_work') {
+    const members = await getProfiles(scope.householdId);
+    const recipientIds = members.map((member) => member.id);
+    return {
+      assignmentType: 'team_work',
+      assignedTo: null,
+      recipientIds: recipientIds.length > 0 ? recipientIds : [scope.profileId],
+    };
+  }
+
+  return {
+    assignmentType: task.assignment_type as TaskAssignmentOverrideType | 'strict_rotation',
+    assignedTo: task.assigned_to,
+    recipientIds: [scope.profileId],
+  };
+}
+
+async function replaceTaskCompletions(
+  taskId: string,
+  householdId: string,
+  points: number,
+  recipientIds: string[],
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from('task_completions')
+    .delete()
+    .eq('task_id', taskId)
+    .eq('household_id', householdId);
+
+  if (deleteError) throw deleteError;
+
+  const splitCompletions = splitPointsAcrossRecipients(points, recipientIds);
+  const completions = splitCompletions.map((completion) => ({
+    task_id: taskId,
+    household_id: householdId,
+    completed_by: completion.completed_by,
+    points_earned: completion.points_earned,
+  }));
+
+  const { error: insertError } = await supabase.from('task_completions').insert(completions);
+  if (insertError) throw insertError;
+}
+
 export async function createTask(input: CreateTaskInput, scope: MutationScope): Promise<Task> {
   const { householdId, profileId } = scope;
 
@@ -586,17 +689,25 @@ export async function deleteTasksAfter(
   if (error) throw error;
 }
 
-export async function completeTask(taskId: string, scope: MutationScope): Promise<void> {
+export async function completeTask(
+  taskId: string,
+  scope: MutationScope,
+  assignmentOverride?: TaskAssignmentOverride,
+): Promise<void> {
   const { householdId, profileId } = scope;
 
   const task = await getTaskById(taskId, householdId);
   if (!task) throw new Error('Task not found');
+
+  const assignment = await resolveAssignmentRecipients(task, scope, assignmentOverride);
 
   const { error: updateError } = await supabase
     .from('tasks')
     .update({
       status: 'completed',
       last_done_by: profileId,
+      assignment_type: assignment.assignmentType,
+      assigned_to: assignment.assignedTo,
       updated_at: new Date().toISOString(),
     })
     .eq('id', taskId)
@@ -604,44 +715,52 @@ export async function completeTask(taskId: string, scope: MutationScope): Promis
 
   if (updateError) throw updateError;
 
-  if (task.assignment_type === 'team_work') {
-    const members = await getProfiles(householdId);
+  await replaceTaskCompletions(taskId, householdId, task.points, assignment.recipientIds);
+}
 
-    if (members.length > 0) {
-      const pointsPerMember = Math.floor(task.points / members.length);
-      let remainder = task.points - pointsPerMember * members.length;
-
-      const completions = members.map((member) => {
-        const extraPoint = remainder > 0 ? 1 : 0;
-        remainder = Math.max(0, remainder - 1);
-
-        return {
-          task_id: taskId,
-          household_id: householdId,
-          completed_by: member.id,
-          points_earned: pointsPerMember + extraPoint,
-        };
-      });
-
-      const { error: completionError } = await supabase
-        .from('task_completions')
-        .insert(completions);
-
-      if (completionError) throw completionError;
-      return;
-    }
-  }
-
-  const { error: completionError } = await supabase
+export async function getTaskCompletions(
+  taskId: string,
+  householdId: string,
+): Promise<TaskCompletionWithProfile[]> {
+  const { data, error } = await supabase
     .from('task_completions')
-    .insert({
-      task_id: taskId,
-      household_id: householdId,
-      completed_by: profileId,
-      points_earned: task.points,
-    });
+    .select('*, profile:profiles(*)')
+    .eq('task_id', taskId)
+    .eq('household_id', householdId)
+    .order('completed_at', { ascending: true });
 
-  if (completionError) throw completionError;
+  if (error) throw error;
+  return (data ?? []) as TaskCompletionWithProfile[];
+}
+
+export async function updateTaskCompletionAssignment(
+  taskId: string,
+  assignmentType: TaskAssignmentOverrideType,
+  assignedTo: string[],
+  scope: MutationScope,
+): Promise<void> {
+  const task = await getTaskById(taskId, scope.householdId);
+  if (!task) throw new Error('Task not found');
+  if (task.status !== 'completed') throw new Error('Task is not completed');
+
+  const assignment = await resolveAssignmentRecipients(task, scope, {
+    type: assignmentType,
+    assignedTo,
+  });
+
+  const { error: updateError } = await supabase
+    .from('tasks')
+    .update({
+      assignment_type: assignment.assignmentType,
+      assigned_to: assignment.assignedTo,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', taskId)
+    .eq('household_id', scope.householdId);
+
+  if (updateError) throw updateError;
+
+  await replaceTaskCompletions(taskId, scope.householdId, task.points, assignment.recipientIds);
 }
 
 export async function postponeTask(taskId: string, householdId: string): Promise<void> {

@@ -423,6 +423,21 @@
     "currentReward": "Recompensa actual",
     "pointsReward": "+{{points}} Puntos"
   },
+  "taskCompletion": {
+    "completed": "Tarea completada",
+    "pointsAssignedTo": "Puntos asignados a:",
+    "change": "Cambiar",
+    "selectAssignment": "Seleccionar asignación de puntos",
+    "defaultAssignment": "Predeterminada",
+    "teamWork": "Equipo",
+    "individual": "Individual",
+    "anyone": "Cualquiera",
+    "confirmAssignment": "Confirmar asignación",
+    "editAssignment": "Editar asignación de puntos",
+    "saveAssignment": "Guardar asignación",
+    "assignmentUpdated": "Asignación actualizada correctamente",
+    "currentAssignment": "Asignación actual de puntos"
+  },
   "partner": {
     "title": "Conectar con pareja",
     "heroTitle": "Empieza tu camino hacia la paz mental",

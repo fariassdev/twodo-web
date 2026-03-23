@@ -394,9 +394,19 @@ export const expensesListRoute = createRoute({
   ),
 });
 
+interface TaskDetailsSearch {
+  editAssignment?: boolean;
+}
+
 export const taskDetailsRoute = createRoute({
   getParentRoute: () => privateGateRoute,
   path: '/task/$taskId',
+  validateSearch: (search: Record<string, unknown>): TaskDetailsSearch => ({
+    editAssignment:
+      typeof search?.editAssignment === 'string'
+        ? search.editAssignment === '1'
+        : search?.editAssignment === true,
+  }),
   component: () => (
     <RouteShell sectionName="task-details">
       <TaskDetails />

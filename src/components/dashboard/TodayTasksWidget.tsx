@@ -5,6 +5,7 @@ import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucid
 import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, useProfilesQuery } from '../../lib/queryHooks';
 import type { Task } from '../../lib/types';
 import TaskAvatars from './TaskAvatars';
+import Snackbar from '../ui/Snackbar';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -17,6 +18,8 @@ export default function TodayTasksWidget() {
   const { data: profiles = [] } = useProfilesQuery();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
   const tasks = todaysTasksQuery.data ?? [];
   const overdueTasks = overdueTasksQuery.data ?? [];
@@ -63,11 +66,21 @@ export default function TodayTasksWidget() {
   const handleComplete = async (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
     try {
-      await completeTaskMutation.mutateAsync(taskId);
+      await completeTaskMutation.mutateAsync({ taskId });
+      const completedTask = tasks.find((task) => task.id === taskId) ?? overdueTasks.find((task) => task.id === taskId) ?? null;
+      setLastCompletedTask(completedTask);
+      setSnackbarOpen(true);
     } catch (err) {
       console.error('Complete error', err);
     }
   };
+
+  const lastAssignmentText =
+    lastCompletedTask?.assignment_type === 'team_work'
+      ? t('taskCompletion.teamWork')
+      : lastCompletedTask?.assignment_type === 'individual'
+        ? t('taskCompletion.individual')
+        : t('taskCompletion.anyone');
 
   const renderTask = (task: Task) => {
     const isCompleted = task.status === 'completed';
@@ -138,6 +151,22 @@ export default function TodayTasksWidget() {
 
   return (
     <div className="mt-6 mb-8 relative">
+      <Snackbar
+        open={snackbarOpen}
+        onClose={() => setSnackbarOpen(false)}
+        message={`${t('taskCompletion.completed')}. ${t('taskCompletion.pointsAssignedTo')} ${lastAssignmentText}`}
+        actionLabel={t('taskCompletion.change')}
+        onAction={() => {
+          if (!lastCompletedTask) return;
+          setSnackbarOpen(false);
+          navigate({
+            to: '/task/$taskId',
+            params: { taskId: lastCompletedTask.id },
+            search: { editAssignment: true },
+          });
+        }}
+      />
+
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold text-white">{t('dashboard.today')}</h2>
       </div>

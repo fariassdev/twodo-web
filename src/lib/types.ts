@@ -34,6 +34,9 @@ export type LoveNote = Database['public']['Tables']['love_notes']['Row'] & {
 export type Kudos = Database['public']['Tables']['kudos']['Row'];
 
 export type TaskCompletion = Database['public']['Tables']['task_completions']['Row'];
+export type TaskCompletionWithProfile = TaskCompletion & {
+  profile?: Profile | null;
+};
 
 export type AuthContextStatus = 'signed_out' | 'pending_profile' | 'pending_household' | 'linked';
 

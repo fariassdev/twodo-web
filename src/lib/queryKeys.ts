@@ -31,6 +31,8 @@ export const queryKeys = {
     all: ['taskDetail'] as const,
     byId: (taskId: string, householdId: string) =>
       ['taskDetail', taskId, householdId] as const,
+    completions: (taskId: string, householdId: string) =>
+      ['taskDetail', 'completions', taskId, householdId] as const,
   },
   metrics: {
     all: ['metrics'] as const,

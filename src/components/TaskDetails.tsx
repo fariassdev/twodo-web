@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAuthScope,
@@ -9,6 +9,9 @@ import {
   usePostponeTaskMutation,
   useProfileQuery,
   useTaskByIdQuery,
+  useTaskCompletionsQuery,
+  useUpdateTaskCompletionAssignmentMutation,
+  useProfilesQuery,
 } from '../lib/queryHooks';
 import { queryKeys } from '../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +19,11 @@ import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
+import AssignmentEditor from './AssignmentEditor';
+import type { TaskAssignmentOverrideType } from '../lib/queries';
 
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
@@ -26,12 +32,17 @@ export default function TaskDetails() {
   const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
+  const searchParams = useSearch({ strict: false }) as { editAssignment?: boolean };
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [assignmentSelectorOpen, setAssignmentSelectorOpen] = useState(false);
+  const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const taskQuery = useTaskByIdQuery(taskId);
   const task = taskQuery.data ?? null;
+  const taskCompletionsQuery = useTaskCompletionsQuery(task?.id);
+  const profilesQuery = useProfilesQuery();
 
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
   const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
@@ -41,15 +52,62 @@ export default function TaskDetails() {
   const postponeTaskMutation = usePostponeTaskMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
   const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
+  const updateTaskCompletionAssignmentMutation = useUpdateTaskCompletionAssignmentMutation();
 
   const loveNote = loveNoteQuery.data ?? null;
   const assignedProfile = assignedProfileQuery.data ?? null;
   const lastDoneByProfile = lastDoneByProfileQuery.data ?? null;
+  const completions = taskCompletionsQuery.data ?? [];
+  const profiles = profilesQuery.data ?? [];
+
+  const defaultSelection = useMemo<AssignmentSelection>(() => {
+    if (!task) return { type: 'anyone', assignedTo: [] };
+    if (task.assignment_type === 'team_work') return { type: 'team_work', assignedTo: [] };
+    if (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') {
+      return { type: 'individual', assignedTo: [task.assigned_to ?? profiles[0]?.id ?? ''].filter(Boolean) };
+    }
+    return { type: 'anyone', assignedTo: [] };
+  }, [profiles, task]);
+
+  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection>({
+    type: 'anyone',
+    assignedTo: [],
+  });
+
+  function normalizeForMutation(selection: AssignmentSelection): {
+    type: TaskAssignmentOverrideType;
+    assignedTo: string[];
+  } {
+    if (selection.type === 'individual') {
+      const fallbackId = task?.assigned_to ?? profiles[0]?.id ?? '';
+      const selectedId = selection.assignedTo[0] ?? fallbackId;
+      return { type: 'individual', assignedTo: selectedId ? [selectedId] : [] };
+    }
+    return { type: selection.type, assignedTo: [] };
+  }
+
+  const safeDefaultAssignmentType =
+    task?.assignment_type === 'strict_rotation' ||
+    task?.assignment_type === 'team_work' ||
+    task?.assignment_type === 'individual' ||
+    task?.assignment_type === 'anyone'
+      ? task.assignment_type
+      : 'anyone';
+
+  useEffect(() => {
+    if (!searchParams.editAssignment || task?.status !== 'completed') return;
+    setSelectedAssignment(defaultSelection);
+    setAssignmentEditorOpen(true);
+  }, [defaultSelection, searchParams.editAssignment, task?.status]);
 
   const loading =
     taskQuery.isPending ||
     (Boolean(task) &&
-      (loveNoteQuery.isLoading || assignedProfileQuery.isLoading || lastDoneByProfileQuery.isLoading));
+      (loveNoteQuery.isLoading ||
+        assignedProfileQuery.isLoading ||
+        lastDoneByProfileQuery.isLoading ||
+        taskCompletionsQuery.isLoading ||
+        profilesQuery.isLoading));
 
   const acting =
     completeTaskMutation.isPending ||
@@ -73,10 +131,29 @@ export default function TaskDetails() {
     if (!task || acting) return;
     setActionError(null);
     try {
-      await completeTaskMutation.mutateAsync(task.id);
+      await completeTaskMutation.mutateAsync({
+        taskId: task.id,
+        assignmentOverride: normalizeForMutation(selectedAssignment),
+      });
       navigate({ to: '/' });
     } catch (err) {
       console.error('Complete error:', err);
+      setActionError(t('queryState.mutationError'));
+    }
+  }
+
+  async function handleUpdateAssignment() {
+    if (!task) return;
+    setActionError(null);
+    try {
+      await updateTaskCompletionAssignmentMutation.mutateAsync({
+        taskId: task.id,
+        assignmentType: normalizeForMutation(selectedAssignment).type,
+        assignedTo: normalizeForMutation(selectedAssignment).assignedTo,
+      });
+      setAssignmentEditorOpen(false);
+    } catch (err) {
+      console.error('Update assignment error:', err);
       setActionError(t('queryState.mutationError'));
     }
   }
@@ -221,6 +298,38 @@ export default function TaskDetails() {
             </div>
           </div>
         </div>
+      )}
+
+      {(task.status === 'pending' || task.status === 'overdue') && (
+        <AssignmentSelector
+          open={assignmentSelectorOpen}
+          defaultAssignmentType={safeDefaultAssignmentType}
+          defaultAssignedTo={task.assigned_to}
+          profiles={profiles}
+          value={selectedAssignment}
+          onChange={setSelectedAssignment}
+          onConfirm={async () => {
+            setAssignmentSelectorOpen(false);
+            await handleComplete();
+          }}
+          onCancel={() => setAssignmentSelectorOpen(false)}
+          loading={completeTaskMutation.isPending}
+        />
+      )}
+
+      {task.status === 'completed' && (
+        <AssignmentEditor
+          open={assignmentEditorOpen}
+          profiles={profiles}
+          completions={completions}
+          defaultAssignmentType={safeDefaultAssignmentType}
+          defaultAssignedTo={task.assigned_to}
+          value={selectedAssignment}
+          onChange={setSelectedAssignment}
+          onSave={handleUpdateAssignment}
+          onCancel={() => setAssignmentEditorOpen(false)}
+          loading={updateTaskCompletionAssignmentMutation.isPending}
+        />
       )}
 
       <TopBar
@@ -378,7 +487,10 @@ export default function TaskDetails() {
           {(task.status === 'pending' || task.status === 'overdue') && !task.deleted_at && (
             <div className="flex flex-col gap-3 mt-6 mb-2">
               <button
-                onClick={handleComplete}
+                onClick={() => {
+                  setSelectedAssignment(defaultSelection);
+                  setAssignmentSelectorOpen(true);
+                }}
                 disabled={acting}
                 className="w-full bg-primary text-background-dark h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform disabled:opacity-50"
               >
@@ -427,6 +539,19 @@ export default function TaskDetails() {
               <span className="font-medium text-primary">{t('taskDetails.pointsReward', { points: task.points })}</span>
             </div>
           </div>
+
+          {task.status === 'completed' && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAssignment(defaultSelection);
+                setAssignmentEditorOpen(true);
+              }}
+              className="w-full rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/15 transition-colors"
+            >
+              {t('taskCompletion.editAssignment')}
+            </button>
+          )}
         </div>
       </main>
     </div>
