@@ -4,6 +4,8 @@ import type { ExpenseActivityFeedItem } from '../../lib/queries';
 import { centsToCurrency, toRelativeExpenseDate } from '../../lib/expenseUtils';
 import type { ExpenseWithDetails } from '../../lib/types';
 import ExpenseListItem from './ExpenseListItem';
+import IconBox from '../ui/IconBox';
+import ListRow from '../ui/ListRow';
 
 type ExpensesListProps = {
   items?: ExpenseActivityFeedItem[];
@@ -84,13 +86,15 @@ export default function ExpensesList({
         const settlement = item.settlement;
 
         return (
-          <article
+          <ListRow
+            as="article"
             key={`settlement-${item.id}`}
-            className="group relative flex items-center gap-4 rounded-[2.5rem] border border-white/5 bg-[#141d1b] p-4 pr-6 transition-all active:scale-[0.98]"
+            className="group pr-6"
+            variant="subtle"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <IconBox className="bg-primary/15 text-primary" size="lg" tone="custom">
               <span className="material-symbols-outlined !text-2xl">payments</span>
-            </div>
+            </IconBox>
 
             <div className="flex-1 min-w-0">
               <h3 className="truncate text-xl font-bold tracking-tight text-slate-100">
@@ -112,7 +116,7 @@ export default function ExpensesList({
                 {t('expenses.settlement.feedStatus')}
               </p>
             </div>
-          </article>
+          </ListRow>
         );
       })}
 

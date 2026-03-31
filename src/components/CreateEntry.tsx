@@ -7,6 +7,10 @@ import type { Profile, TaskCatalogItem } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../lib/schemas';
+import Badge from './ui/Badge';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import TextInput from './ui/TextInput';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 
@@ -282,14 +286,11 @@ export default function CreateEntry() {
           {/* Type Cards */}
           <div className="flex gap-4 w-full max-w-xs mb-10">
             {/* Task Card */}
-            <button
-              type="button"
+            <Button
+              active={selectedType === 'task'}
+              className="flex-1 h-auto flex-col gap-4 rounded-2xl border-2 p-6 shadow-lg shadow-primary/10"
               onClick={() => setSelectedType('task')}
-              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 ${
-                selectedType === 'task'
-                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
-              }`}
+              variant="selector"
             >
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
                 selectedType === 'task' ? 'bg-primary/20' : 'bg-primary/10'
@@ -299,17 +300,14 @@ export default function CreateEntry() {
               <span className={`text-base font-bold ${selectedType === 'task' ? 'text-slate-100' : 'text-primary/70'}`}>
                 {t('entryForm.typeTask')}
               </span>
-            </button>
+            </Button>
 
             {/* Event Card */}
-            <button
-              type="button"
+            <Button
+              active={selectedType === 'event'}
+              className="relative flex-1 h-auto flex-col gap-4 rounded-2xl border-2 p-6 shadow-lg shadow-primary/10"
               onClick={() => setSelectedType('event')}
-              className={`flex-1 flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all duration-200 relative ${
-                selectedType === 'event'
-                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                  : 'border-primary/20 bg-primary/5 hover:border-primary/40'
-              }`}
+              variant="selector"
             >
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
                 selectedType === 'event' ? 'bg-primary/20' : 'bg-primary/10'
@@ -319,27 +317,29 @@ export default function CreateEntry() {
               <span className={`text-base font-bold ${selectedType === 'event' ? 'text-slate-100' : 'text-primary/70'}`}>
                 {t('entryForm.typeEvent')}
               </span>
-            </button>
+            </Button>
           </div>
 
           {/* Continue button */}
-          <button
-            type="button"
+          <Button
+            className="max-w-xs"
+            endIcon={<span className="material-symbols-outlined text-xl">arrow_forward</span>}
+            fullWidth
             onClick={handleContinueFromTypeSelect}
-            className="w-full max-w-xs h-14 rounded-2xl bg-primary text-background-dark font-bold text-base flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+            size="lg"
           >
             {t('entryCreate.continue')}
-            <span className="material-symbols-outlined text-xl">arrow_forward</span>
-          </button>
+          </Button>
 
           {/* Cancel */}
-          <button
-            type="button"
+          <Button
+            className="mt-4"
             onClick={() => router.history.back()}
-            className="mt-4 text-sm text-primary/50 hover:text-primary/80 transition-colors"
+            size="sm"
+            variant="ghost"
           >
             {t('cta.cancel')}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -362,16 +362,15 @@ export default function CreateEntry() {
 
         <div className="flex flex-col gap-4 px-4 py-4 max-w-md mx-auto w-full flex-1">
           {/* Search bar */}
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-4 top-4 text-primary/40">search</span>
-            <input
-              className={`${inputClass} !pl-12`}
-              placeholder={t('entryForm.catalogSearch')}
-              type="text"
-              value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
-            />
-          </div>
+          <TextInput
+            leading={<span className="material-symbols-outlined text-primary/40">search</span>}
+            placeholder={t('entryForm.catalogSearch')}
+            size="lg"
+            type="text"
+            value={catalogSearch}
+            variant="soft"
+            onChange={(e) => setCatalogSearch(e.target.value)}
+          />
 
           {/* Catalog grouped by category */}
           <div className="flex flex-col gap-5 pb-4 overflow-y-auto flex-1">
@@ -390,33 +389,35 @@ export default function CreateEntry() {
                   const name = i18n.language === 'es' ? item.name_es : item.name_en;
                   const points = EFFORT_POINTS[item.default_effort_level as EffortLevel] ?? 0;
                   return (
-                    <button
+                    <Button
                       key={item.id}
-                      type="button"
+                      className="h-auto justify-start gap-3 border-primary/15 px-4 py-3.5 text-left"
+                      fullWidth
                       onClick={() => handleCatalogSelect(item)}
-                      className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all text-left active:scale-[0.98]"
+                      variant="subtle"
                     >
                       <span className="text-xl w-8 text-center shrink-0">{item.icon}</span>
                       <span className="flex-1 text-slate-100 text-sm font-medium truncate">{name}</span>
-                      <span className="text-xs font-bold text-primary/80 bg-primary/15 px-2.5 py-1 rounded-lg shrink-0 whitespace-nowrap">
+                      <Badge className="shrink-0 whitespace-nowrap" size="md" tone="primary">
                         {item.default_effort_level} · {points}pts
-                      </span>
-                    </button>
+                      </Badge>
+                    </Button>
                   );
                 })}
               </div>
             ))}
 
             {/* Create custom task */}
-            <button
-              type="button"
+            <Button
+              className="mt-2 h-auto justify-start gap-3 border-dashed border-primary/30 px-4 py-4"
+              fullWidth
               onClick={handleCustomTask}
-              className="flex items-center gap-3 px-4 py-4 mt-2 rounded-xl border border-dashed border-primary/30 hover:bg-primary/5 transition-all active:scale-[0.98]"
+              variant="subtle"
             >
               <span className="text-xl w-8 text-center">✏️</span>
               <span className="flex-1 text-sm font-semibold text-primary/80">{t('entryForm.createCustomTask')}</span>
               <span className="material-symbols-outlined text-primary/40 text-xl">arrow_forward</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -437,22 +438,23 @@ export default function CreateEntry() {
           onClick: handleBackFromForm,
         }}
         rightSlot={(
-          <button
+          <Button
             aria-label={t('topBar.save')}
-            className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
-            disabled={saving}
+            className="min-h-10 justify-end px-0 text-base font-bold tracking-[0.015em] text-primary disabled:text-primary/40"
+            loading={saving}
             onClick={handleSubmit(onSubmit)}
-            type="button"
+            size="sm"
+            variant="ghost"
           >
-            {saving ? t('common.saving') : t('cta.save')}
-          </button>
+            {t('cta.save')}
+          </Button>
         )}
       />
 
       <div className="flex flex-col gap-6 px-4 py-4 max-w-md mx-auto w-full">
         {/* ── Selected catalog item badge ── */}
         {type === 'task' && selectedCatalogItem && (
-          <div className="flex items-center gap-3 p-3 rounded-xl border border-primary/20 bg-primary/10">
+          <Card className="flex items-center gap-3" padding="sm" radius="xl" variant="info">
             <span className="text-xl">{selectedCatalogItem.icon}</span>
             <div className="flex-1 min-w-0">
               <p className="text-slate-100 text-sm font-semibold truncate">
@@ -462,14 +464,15 @@ export default function CreateEntry() {
                 {t(`entryForm.categories.${selectedCatalogItem.category}` as const)}
               </p>
             </div>
-            <button
-              type="button"
+            <Button
+              className="size-8 p-0 text-primary/50 hover:text-primary/80"
               onClick={() => { setSelectedCatalogItem(null); setStep('catalog'); }}
-              className="text-primary/50 hover:text-primary/80 transition-colors"
+              size="icon"
+              variant="icon"
             >
               <span className="material-symbols-outlined text-lg">close</span>
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
 
         {/* ── Task Name ── */}

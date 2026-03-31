@@ -5,6 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useForgotPasswordMutation } from '../../lib/queryHooks';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../lib/schemas';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import ErrorBanner from '../ui/ErrorBanner';
+import FormField from '../ui/FormField';
+import IconBox from '../ui/IconBox';
+import TextInput from '../ui/TextInput';
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -45,11 +51,11 @@ export default function ForgotPassword() {
       </Link>
 
       <div className="mb-8">
-        <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
+        <IconBox className="mb-6" size="lg" tone="primary">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-        </div>
+        </IconBox>
 
         <h1 className="text-3xl font-bold text-slate-100 mb-3">{t('auth.forgotPassword.title')}</h1>
         <p className="text-sm text-slate-400 leading-relaxed">{t('auth.forgotPassword.description')}</p>
@@ -57,10 +63,10 @@ export default function ForgotPassword() {
 
       {sent ? (
         <div className="flex-1 flex flex-col">
-          <div className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-5 mb-6">
+          <Card className="mb-6" padding="lg" variant="info">
             <p className="text-sm font-semibold text-primary mb-1">{t('auth.forgotPassword.sentTitle')}</p>
             <p className="text-sm text-slate-300">{t('auth.forgotPassword.sentDescription', { email: getValues('email') })}</p>
-          </div>
+          </Card>
           <Link
             to="/auth/login"
             className="text-center text-sm font-semibold text-primary hover:text-primary/80"
@@ -70,38 +76,30 @@ export default function ForgotPassword() {
         </div>
       ) : (
         <form className="flex-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
-          <label className="flex flex-col gap-2 mb-4">
-            <span className="text-sm font-semibold text-slate-200">{t('auth.emailLabel')}</span>
-            <div className="flex items-center h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 gap-3 focus-within:ring-1 focus-within:ring-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <input
-                className="flex-1 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none"
-                type="email"
-                autoComplete="email"
-                placeholder={t('auth.emailPlaceholder')}
-                {...register('email')}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
-            )}
-          </label>
+          <FormField className="mb-4" error={errors.email ? t(errors.email.message!) : null} htmlFor="forgot-password-email" label={t('auth.emailLabel')}>
+            <TextInput
+              autoComplete="email"
+              id="forgot-password-email"
+              leading={(
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              )}
+              placeholder={t('auth.emailPlaceholder')}
+              size="lg"
+              type="email"
+              variant="elevated"
+              {...register('email')}
+            />
+          </FormField>
 
           {serverError && (
-            <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100 mb-4">
-              {serverError}
-            </p>
+            <ErrorBanner className="mb-4" message={serverError} />
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-14 w-full rounded-2xl bg-primary font-bold text-background-dark text-base transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 mt-2"
-          >
-            {loading ? t('auth.loading') : t('auth.forgotPassword.cta')}
-          </button>
+          <Button className="mt-2" fullWidth loading={loading} size="lg" type="submit">
+            {t('auth.forgotPassword.cta')}
+          </Button>
 
           <p className="mt-auto pt-8 text-center text-sm text-slate-400">
             {t('auth.forgotPassword.rememberPassword')}{' '}

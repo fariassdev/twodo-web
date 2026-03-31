@@ -6,6 +6,8 @@ import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, use
 import type { Task } from '../../lib/types';
 import TaskAvatars from './TaskAvatars';
 import Snackbar from '../ui/Snackbar';
+import Badge from '../ui/Badge';
+import ListRow from '../ui/ListRow';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -89,12 +91,13 @@ export default function TodayTasksWidget() {
     const isTeamWork = task.assignment_type === 'team_work' || task.assignment_type === 'anyone';
 
     return (
-      <div
+      <ListRow
+        as="div"
+        completed={isCompleted}
         key={task.id}
         onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-        className={`relative flex items-center gap-4 p-4 rounded-2xl border mb-3 cursor-pointer transition-all ${
-          isCompleted ? 'bg-transparent border-transparent opacity-60' : 'bg-[#1c221e] border-white/5 shadow-sm'
-        }`}
+        className="mb-3 shadow-sm"
+        interactive
       >
         {/* Glow left edge for high priority/morning like the design */}
         {!isCompleted && isHighPriority && (
@@ -125,11 +128,9 @@ export default function TodayTasksWidget() {
               <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
             )}
             {showSize && !isCompleted && (
-              <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm ${
-                task.effort_level === 'XL' ? 'bg-[#3f2a1d] text-amber-500' : 'bg-[#1c362a] text-emerald-400'
-              }`}>
+              <Badge size="xs" tone={task.effort_level === 'XL' ? 'warning' : 'success'}>
                 {task.effort_level}
-              </span>
+              </Badge>
             )}
           </div>
           {isCompleted && (
@@ -145,7 +146,7 @@ export default function TodayTasksWidget() {
         <div className="flex items-center flex-shrink-0">
           <TaskAvatars task={task} profiles={profiles} />
         </div>
-      </div>
+      </ListRow>
     );
   };
 
@@ -189,20 +190,19 @@ export default function TodayTasksWidget() {
       })}
 
       {tasks.length === 0 && overdueTasks.length === 0 && (
-        <div className="text-center p-8 bg-[#1c221e] rounded-3xl border border-dashed border-white/10 text-gray-500">
+        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-gray-500" variant="default">
           {t('dashboard.noTasksFound')}
-        </div>
+        </ListRow>
       )}
 
       {overdueTasks.length > 0 && (
         <div className="mt-8">
-          <div 
+          <ListRow
+            as="div"
             onClick={() => setIsPendingExpanded(!isPendingExpanded)}
-            className={`rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all border ${
-              allOverdueCompleted 
-                ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-100' 
-                : 'bg-[#2a1a19] border-red-500/10 text-white/90'
-            }`}
+            className="justify-between"
+            interactive
+            variant={allOverdueCompleted ? 'success' : 'alert'}
           >
             <div className="flex items-center gap-3">
               {allOverdueCompleted ? (
@@ -215,18 +215,20 @@ export default function TodayTasksWidget() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-[#2a1a19] text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
-                allOverdueCompleted ? 'bg-emerald-400' : 'bg-[#bb6156]'
-              }`}>
+              <Badge
+                className={`size-6 rounded-full p-0 text-[#2a1a19] ${allOverdueCompleted ? 'bg-emerald-400 text-[#0f281f]' : 'bg-[#bb6156] text-[#2a1a19]'}`}
+                size="sm"
+                tone="neutral"
+              >
                 {overdueTasks.filter(t => t.status !== 'completed').length}
-              </span>
+              </Badge>
               {isPendingExpanded ? (
                 <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
               ) : (
                 <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
               )}
             </div>
-          </div>
+          </ListRow>
           
           {isPendingExpanded && (
             <div className="mt-4">

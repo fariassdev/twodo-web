@@ -43,8 +43,27 @@
   --color-primary: #17cf91;
   --color-background-light: #f6f8f7;
   --color-background-dark: #11211c;
+  --color-surface-1: #141d1b;
+  --color-surface-2: #1c221e;
+  --color-surface-3: #2a302c;
+  --color-border-subtle: rgb(255 255 255 / 0.05);
+  --color-border-strong: rgb(23 207 145 / 0.2);
+  --color-success: #2ecc71;
+  --color-warning: #facc15;
+  --color-danger: #f87171;
   --color-dot-task: #3b82f6;
-  --color-dot-event: #E55381;
+  --color-dot-event: #e55381;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --shadow-card-sm: 0 2px 8px rgb(0 0 0 / 0.2);
+  --shadow-glow-primary: 0 4px 14px rgb(52 211 153 / 0.3);
+  --motion-fast: 75ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --z-modal: 50;
+  --z-fab: 50;
   --font-display: "Plus Jakarta Sans", sans-serif;
 }
 

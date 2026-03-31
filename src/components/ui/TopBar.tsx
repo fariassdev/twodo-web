@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { cn } from '../../lib/cn';
 
 export type TopBarAction = {
   ariaLabel: string;
@@ -39,10 +40,6 @@ type TopBarProps = {
   sticky?: boolean;
 };
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
-
 export default function TopBar({
   title,
   titleIcon,
@@ -80,7 +77,7 @@ export default function TopBar({
 
   const headerClassName = useMemo(
     () =>
-      cx(
+      cn(
         sticky && 'sticky top-0',
         'z-30 border-b border-primary/10 bg-background-dark/80 backdrop-blur-md',
         containerClassName,
@@ -96,7 +93,7 @@ export default function TopBar({
             {leftAction ? (
               <button
                 aria-label={leftAction.ariaLabel}
-                className={cx(
+                className={cn(
                   'flex size-10 items-center justify-center rounded-full text-slate-100 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
                   leftAction.className,
                 )}
@@ -138,12 +135,12 @@ export default function TopBar({
                   <>
                     <button
                       aria-label={rightMenu.closeAriaLabel ?? 'Close menu'}
-                      className={cx('fixed inset-0 z-40 cursor-default bg-transparent', rightMenu.overlayClassName)}
+                      className={cn('fixed inset-0 z-40 cursor-default bg-transparent', rightMenu.overlayClassName)}
                       onClick={() => setMenuOpen(false)}
                       type="button"
                     />
                     <div
-                      className={cx(
+                      className={cn(
                         'absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 py-1 shadow-xl',
                         rightMenu.menuClassName,
                       )}
@@ -152,7 +149,7 @@ export default function TopBar({
                         <React.Fragment key={item.id}>
                           {item.separatorBefore ? <div className="mx-3 h-px bg-slate-700/60" /> : null}
                           <button
-                            className={cx(
+                            className={cn(
                               'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50',
                               item.danger ? 'text-rose-500' : 'text-slate-100',
                             )}
@@ -164,7 +161,7 @@ export default function TopBar({
                             type="button"
                           >
                             {item.icon ? (
-                              <span className={cx('material-symbols-outlined text-[20px]', item.danger ? 'text-rose-500' : 'text-slate-400')}>
+                              <span className={cn('material-symbols-outlined text-[20px]', item.danger ? 'text-rose-500' : 'text-slate-400')}>
                                 {item.icon}
                               </span>
                             ) : null}

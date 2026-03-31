@@ -5,6 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useSignInMutation } from '../../lib/queryHooks';
 import { loginSchema, type LoginFormValues } from '../../lib/schemas';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import ErrorBanner from '../ui/ErrorBanner';
+import FormField from '../ui/FormField';
+import TextInput from '../ui/TextInput';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -33,54 +38,40 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md rounded-2xl border border-primary/20 bg-primary/5 p-6 shadow-xl">
+      <Card className="w-full max-w-md shadow-xl" padding="xl" variant="surface">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-slate-100">{t('auth.login.title')}</h1>
           <p className="mt-2 text-sm text-slate-400">{t('auth.login.subtitle')}</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-200">{t('auth.email')}</span>
-            <input
-              className="h-12 rounded-xl border border-primary/20 bg-background-dark px-4 text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
-              type="email"
+          <FormField error={errors.email ? t(errors.email.message!) : null} htmlFor="login-email" label={t('auth.email')}>
+            <TextInput
               autoComplete="email"
+              id="login-email"
               placeholder={t('auth.emailPlaceholder')}
+              type="email"
               {...register('email')}
             />
-            {errors.email && (
-              <p className="text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
-            )}
-          </label>
+          </FormField>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-200">{t('auth.password')}</span>
-            <input
-              className="h-12 rounded-xl border border-primary/20 bg-background-dark px-4 text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
-              type="password"
+          <FormField error={errors.password ? t(errors.password.message!) : null} htmlFor="login-password" label={t('auth.password')}>
+            <TextInput
               autoComplete="current-password"
+              id="login-password"
               placeholder={t('auth.passwordPlaceholder')}
+              type="password"
               {...register('password')}
             />
-            {errors.password && (
-              <p className="text-xs font-medium text-rose-300">{t(errors.password.message!)}</p>
-            )}
-          </label>
+          </FormField>
 
           {serverError && (
-            <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-              {serverError}
-            </p>
+            <ErrorBanner message={serverError} />
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-12 w-full rounded-xl bg-primary font-bold text-background-dark transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? t('auth.loading') : t('auth.login.cta')}
-          </button>
+          <Button fullWidth loading={loading} type="submit">
+            {t('auth.login.cta')}
+          </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-slate-400">
@@ -95,7 +86,7 @@ export default function Login() {
             {t('auth.login.forgotPassword')}
           </Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

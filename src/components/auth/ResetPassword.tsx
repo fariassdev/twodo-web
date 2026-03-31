@@ -6,6 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { useUpdatePasswordMutation } from '../../lib/queryHooks';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../../lib/schemas';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import ErrorBanner from '../ui/ErrorBanner';
+import FormField from '../ui/FormField';
+import IconBox from '../ui/IconBox';
+import TextInput from '../ui/TextInput';
 
 type PageState = 'loading' | 'ready' | 'expired' | 'success';
 
@@ -79,11 +85,11 @@ export default function ResetPassword() {
       </Link>
 
       <div className="mb-8">
-        <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
+        <IconBox className="mb-6" size="lg" tone="primary">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-        </div>
+        </IconBox>
         <h1 className="text-3xl font-bold text-slate-100 mb-3">{t('auth.resetPassword.title')}</h1>
         <p className="text-sm text-slate-400 leading-relaxed">{t('auth.resetPassword.description')}</p>
       </div>
@@ -96,10 +102,10 @@ export default function ResetPassword() {
 
       {pageState === 'expired' && (
         <div className="flex-1 flex flex-col">
-          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-5 mb-6">
+          <Card className="mb-6" padding="lg" variant="error">
             <p className="text-sm font-semibold text-rose-200 mb-1">{t('auth.resetPassword.expiredTitle')}</p>
             <p className="text-sm text-slate-300">{t('auth.resetPassword.expiredDescription')}</p>
-          </div>
+          </Card>
           <Link
             to="/auth/forgot-password"
             className="h-14 flex items-center justify-center rounded-2xl bg-primary font-bold text-background-dark text-base transition-colors hover:bg-primary/90"
@@ -111,58 +117,52 @@ export default function ResetPassword() {
 
       {pageState === 'success' && (
         <div className="flex-1 flex flex-col">
-          <div className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-5 mb-6">
+          <Card className="mb-6" padding="lg" variant="info">
             <p className="text-sm font-semibold text-primary mb-1">{t('auth.resetPassword.successTitle')}</p>
             <p className="text-sm text-slate-300">{t('auth.resetPassword.successDescription')}</p>
-          </div>
+          </Card>
         </div>
       )}
 
       {pageState === 'ready' && (
         <form className="flex-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4 mb-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-200">{t('auth.password')}</span>
-              <input
-                className="h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary"
-                type="password"
+            <FormField error={errors.password ? t(errors.password.message!) : null} htmlFor="reset-password" label={t('auth.password')}>
+              <TextInput
                 autoComplete="new-password"
+                id="reset-password"
                 placeholder={t('auth.passwordPlaceholder')}
+                size="lg"
+                type="password"
+                variant="elevated"
                 {...register('password')}
               />
-              {errors.password && (
-                <p className="text-xs font-medium text-rose-300">{t(errors.password.message!)}</p>
-              )}
-            </label>
+            </FormField>
 
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-200">{t('auth.confirmPassword')}</span>
-              <input
-                className="h-14 rounded-2xl border border-primary/20 bg-slate-800/60 px-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary"
-                type="password"
+            <FormField
+              error={errors.confirmPassword ? t(errors.confirmPassword.message!) : null}
+              htmlFor="reset-confirm-password"
+              label={t('auth.confirmPassword')}
+            >
+              <TextInput
                 autoComplete="new-password"
+                id="reset-confirm-password"
                 placeholder={t('auth.confirmPasswordPlaceholder')}
+                size="lg"
+                type="password"
+                variant="elevated"
                 {...register('confirmPassword')}
               />
-              {errors.confirmPassword && (
-                <p className="text-xs font-medium text-rose-300">{t(errors.confirmPassword.message!)}</p>
-              )}
-            </label>
+            </FormField>
           </div>
 
           {serverError && (
-            <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100 mb-4">
-              {serverError}
-            </p>
+            <ErrorBanner className="mb-4" message={serverError} />
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-14 w-full rounded-2xl bg-primary font-bold text-background-dark text-base transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 mt-2"
-          >
-            {loading ? t('auth.loading') : t('auth.resetPassword.cta')}
-          </button>
+          <Button className="mt-2" fullWidth loading={loading} size="lg" type="submit">
+            {t('auth.resetPassword.cta')}
+          </Button>
         </form>
       )}
     </div>

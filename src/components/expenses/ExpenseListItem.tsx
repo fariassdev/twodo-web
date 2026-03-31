@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ExpenseWithDetails } from '../../lib/types';
 import { centsToCurrency, toRelativeExpenseDate } from '../../lib/expenseUtils';
+import IconBox from '../ui/IconBox';
+import ListRow from '../ui/ListRow';
 
 type ExpenseListItemProps = {
   expense: ExpenseWithDetails;
@@ -69,16 +71,16 @@ export default function ExpenseListItem({
     : {};
 
   return (
-    <article
-      className={`group relative flex items-center gap-4 rounded-[2.5rem] border border-white/5 bg-[#141d1b] p-4 pr-6 transition-all active:scale-[0.98] ${
-        onClick ? 'cursor-pointer hover:bg-[#1a2523]' : ''
-      }`}
+    <ListRow
+      className={onClick ? 'group pr-6 hover:bg-[#1a2523]' : 'group pr-6'}
+      interactive={Boolean(onClick)}
+      variant="subtle"
       {...clickableProps}
     >
       {/* Icon Container */}
-      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${iconBg} ${iconText}`}>
+      <IconBox className={`${iconBg} ${iconText}`} size="lg" tone="custom">
         <span className="material-symbols-outlined !text-2xl">{icon}</span>
-      </div>
+      </IconBox>
 
       {/* Info Container */}
       <div className="flex-1 min-w-0">
@@ -99,6 +101,6 @@ export default function ExpenseListItem({
           {impactLabel}
         </p>
       </div>
-    </article>
+    </ListRow>
   );
 }
