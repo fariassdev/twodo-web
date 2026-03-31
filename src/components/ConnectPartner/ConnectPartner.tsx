@@ -21,7 +21,7 @@ import {
   partnerInviteEmailFormSchema,
   type PartnerInviteCodeFormValues,
   type PartnerInviteEmailFormValues,
-} from '../../lib/schemas';
+} from '../../helpers/schemas';
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
 

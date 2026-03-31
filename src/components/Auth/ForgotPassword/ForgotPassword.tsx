@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useForgotPasswordMutation } from '../../../lib/queryHooks';
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../../lib/schemas';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';

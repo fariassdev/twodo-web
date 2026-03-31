@@ -17,7 +17,7 @@ import TopBar from '../ui/TopBar';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { shoppingItemSchema, type ShoppingItemFormValues } from '../../lib/schemas';
+import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
 
 export default function ShoppingList() {
   const { t } = useTranslation();

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useSignUpMutation } from '../../../lib/queryHooks';
-import { registerSchema, type RegisterFormValues } from '../../../lib/schemas';
+import { registerSchema, type RegisterFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';

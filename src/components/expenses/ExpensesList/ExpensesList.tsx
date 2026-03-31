@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ExpenseActivityFeedItem } from '../../../lib/queries';
-import { centsToCurrency, toRelativeExpenseDate } from '../../../lib/expenseUtils';
+import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import type { ExpenseWithDetails } from '../../../lib/types';
 import ExpenseListItem from '../ExpenseListItem';
 import IconBox from '../../ui/IconBox';

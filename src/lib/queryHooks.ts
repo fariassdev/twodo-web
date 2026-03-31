@@ -85,7 +85,7 @@ import {
   supabase,
   updatePassword,
 } from './supabase';
-import { normalizeSearchText } from './expenseUtils';
+import { normalizeSearchText } from '../helpers/expense';
 import type {
   AuthContext,
   ExpenseCategory,

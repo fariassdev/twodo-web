@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ExpenseWithDetails } from '../../../lib/types';
-import { centsToCurrency, toRelativeExpenseDate } from '../../../lib/expenseUtils';
+import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
 

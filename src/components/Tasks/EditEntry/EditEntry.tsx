@@ -19,7 +19,7 @@ import FormSection from '../../ui/FormSection';
 import Modal from '../../ui/Modal';
 import TextInput from '../../ui/TextInput';
 import { SegmentedControl, SegmentedControlItem } from '../../ui/SegmentedControl';
-import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../../../lib/schemas';
+import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../../../helpers/schemas';
 
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 

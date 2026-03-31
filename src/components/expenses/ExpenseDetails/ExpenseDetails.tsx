@@ -19,8 +19,8 @@ import {
   useProfilesQuery,
   useUpdateExpenseMutation,
 } from '../../../lib/queryHooks';
-import { centsToCurrency } from '../../../lib/expenseUtils';
-import { expenseFormSchema, type ExpenseFormValues } from '../../../lib/schemas';
+import { centsToCurrency } from '../../../helpers/expense';
+import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 import type { ExpenseDetailsSearch, ExpensesListSearch } from '../../../router';
 
 function centsToInput(cents: number): string {

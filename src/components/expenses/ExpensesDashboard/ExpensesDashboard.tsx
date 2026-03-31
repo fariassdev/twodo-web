@@ -14,14 +14,14 @@ import QueryErrorState from '../../ui/QueryErrorState';
 import TextInput from '../../ui/TextInput';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import { centsToCurrency } from '../../../lib/expenseUtils';
+import { centsToCurrency } from '../../../helpers/expense';
 import {
   useAuthScope,
   useCreateSettlementMutation,
   useExpensesActivityFeedInfiniteQuery,
   useExpensesDashboardQuery,
 } from '../../../lib/queryHooks';
-import { settlementFormSchema, type SettlementFormValues } from '../../../lib/schemas';
+import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();

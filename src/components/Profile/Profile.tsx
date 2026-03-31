@@ -12,7 +12,7 @@ import {
 } from '../../lib/queryHooks';
 import type { Profile } from '../../lib/types';
 import TopBar from '../ui/TopBar';
-import { profileSchema, type ProfileFormValues } from '../../lib/schemas';
+import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();

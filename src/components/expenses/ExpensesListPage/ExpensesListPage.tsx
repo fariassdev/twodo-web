@@ -11,7 +11,7 @@ import ExpensesList from '../ExpensesList';
 import {
   includesNormalizedText,
   normalizeSearchText,
-} from '../../../lib/expenseUtils';
+} from '../../../helpers/expense';
 import {
   useAuthScope,
   useExpensesActivityFeedInfiniteQuery,

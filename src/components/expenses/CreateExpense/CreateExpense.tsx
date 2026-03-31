@@ -15,7 +15,7 @@ import {
   useExpenseCategoriesQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
-import { expenseFormSchema, type ExpenseFormValues } from '../../../lib/schemas';
+import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 
 function parseAmountToCents(raw: string): number {
   const normalized = raw.replace(',', '.').trim();
