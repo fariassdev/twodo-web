@@ -2,6 +2,9 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useResendVerificationMutation, useSignOutMutation } from '../../lib/queryHooks';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import ErrorBanner from '../ui/ErrorBanner';
 
 interface VerifyEmailProps {
   email?: string;
@@ -38,16 +41,12 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
   return (
     <div className="min-h-screen flex flex-col px-5 pt-12 pb-8 bg-background-dark">
       <div className="flex items-center gap-2 mb-8">
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
-        >
+        <Button className="gap-2 text-sm text-slate-400 hover:text-slate-200" onClick={handleSignOut} size="sm" variant="ghost">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           <span className="font-semibold">couple-organizer</span>
-        </button>
+        </Button>
       </div>
 
       <div className="mb-8">
@@ -67,31 +66,28 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-4">
+        <Card padding="md" radius="2xl" variant="surface">
           <p className="text-sm text-slate-300 leading-relaxed">{t('auth.verifyEmail.hint')}</p>
-        </div>
+        </Card>
 
         {resendSuccess && (
-          <p className="rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-            {t('auth.verifyEmail.resendSuccess')}
-          </p>
+          <ErrorBanner message={t('auth.verifyEmail.resendSuccess')} tone="success" />
         )}
 
         {resendError && (
-          <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-            {resendError}
-          </p>
+          <ErrorBanner message={resendError} />
         )}
 
         {email && (
-          <button
-            type="button"
+          <Button
             disabled={resendMutation.isPending}
             onClick={handleResend}
-            className="h-14 w-full rounded-2xl border border-primary/40 font-semibold text-primary text-base transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+            fullWidth
+            size="lg"
+            variant="subtle"
           >
             {resendMutation.isPending ? t('auth.loading') : t('auth.verifyEmail.resend')}
-          </button>
+          </Button>
         )}
 
         <p className="mt-auto text-center text-sm text-slate-400">

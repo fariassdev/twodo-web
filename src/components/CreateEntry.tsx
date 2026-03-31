@@ -11,6 +11,9 @@ import Badge from './ui/Badge';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import TextInput from './ui/TextInput';
+import FormField from './ui/FormField';
+import FormSection from './ui/FormSection';
+import { SegmentedControl, SegmentedControlItem } from './ui/SegmentedControl';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 
@@ -257,10 +260,7 @@ export default function CreateEntry() {
     }
   }
 
-  const inputClass = 'flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-14 placeholder:text-primary/40 p-4 text-base font-normal leading-normal';
   const labelClass = 'text-slate-100 text-sm font-semibold leading-normal pb-2';
-  const pillActiveClass = 'bg-background-dark shadow-sm text-primary';
-  const pillInactiveClass = 'text-primary/60';
 
   // ═══════════════════════════════════════════════════════════════
   //  STEP 1 — TYPE SELECTOR
@@ -476,39 +476,33 @@ export default function CreateEntry() {
         )}
 
         {/* ── Task Name ── */}
-        <label className="flex flex-col w-full">
-          <p className={labelClass}>{t('entryForm.planName')}</p>
-          <input
-            className={inputClass}
+        <FormField error={errors.title ? t(errors.title.message!) : null} label={t('entryForm.planName')}>
+          <TextInput
             placeholder={t('entryForm.planNamePlaceholder')}
+            size="lg"
             type="text"
+            variant="soft"
             {...register('title')}
           />
-          {errors.title && <p className="text-xs text-red-400 mt-1">{t(errors.title.message!)}</p>}
-        </label>
+        </FormField>
 
         {/* ── Date ── */}
-        <label className="flex flex-col">
-          <p className={labelClass}>{t('entryForm.date')}</p>
-          <input
-            className={inputClass}
-            type="date"
-            {...register('date')}
-          />
-        </label>
+        <FormField label={t('entryForm.date')}>
+          <TextInput size="lg" type="date" variant="soft" {...register('date')} />
+        </FormField>
 
         {/* ── Effort Level (task only) ── */}
         {type === 'task' && (
           <div className="flex flex-col gap-3">
             <p className={labelClass}>{t('entryForm.effort')}</p>
-            <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
+            <SegmentedControl>
               {EFFORT_LEVELS.map(level => (
-                <label key={level} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${effortLevel === level ? pillActiveClass : pillInactiveClass}`}>
+                <SegmentedControlItem active={effortLevel === level} key={level}>
                   <span className="truncate">{t(`entryForm.effortLevels.${level}` as const)}</span>
                   <input className="invisible w-0" type="radio" value={level} {...register('effortLevel')} />
-                </label>
+                </SegmentedControlItem>
               ))}
-            </div>
+            </SegmentedControl>
           </div>
         )}
 
@@ -516,14 +510,14 @@ export default function CreateEntry() {
         {type === 'task' && (
           <div className="flex flex-col gap-3">
             <p className={labelClass}>{t('entryForm.timeOfDay')}</p>
-            <div className="grid grid-cols-4 gap-2">
+            <SegmentedControl className="grid-cols-4" variant="grid">
               {TIME_OF_DAY_OPTIONS.map(tod => (
-                <label key={tod} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${timeOfDay === tod ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                <SegmentedControlItem active={timeOfDay === tod} key={tod} variant="chip">
                   <span className="truncate text-center">{t(`entryForm.timeOfDayOptions.${tod}` as const)}</span>
                   <input className="invisible w-0 absolute" type="radio" value={tod} {...register('timeOfDay')} />
-                </label>
+                </SegmentedControlItem>
               ))}
-            </div>
+            </SegmentedControl>
           </div>
         )}
 
@@ -531,14 +525,14 @@ export default function CreateEntry() {
         {type === 'task' && !selectedCatalogItem && (
           <div className="flex flex-col gap-3">
             <p className={labelClass}>{t('entryForm.category')}</p>
-            <div className="grid grid-cols-4 gap-2">
+            <SegmentedControl className="grid-cols-4" variant="grid">
               {TASK_CATEGORIES.map(cat => (
-                <label key={cat} className={`flex cursor-pointer items-center justify-center rounded-xl px-2 py-3 text-xs font-bold transition-all border ${category === cat ? 'border-primary bg-primary/15 text-primary' : 'border-primary/20 bg-primary/5 text-primary/60'}`}>
+                <SegmentedControlItem active={category === cat} key={cat} variant="chip">
                   <span className="truncate text-center">{t(`entryForm.categories.${cat}` as const)}</span>
                   <input className="invisible w-0 absolute" type="radio" value={cat} {...register('category')} />
-                </label>
+                </SegmentedControlItem>
               ))}
-            </div>
+            </SegmentedControl>
           </div>
         )}
 
@@ -546,16 +540,16 @@ export default function CreateEntry() {
         {type === 'task' && (
           <div className="flex flex-col gap-3">
             <p className={labelClass}>{t('entryForm.urgency')}</p>
-            <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'normal' ? pillActiveClass : pillInactiveClass}`}>
+            <SegmentedControl>
+              <SegmentedControlItem active={urgency === 'normal'}>
                 <span className="truncate">{t('entryForm.urgencyNormal')}</span>
                 <input className="invisible w-0" type="radio" value="normal" {...register('urgency')} />
-              </label>
-              <label className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${urgency === 'high' ? pillActiveClass : pillInactiveClass}`}>
+              </SegmentedControlItem>
+              <SegmentedControlItem active={urgency === 'high'}>
                 <span className="truncate">{t('entryForm.urgencyHigh')}</span>
                 <input className="invisible w-0" type="radio" value="high" {...register('urgency')} />
-              </label>
-            </div>
+              </SegmentedControlItem>
+            </SegmentedControl>
           </div>
         )}
 
@@ -563,26 +557,41 @@ export default function CreateEntry() {
         {type === 'event' && (
           <>
             <div className="grid gap-4 grid-cols-2">
-              <label className="flex flex-col">
-                <p className={labelClass}>{t('entryForm.startTime')}</p>
-                <input className={inputClass} type="time" placeholder={t('entryForm.startTimePlaceholder')} {...register('startTime')} />
-              </label>
-              <label className="flex flex-col">
-                <p className={labelClass}>{t('entryForm.endTime')}</p>
-                <input className={inputClass} type="time" placeholder={t('entryForm.endTimePlaceholder')} {...register('endTime')} />
-              </label>
+              <FormField label={t('entryForm.startTime')}>
+                <TextInput
+                  placeholder={t('entryForm.startTimePlaceholder')}
+                  size="lg"
+                  type="time"
+                  variant="soft"
+                  {...register('startTime')}
+                />
+              </FormField>
+              <FormField label={t('entryForm.endTime')}>
+                <TextInput
+                  placeholder={t('entryForm.endTimePlaceholder')}
+                  size="lg"
+                  type="time"
+                  variant="soft"
+                  {...register('endTime')}
+                />
+              </FormField>
             </div>
             {errors.endTime && <p className="text-sm text-red-400 mt-1">{t(errors.endTime.message!)}</p>}
 
-            <label className="flex flex-col w-full">
-              <p className={labelClass}>{t('entryForm.location')}</p>
-              <input className={inputClass} placeholder={t('entryForm.locationPlaceholder')} type="text" {...register('location')} />
-            </label>
+            <FormField label={t('entryForm.location')}>
+              <TextInput
+                placeholder={t('entryForm.locationPlaceholder')}
+                size="lg"
+                type="text"
+                variant="soft"
+                {...register('location')}
+              />
+            </FormField>
           </>
         )}
 
         {/* ── Recurring ── */}
-        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5">
+        <FormSection>
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <p className="text-slate-100 text-base font-bold leading-tight">{t('entryForm.recurring')}</p>
@@ -596,17 +605,17 @@ export default function CreateEntry() {
           {isRecurring && (
             <div className="mt-2">
               <p className="text-slate-100 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
-              <div className="flex h-11 items-center justify-center rounded-xl bg-primary/10 p-1">
+              <SegmentedControl>
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
-                  <label key={f} className={`flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-sm font-bold transition-all ${frequency === f ? pillActiveClass : pillInactiveClass}`}>
+                  <SegmentedControlItem active={frequency === f} key={f}>
                     <span className="truncate">{t(`entryForm.frequencyOptions.${f}`)}</span>
                     <input className="invisible w-0" type="radio" value={f} {...register('frequency')} />
-                  </label>
+                  </SegmentedControlItem>
                 ))}
-              </div>
+              </SegmentedControl>
             </div>
           )}
-        </div>
+        </FormSection>
 
         {/* ── Assignment ── */}
         <div className="flex flex-col gap-3">
@@ -680,17 +689,21 @@ export default function CreateEntry() {
         </div>
 
         {/* ── Description ── */}
-        <label className="flex flex-col w-full pb-8">
-          <div className="flex items-center gap-2 pb-2">
-            <span className="material-symbols-outlined text-primary text-sm">description</span>
-            <p className={labelClass}>{t('entryForm.description')}</p>
-          </div>
+        <FormField
+          className="w-full pb-8"
+          label={(
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-sm">description</span>
+              <span>{t('entryForm.description')}</span>
+            </span>
+          )}
+        >
           <textarea
             className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
             placeholder={t('entryForm.descriptionPlaceholder')}
             {...register('description')}
           />
-        </label>
+        </FormField>
       </div>
     </div>
   );

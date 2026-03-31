@@ -4,8 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
+import Button from './ui/Button';
+import ErrorBanner from './ui/ErrorBanner';
+import FormField from './ui/FormField';
 import QueryErrorState from './ui/QueryErrorState';
 import { NumericInput } from './ui/NumericInput';
+import TextInput from './ui/TextInput';
 import {
   useAuthScope,
   useDeleteExpenseMutation,
@@ -172,9 +176,9 @@ export default function ExpenseDetails() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <p className="text-sm text-slate-300">{t('expenses.notFound')}</p>
-        <button className="font-semibold text-primary" onClick={goBackToExpenses} type="button">
+        <Button onClick={goBackToExpenses} size="sm" variant="ghost">
           {t('taskDetails.back')}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -194,23 +198,20 @@ export default function ExpenseDetails() {
           onClick: goBackToExpenses,
         }}
         rightSlot={(
-          <button
+          <Button
             aria-label={t('expenses.deleteExpense')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-200 hover:bg-primary/10"
+            className="text-slate-200"
             onClick={handleDelete}
-            type="button"
+            size="icon"
+            variant="icon"
           >
             <span className="material-symbols-outlined">delete</span>
-          </button>
+          </Button>
         )}
       />
 
       <main className="mx-auto max-w-md px-4 pt-6">
-        {actionError && (
-          <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-            {actionError}
-          </p>
-        )}
+        {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <section className="rounded-3xl border border-primary/20 bg-primary/10 p-6">
           <p className="text-center text-7xl font-black text-slate-100">{amountLabel}</p>
@@ -248,22 +249,28 @@ export default function ExpenseDetails() {
 
         {isEditing && (
           <section className="mt-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-            <Controller
-              name="amountInput"
-              control={control}
-              render={({ field }) => (
-                <NumericInput
-                  {...field}
-                  className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-                />
-              )}
-            />
+            <FormField label={t('expenses.amount')}>
+              <Controller
+                name="amountInput"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    {...field}
+                    className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
+                  />
+                )}
+              />
+            </FormField>
             {errors.amountInput && <p className="text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
-            <input
-              className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              placeholder={t('expenses.descriptionPlaceholder')}
-              {...register('description')}
-            />
+            <FormField label={t('expenses.description')}>
+              <TextInput
+                placeholder={t('expenses.descriptionPlaceholder')}
+                size="md"
+                type="text"
+                variant="surface"
+                {...register('description')}
+              />
+            </FormField>
             <select
               className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
               {...register('categoryId')}
@@ -286,11 +293,9 @@ export default function ExpenseDetails() {
               ))}
             </select>
             {errors.paidByProfileId && <p className="text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
-            <input
-              className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              type="date"
-              {...register('expenseDate')}
-            />
+            <FormField label={t('expenses.date')}>
+              <TextInput size="md" type="date" variant="surface" {...register('expenseDate')} />
+            </FormField>
             {errors.expenseDate && <p className="text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
           </section>
         )}
@@ -300,34 +305,34 @@ export default function ExpenseDetails() {
         <div className="mx-auto max-w-md">
           {isEditing ? (
             <div className="grid grid-cols-2 gap-2">
-              <button
-                className="h-12 rounded-2xl border border-primary/20 text-sm font-semibold text-slate-300"
+              <Button
+                className="border-primary/20 text-sm font-semibold text-slate-300"
                 onClick={() => setIsEditing(false)}
-                type="button"
+                variant="subtle"
               >
                 {t('cta.cancel')}
-              </button>
-              <button
-                className="h-12 rounded-2xl bg-primary text-lg font-bold text-background-dark disabled:opacity-50"
+              </Button>
+              <Button
+                className="text-lg font-bold disabled:opacity-50"
                 disabled={amountCents <= 0 || updateExpenseMutation.isPending}
                 onClick={handleSave}
-                type="button"
               >
                 {updateExpenseMutation.isPending ? t('common.saving') : t('expenses.saveExpense')}
-              </button>
+              </Button>
             </div>
           ) : (
-            <button
-              className="h-14 w-full rounded-2xl bg-primary text-2xl font-bold text-background-dark"
+            <Button
+              className="text-2xl font-bold"
+              fullWidth
               onClick={() => {
                 setActionError(null);
                 loadForm();
                 setIsEditing(true);
               }}
-              type="button"
+              size="lg"
             >
               {t('expenses.editExpense')}
-            </button>
+            </Button>
           )}
         </div>
       </div>

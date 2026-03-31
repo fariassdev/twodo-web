@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useAuthScope, useSignOutMutation } from '../../lib/queryHooks';
 import ConnectPartner from '../ConnectPartner';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 
 export default function PendingAccess() {
   const { t } = useTranslation();
@@ -27,22 +29,23 @@ export default function PendingAccess() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md rounded-2xl border border-primary/20 bg-primary/5 p-6 shadow-xl">
+      <Card className="w-full max-w-md shadow-xl" padding="xl" radius="2xl" variant="surface">
         <h1 className="text-2xl font-bold text-slate-100">{t('auth.pending.title')}</h1>
         <p className="mt-3 text-sm text-slate-300">{t('auth.pending.description')}</p>
         <p className="mt-3 rounded-xl border border-primary/20 bg-background-dark/40 px-3 py-2 text-sm text-primary">
           {pendingReason}
         </p>
 
-        <button
-          type="button"
-          className="mt-6 h-11 w-full rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+        <Button
+          className="mt-6 border-primary/40 text-sm font-semibold text-primary"
           onClick={handleSignOut}
           disabled={loading}
+          fullWidth
+          variant="subtle"
         >
           {loading ? t('auth.loading') : t('auth.pending.signOut')}
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }

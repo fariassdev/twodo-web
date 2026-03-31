@@ -4,7 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
+import Button from './ui/Button';
+import ErrorBanner from './ui/ErrorBanner';
+import FormField from './ui/FormField';
 import { NumericInput } from './ui/NumericInput';
+import TextInput from './ui/TextInput';
 import {
   useAuthScope,
   useCreateExpenseMutation,
@@ -115,24 +119,21 @@ export default function CreateExpense() {
           onClick: () => navigate({ to: '/expenses' }),
         }}
         rightSlot={(
-          <button
+          <Button
             aria-label={t('cta.save')}
-            className="flex min-h-10 items-center justify-end text-base font-bold tracking-[0.015em] text-primary transition-colors disabled:cursor-not-allowed disabled:text-primary/40"
+            className="min-h-10 justify-end px-0 text-base font-bold tracking-[0.015em] text-primary disabled:text-primary/40"
             disabled={!canSubmit || createExpenseMutation.isPending}
             onClick={handleSave}
-            type="button"
+            size="sm"
+            variant="ghost"
           >
             {createExpenseMutation.isPending ? t('common.saving') : t('cta.save')}
-          </button>
+          </Button>
         )}
       />
 
       <main className="mx-auto max-w-md px-4 pb-12 pt-6">
-        {actionError && (
-          <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-            {actionError}
-          </p>
-        )}
+        {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5">
           <label className="text-sm uppercase tracking-wider text-primary/80">{t('expenses.amount')}</label>
@@ -154,14 +155,15 @@ export default function CreateExpense() {
           {errors.amountInput && <p className="mt-2 text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
         </div>
 
-        <label className="mt-6 block text-sm font-semibold uppercase tracking-wide text-slate-300">
-          {t('expenses.description')}
-        </label>
-        <input
-          className="mt-2 h-14 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-base text-slate-100 placeholder:text-slate-500"
-          placeholder={t('expenses.descriptionPlaceholder')}
-          {...register('description')}
-        />
+        <FormField className="mt-6" label={t('expenses.description')}>
+          <TextInput
+            placeholder={t('expenses.descriptionPlaceholder')}
+            size="lg"
+            type="text"
+            variant="soft"
+            {...register('description')}
+          />
+        </FormField>
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.category')}</p>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -208,14 +210,9 @@ export default function CreateExpense() {
         </div>
         {errors.paidByProfileId && <p className="mt-2 text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
 
-        <label className="mt-6 block text-sm font-semibold uppercase tracking-wide text-slate-300">
-          {t('expenses.date')}
-        </label>
-        <input
-          className="mt-2 h-14 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-base text-slate-100"
-          type="date"
-          {...register('expenseDate')}
-        />
+        <FormField className="mt-6" label={t('expenses.date')}>
+          <TextInput size="lg" type="date" variant="soft" {...register('expenseDate')} />
+        </FormField>
         {errors.expenseDate && <p className="mt-2 text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
       </main>
     </div>

@@ -43,6 +43,8 @@
   "devDependencies": {
     "@tanstack/router-plugin": "1.167.12",
     "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
     "autoprefixer": "10.4.27",
     "supabase": "2.84.5",
     "tailwindcss": "4.2.2",

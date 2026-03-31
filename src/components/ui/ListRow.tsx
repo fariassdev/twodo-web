@@ -5,11 +5,11 @@ import { cn } from '../../lib/cn';
 const listRowVariants = cva('relative flex items-center gap-4 border p-4 transition-all', {
   variants: {
     variant: {
-      default: 'rounded-2xl border-white/5 bg-[#1c221e]',
-      subtle: 'rounded-[2.5rem] border-white/5 bg-[#141d1b]',
-      transparent: 'rounded-2xl border-transparent bg-transparent',
-      alert: 'rounded-2xl border-red-500/10 bg-[#2a1a19] text-white/90',
-      success: 'rounded-2xl border-emerald-500/20 bg-emerald-950/20 text-emerald-100',
+      default: 'rounded-xl border-white/5 bg-[#1c221e]',
+      subtle: 'rounded-xl border-white/5 bg-[#141d1b]',
+      transparent: 'rounded-xl border-transparent bg-transparent',
+      alert: 'rounded-xl border-red-500/10 bg-[#2a1a19] text-white/90',
+      success: 'rounded-xl border-emerald-500/20 bg-emerald-950/20 text-emerald-100',
     },
     interactive: {
       true: 'cursor-pointer active:scale-[0.98]',

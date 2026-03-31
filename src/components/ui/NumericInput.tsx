@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 
-export interface NumericInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   value: string;
   onChange: (value: string) => void;
   allowDecimals?: boolean;

@@ -18,12 +18,33 @@ import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import Badge from './ui/Badge';
+import ErrorBanner from './ui/ErrorBanner';
+import Modal from './ui/Modal';
+import SectionHeader from './ui/SectionHeader';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import AssignmentEditor from './AssignmentEditor';
 import type { TaskAssignmentOverrideType } from '../lib/queries';
 
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+
+type MetaChipProps = {
+  icon: string;
+  label: string;
+  iconClassName?: string;
+};
+
+function MetaChip({ icon, label, iconClassName }: Readonly<MetaChipProps>): React.ReactElement {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-1.5">
+      <span className={`material-symbols-outlined text-lg ${iconClassName ?? 'text-primary'}`}>{icon}</span>
+      <span className="text-sm font-medium">{label}</span>
+    </div>
+  );
+}
 
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
@@ -252,6 +273,14 @@ export default function TaskDetails() {
     individual: t('taskDetails.assignment.individual'),
   };
 
+  const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
+    pending: 'primary',
+    completed: 'success',
+    postponed: 'warning',
+    expired: 'neutral',
+    overdue: 'warning',
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -275,30 +304,37 @@ export default function TaskDetails() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-slate-400">{t('taskDetails.notFound')}</p>
-        <button onClick={() => navigate({ to: '/' })} className="text-primary font-bold">{t('taskDetails.back')}</button>
+        <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">
+          {t('taskDetails.back')}
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen pb-32">
-      {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={() => setDeleteModalOpen(false)} />
-          <div className="relative w-full max-w-sm bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden flex flex-col pointer-events-auto z-10">
-            <div className="p-6 pb-4">
-              <h3 className="text-lg font-bold text-slate-100 mb-2">{t('taskDetails.deleteRecurringTitle')}</h3>
-              <p className="text-slate-400 text-sm">{t('taskDetails.deleteRecurringDescription')}</p>
-            </div>
-            <div className="flex flex-col border-t border-slate-700 divide-y divide-slate-700">
-              <button onClick={handleDeleteSingle} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('taskDetails.deleteOnlyThis')}</button>
-              <button onClick={handleDeleteFollowing} className="p-4 text-left text-slate-100 hover:bg-slate-700 transition-colors font-medium">{t('taskDetails.deleteThisAndFollowing')}</button>
-              <button onClick={handleDeleteAll} className="p-4 text-left text-rose-500 hover:bg-slate-700 transition-colors font-medium">{t('taskDetails.deleteAll')}</button>
-              <button onClick={() => setDeleteModalOpen(false)} className="p-4 text-center text-slate-400 hover:bg-slate-700 transition-colors font-medium bg-slate-800/50">{t('cta.cancel')}</button>
-            </div>
+      <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
+        <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
+          <div className="p-6 pb-4">
+            <h3 className="mb-2 text-lg font-bold text-slate-100">{t('taskDetails.deleteRecurringTitle')}</h3>
+            <p className="text-sm text-slate-400">{t('taskDetails.deleteRecurringDescription')}</p>
           </div>
-        </div>
-      )}
+          <div className="flex flex-col divide-y divide-slate-700 border-t border-slate-700">
+            <Button className="justify-start" onClick={handleDeleteSingle} size="menu" variant="modalAction">
+              {t('taskDetails.deleteOnlyThis')}
+            </Button>
+            <Button className="justify-start" onClick={handleDeleteFollowing} size="menu" variant="modalAction">
+              {t('taskDetails.deleteThisAndFollowing')}
+            </Button>
+            <Button className="justify-start text-rose-500" onClick={handleDeleteAll} size="menu" variant="modalAction">
+              {t('taskDetails.deleteAll')}
+            </Button>
+            <Button className="justify-center bg-slate-800/50 text-slate-400" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
+              {t('cta.cancel')}
+            </Button>
+          </div>
+        </Card>
+      </Modal>
 
       {(task.status === 'pending' || task.status === 'overdue') && (
         <AssignmentSelector
@@ -386,27 +422,17 @@ export default function TaskDetails() {
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
         <div className="pt-4 pb-6">
-          {actionError && (
-            <p className="mb-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-              {actionError}
-            </p>
-          )}
+          {actionError ? <ErrorBanner className="mb-4" message={actionError} /> : null}
 
           <div className="flex items-center gap-2 mb-2">
             {task.deleted_at ? (
-              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500">
+              <Badge size="md" tone="danger">
                 {t('calendar.deletedBadge')}
-              </span>
+              </Badge>
             ) : (
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                task.status === 'completed' ? 'bg-primary/20 text-primary' :
-                task.status === 'postponed' ? 'bg-yellow-500/20 text-yellow-500' :
-                task.status === 'expired' ? 'bg-slate-500/20 text-slate-400' :
-                task.status === 'overdue' ? 'bg-amber-500/20 text-amber-500' :
-                'bg-primary/20 text-primary'
-              }`}>
+              <Badge size="md" tone={statusToneMap[task.status] ?? 'primary'}>
                 {statusLabels[task.status] || task.status}
-              </span>
+              </Badge>
             )}
             {assignedProfile && (
               <span className="text-slate-400 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
@@ -421,47 +447,36 @@ export default function TaskDetails() {
 
           <div className="flex flex-wrap gap-2">
             {task.type === 'task' && (
-              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className={`material-symbols-outlined text-lg ${task.priority === 'high' ? 'text-rose-500' : 'text-primary'}`}>priority_high</span>
-                <span className="text-sm font-medium">{urgencyLabels[task.priority] || task.priority}</span>
-              </div>
+              <MetaChip
+                icon="priority_high"
+                iconClassName={task.priority === 'high' ? 'text-rose-500' : 'text-primary'}
+                label={urgencyLabels[task.priority] || task.priority}
+              />
             )}
             {task.type === 'task' && task.effort_level && (
-              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className="material-symbols-outlined text-primary text-lg">fitness_center</span>
-                <span className="text-sm font-medium">{t(`entryForm.effortLevels.${task.effort_level}` as const)}</span>
-              </div>
+              <MetaChip icon="fitness_center" label={t(`entryForm.effortLevels.${task.effort_level}` as const)} />
             )}
             {task.type === 'task' && task.time_of_day && (
-              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className="material-symbols-outlined text-primary text-lg">schedule</span>
-                <span className="text-sm font-medium">{timeOfDayLabels[task.time_of_day] || task.time_of_day}</span>
-              </div>
+              <MetaChip icon="schedule" label={timeOfDayLabels[task.time_of_day] || task.time_of_day} />
             )}
             {task.type === 'task' && task.category && (
-              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className="material-symbols-outlined text-primary text-lg">category</span>
-                <span className="text-sm font-medium">{categoryLabels[task.category] || task.category}</span>
-              </div>
+              <MetaChip icon="category" label={categoryLabels[task.category] || task.category} />
             )}
             {task.is_recurring && task.frequency && (
-              <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className="material-symbols-outlined text-primary text-lg">repeat</span>
-                <span className="text-sm font-medium">{frequencyLabels[task.frequency]}</span>
-              </div>
+              <MetaChip icon="repeat" label={frequencyLabels[task.frequency]} />
             )}
-            <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
-              <span className="material-symbols-outlined text-primary text-lg">
-                {task.assignment_type === 'team_work'
+            <MetaChip
+              icon={
+                task.assignment_type === 'team_work'
                   ? 'groups'
                   : task.assignment_type === 'anyone'
                     ? 'groups_2'
                     : task.assignment_type === 'individual'
                       ? 'person'
-                      : 'sync_alt'}
-              </span>
-              <span className="text-sm font-medium">{assignmentLabels[task.assignment_type]}</span>
-            </div>
+                      : 'sync_alt'
+              }
+              label={assignmentLabels[task.assignment_type]}
+            />
           </div>
 
           {task.description && (
@@ -486,24 +501,27 @@ export default function TaskDetails() {
 
           {(task.status === 'pending' || task.status === 'overdue') && !task.deleted_at && (
             <div className="flex flex-col gap-3 mt-6 mb-2">
-              <button
+              <Button
+                className="justify-center shadow-lg shadow-primary/20"
+                fullWidth
                 onClick={() => {
                   setSelectedAssignment(defaultSelection);
                   setAssignmentSelectorOpen(true);
                 }}
                 disabled={acting}
-                className="w-full bg-primary text-background-dark h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform disabled:opacity-50"
               >
                 <span className="material-symbols-outlined font-bold">check_circle</span>
                 {acting ? t('taskDetails.processing') : t('taskDetails.markCompleted')}
-              </button>
-              <button
+              </Button>
+              <Button
+                className="justify-center border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700/60"
+                fullWidth
                 onClick={handlePostpone}
                 disabled={acting}
-                className="w-full bg-slate-800/50 text-slate-300 h-12 rounded-xl font-bold border border-slate-700 active:scale-[0.98] transition-transform flex items-center justify-center disabled:opacity-50"
+                variant="subtle"
               >
                 {t('taskDetails.postpone')}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -524,7 +542,7 @@ export default function TaskDetails() {
         )}
 
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('taskDetails.assignmentDetails')}</h3>
+          <SectionHeader>{t('taskDetails.assignmentDetails')}</SectionHeader>
           <div className="bg-slate-800/40 rounded-xl border border-slate-700 divide-y divide-slate-700">
             <div className="p-4 flex justify-between items-center">
               <span className="text-slate-400">{t('taskDetails.rotationType')}</span>
@@ -541,16 +559,17 @@ export default function TaskDetails() {
           </div>
 
           {task.status === 'completed' && (
-            <button
-              type="button"
+            <Button
+              className="text-sm font-semibold"
+              fullWidth
               onClick={() => {
                 setSelectedAssignment(defaultSelection);
                 setAssignmentEditorOpen(true);
               }}
-              className="w-full rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/15 transition-colors"
+              variant="subtle"
             >
               {t('taskCompletion.editAssignment')}
-            </button>
+            </Button>
           )}
         </div>
       </main>
