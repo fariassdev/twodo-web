@@ -2,7 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
+import Button from './ui/Button';
+import Card from './ui/Card';
 import QueryErrorState from './ui/QueryErrorState';
+import SelectInput from './ui/SelectInput';
+import TextInput from './ui/TextInput';
 import ExpensesList from './expenses/ExpensesList';
 import {
   includesNormalizedText,
@@ -289,101 +293,94 @@ export default function ExpensesListPage() {
       />
 
       <main className="mx-auto max-w-md px-4 pt-4 pb-8">
-        <div className="relative">
-          <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            search
-          </span>
-          <input
-            className="h-12 w-full rounded-2xl border border-slate-700/45 bg-slate-900/75 pl-11 pr-12 text-base text-slate-100 outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-            placeholder={t('expenses.searchExpensesPlaceholder')}
-            type="text"
-            inputMode="search"
-            value={inputSearchText}
-            onChange={(event) => handleSearchChange(event.target.value)}
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            {isSearchLoading ? (
+        <TextInput
+          className="rounded-2xl border-slate-700/45 bg-slate-900/75"
+          inputMode="search"
+          leading={<span className="material-symbols-outlined text-slate-400">search</span>}
+          placeholder={t('expenses.searchExpensesPlaceholder')}
+          size="md"
+          trailing={
+            isSearchLoading ? (
               <span
                 aria-label={t('expenses.searchLoading')}
                 className="block h-5 w-5 animate-spin rounded-full border-2 border-primary/80 border-t-transparent"
                 role="status"
               />
             ) : hasSearchText ? (
-              <button
+              <Button
                 aria-label={t('expenses.clearSearch')}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-700/50 hover:text-slate-100"
+                className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100"
                 onClick={clearSearchText}
-                type="button"
+                size="icon"
+                variant="icon"
               >
                 <span className="material-symbols-outlined text-xl">close</span>
-              </button>
-            ) : null}
-          </div>
-        </div>
+              </Button>
+            ) : null
+          }
+          type="text"
+          value={inputSearchText}
+          variant="elevated"
+          onChange={(event) => handleSearchChange(event.target.value)}
+        />
 
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          <div className="relative min-w-[10.5rem] flex-1">
-            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
-              category
-            </span>
-            <select
-              className="h-11 w-full appearance-none rounded-full border border-primary/25 bg-[#10223d]/75 pl-10 pr-9 text-sm font-semibold text-slate-100 outline-none"
-              value={categoryId}
-              onChange={(event) => handleCategoryChange(event.target.value)}
-            >
-              <option value="all">{t('expenses.filterCategory')}</option>
-              {(categoriesQuery.data ?? []).map((category) => (
-                <option key={category.id} value={category.id}>
-                  {i18n.language.startsWith('es') ? category.name_es : category.name_en}
-                </option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-300">
-              expand_more
-            </span>
-          </div>
+          <SelectInput
+            className="min-w-[10.5rem] flex-1"
+            leading={<span className="material-symbols-outlined text-slate-300">category</span>}
+            selectClassName="text-sm font-semibold"
+            size="md"
+            value={categoryId}
+            variant="chip"
+            onChange={(event) => handleCategoryChange(event.target.value)}
+          >
+            <option value="all">{t('expenses.filterCategory')}</option>
+            {(categoriesQuery.data ?? []).map((category) => (
+              <option key={category.id} value={category.id}>
+                {i18n.language.startsWith('es') ? category.name_es : category.name_en}
+              </option>
+            ))}
+          </SelectInput>
 
-          <div className="relative min-w-[10.5rem] flex-1">
-            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
-              person
-            </span>
-            <select
-              className="h-11 w-full appearance-none rounded-full border border-primary/25 bg-[#10223d]/75 pl-10 pr-9 text-sm font-semibold text-slate-100 outline-none"
-              value={paidByProfileId}
-              onChange={(event) => handlePaidByProfileChange(event.target.value)}
-            >
-              <option value="all">{t('expenses.filterPaidBy')}</option>
-              {(profilesQuery.data ?? []).map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
-                </option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-300">
-              expand_more
-            </span>
-          </div>
+          <SelectInput
+            className="min-w-[10.5rem] flex-1"
+            leading={<span className="material-symbols-outlined text-slate-300">person</span>}
+            selectClassName="text-sm font-semibold"
+            size="md"
+            value={paidByProfileId}
+            variant="chip"
+            onChange={(event) => handlePaidByProfileChange(event.target.value)}
+          >
+            <option value="all">{t('expenses.filterPaidBy')}</option>
+            {(profilesQuery.data ?? []).map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
+              </option>
+            ))}
+          </SelectInput>
 
-          <button
-            className="flex h-11 min-w-[10.5rem] flex-1 items-center gap-2 rounded-full border border-primary/25 bg-[#10223d]/75 px-3 text-sm font-semibold text-slate-100"
+          <Button
+            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-primary/25 bg-[#10223d]/75 px-3 text-sm font-semibold text-slate-100"
             onClick={() => setIsDateRangeOpen((current) => !current)}
-            type="button"
+            variant="subtle"
           >
             <span className="material-symbols-outlined text-slate-200">calendar_month</span>
             <span className="truncate">{t('expenses.dateRange')}</span>
             <span className="material-symbols-outlined ml-auto text-slate-300">expand_more</span>
-          </button>
+          </Button>
         </div>
 
         {isDateRangeOpen && (
           <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-slate-900/70 p-3">
             <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               <span>{t('expenses.dateFrom')}</span>
-              <input
-                className="h-10 w-full rounded-xl border border-primary/25 bg-background-dark px-3 text-sm text-slate-100 outline-none focus:border-primary/70"
+              <TextInput
+                className="h-10 border-primary/25 bg-background-dark"
                 max={toDate || undefined}
+                size="md"
                 type="date"
                 value={fromDate}
+                variant="surface"
                 onChange={(event) => {
                   handleFromDateChange(event.target.value);
                 }}
@@ -392,11 +389,13 @@ export default function ExpensesListPage() {
 
             <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               <span>{t('expenses.dateTo')}</span>
-              <input
-                className="h-10 w-full rounded-xl border border-primary/25 bg-background-dark px-3 text-sm text-slate-100 outline-none focus:border-primary/70"
+              <TextInput
+                className="h-10 border-primary/25 bg-background-dark"
                 min={fromDate || undefined}
+                size="md"
                 type="date"
                 value={toDate}
+                variant="surface"
                 onChange={(event) => {
                   handleToDateChange(event.target.value);
                 }}
@@ -420,37 +419,38 @@ export default function ExpensesListPage() {
           if (isEmpty) {
             return (
               <div className="mt-10 flex flex-col items-center px-2 text-center">
-                <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]">
+                <Card className="relative flex h-52 w-52 items-center justify-center rounded-full border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]" padding="none" radius="3xl" variant="surface">
                   <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">
                     receipt_long
                   </span>
                   <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-primary/25 bg-slate-900">
                     <span className="material-symbols-outlined text-xl text-primary">search_off</span>
                   </div>
-                </div>
+                </Card>
 
                 <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-slate-100">
                   {t('expenses.emptyNoResultsTitle')}
                 </h2>
                 <p className="mt-3 max-w-sm text-lg leading-relaxed text-slate-300">{emptySubtitle}</p>
 
-                <button
-                  className="mt-8 flex h-16 w-full max-w-[22rem] items-center justify-center gap-2 rounded-3xl bg-primary px-6 text-lg font-black text-background-dark shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"
+                <Button
+                  className="mt-8 h-16 w-full max-w-[22rem] gap-2 rounded-3xl px-6 text-lg font-black shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"
                   onClick={() => navigate({ to: '/expenses/new' })}
-                  type="button"
+                  size="lg"
                 >
                   <span className="material-symbols-outlined text-3xl">add</span>
                   <span>{t('expenses.addExpense')}</span>
-                </button>
+                </Button>
 
                 {hasActiveFilters && (
-                  <button
-                    className="mt-5 text-lg font-bold text-primary"
+                  <Button
+                    className="mt-5 h-auto px-0 py-0 text-lg font-bold text-primary"
                     onClick={clearAllFilters}
-                    type="button"
+                    size="sm"
+                    variant="ghost"
                   >
                     {t('expenses.clearAllFilters')}
-                  </button>
+                  </Button>
                 )}
               </div>
             );

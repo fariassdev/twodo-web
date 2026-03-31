@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useUpcomingTasksQuery, useProfilesQuery } from '../../lib/queryHooks';
 import type { Task } from '../../lib/types';
 import TaskAvatars from './TaskAvatars';
+import ListRow from '../ui/ListRow';
 
 export default function UpcomingTasksWidget() {
   const { t, i18n } = useTranslation();
@@ -42,10 +43,13 @@ export default function UpcomingTasksWidget() {
           const { dow, day } = formatDate(date);
 
           return groups[date].map((task) => (
-            <div
+            <ListRow
+              as="div"
               key={task.id}
               onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-              className="bg-[#1c221e] rounded-2xl border border-white/5 overflow-hidden flex items-center justify-between p-4 cursor-pointer hover:bg-[#1a201c] transition-colors"
+              className="justify-between overflow-hidden p-4 hover:bg-[#1a201c]"
+              interactive
+              variant="default"
             >
               <div className="flex items-center gap-4 flex-1 truncate">
                 <div className="flex flex-col items-center justify-center min-w-[36px]">
@@ -66,7 +70,7 @@ export default function UpcomingTasksWidget() {
               >
                 <TaskAvatars task={task} profiles={profiles} overlap="-space-x-1.5" className="ml-2" />
               </div>
-            </div>
+            </ListRow>
           ));
         })}
       </div>

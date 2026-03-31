@@ -4,6 +4,7 @@ import type { Profile } from '../lib/types';
 import type { TaskAssignmentOverrideType } from '../lib/queries';
 import Button from './ui/Button';
 import Card from './ui/Card';
+import SelectInput from './ui/SelectInput';
 
 export interface AssignmentSelection {
   type: TaskAssignmentOverrideType;
@@ -96,17 +97,19 @@ export default function AssignmentSelector({
             >
               <p className="text-sm font-semibold text-slate-100">{t('taskCompletion.individual')}</p>
             </Button>
-            <select
+            <SelectInput
+              className="mt-2"
+              selectClassName="text-sm"
               value={selectedIndividualId}
+              variant="slate"
               onChange={(event) => onChange({ type: 'individual', assignedTo: [event.target.value] })}
-              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
             >
               {profiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.name}
                 </option>
               ))}
-            </select>
+            </SelectInput>
           </div>
 
           <Button

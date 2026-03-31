@@ -2,10 +2,11 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import Button from '../ui/Button';
 import { useProfilesQuery } from '../../lib/queryHooks';
 
 export default function CompactHeader() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const { data: profiles = [] } = useProfilesQuery();
 
@@ -48,9 +49,15 @@ export default function CompactHeader() {
           ))}
         </div>
 
-        <button className="text-gray-300 hover:text-white transition-colors" aria-label="Search">
+        <Button
+          aria-label={t('expenses.openSearch')}
+          className="text-gray-300 hover:text-white"
+          onClick={() => navigate({ to: '/expenses/list' })}
+          size="icon"
+          variant="icon"
+        >
           <Search className="w-6 h-6" />
-        </button>
+        </Button>
       </div>
     </div>
   );

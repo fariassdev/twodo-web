@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import Badge from '../ui/Badge';
+import Card from '../ui/Card';
 import { useAuthScope, useProfilesQuery, useBalanceScoreQuery } from '../../lib/queryHooks';
 
 export default function BalanceScoreWidget() {
@@ -50,9 +52,13 @@ export default function BalanceScoreWidget() {
   const dashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div
-      className="bg-[#1c221e] rounded-3xl p-5 border border-white/5 flex items-center gap-5 cursor-pointer active:scale-[0.98] transition-transform mt-6 mb-8"
+    <Card
+      className="mb-8 mt-6 flex items-center gap-5"
+      interactive
       onClick={() => navigate({ to: '/metrics' })}
+      padding="lg"
+      radius="3xl"
+      variant="elevated"
     >
       <div className="relative w-[72px] h-[72px] flex-shrink-0">
         <svg className="w-[72px] h-[72px] transform -rotate-90">
@@ -83,14 +89,14 @@ export default function BalanceScoreWidget() {
       <div className="flex flex-col">
         <div className="flex items-center gap-2 mb-1.5">
           <div className={`w-1.5 h-1.5 rounded-full ${colorClass.includes('emerald') ? 'bg-emerald-400' : colorClass.includes('rose') ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
-          <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+          <Badge className="bg-transparent p-0 text-[10px] text-gray-400" size="xs" tone="neutral">
             {t('dashboard.balanceBadge')}
-          </span>
+          </Badge>
         </div>
         <p className="text-[15px] font-medium text-white leading-tight pr-4">
           {secondaryText || t('dashboard.balanceScoreText')}
         </p>
       </div>
-    </div>
+    </Card>
   );
 }

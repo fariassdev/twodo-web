@@ -9,6 +9,7 @@ import ErrorBanner from './ui/ErrorBanner';
 import FormField from './ui/FormField';
 import QueryErrorState from './ui/QueryErrorState';
 import { NumericInput } from './ui/NumericInput';
+import SelectInput from './ui/SelectInput';
 import TextInput from './ui/TextInput';
 import {
   useAuthScope,
@@ -271,27 +272,35 @@ export default function ExpenseDetails() {
                 {...register('description')}
               />
             </FormField>
-            <select
-              className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              {...register('categoryId')}
-            >
-              {(categoriesQuery.data ?? []).map((category) => (
-                <option key={category.id} value={category.id}>
-                  {i18n.language.startsWith('es') ? category.name_es : category.name_en}
-                </option>
-              ))}
-            </select>
+            <FormField label={t('expenses.category')}>
+              <SelectInput
+                selectClassName="text-sm"
+                size="lg"
+                variant="surface"
+                {...register('categoryId')}
+              >
+                {(categoriesQuery.data ?? []).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {i18n.language.startsWith('es') ? category.name_es : category.name_en}
+                  </option>
+                ))}
+              </SelectInput>
+            </FormField>
             {errors.categoryId && <p className="text-xs text-red-400">{t(errors.categoryId.message!)}</p>}
-            <select
-              className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
-              {...register('paidByProfileId')}
-            >
-              {(profilesQuery.data ?? []).map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
-                </option>
-              ))}
-            </select>
+            <FormField label={t('expenses.paidBy')}>
+              <SelectInput
+                selectClassName="text-sm"
+                size="lg"
+                variant="surface"
+                {...register('paidByProfileId')}
+              >
+                {(profilesQuery.data ?? []).map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
+                  </option>
+                ))}
+              </SelectInput>
+            </FormField>
             {errors.paidByProfileId && <p className="text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
             <FormField label={t('expenses.date')}>
               <TextInput size="md" type="date" variant="surface" {...register('expenseDate')} />

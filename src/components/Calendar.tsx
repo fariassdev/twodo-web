@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import TopBar from './ui/TopBar';
 import DataStatusBanner from './ui/DataStatusBanner';
 import QueryErrorState from './ui/QueryErrorState';
+import SelectInput from './ui/SelectInput';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 import { useNavigate } from '@tanstack/react-router';
@@ -457,34 +458,40 @@ export default function Calendar() {
               <div className="mb-3 grid grid-cols-3 gap-2">
                 <label className="flex flex-col gap-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.sortBy')}</span>
-                  <select
-                    className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
+                  <SelectInput
+                    selectClassName="text-xs font-semibold"
+                    size="sm"
+                    variant="slate"
                     onChange={(event) => setSortBy(event.target.value as SortOption)}
                     value={sortBy}
                   >
                     <option value="status">{t('calendar.sortStatus')}</option>
                     <option value="name">{t('calendar.sortName')}</option>
                     <option value="assignee">{t('calendar.sortAssignee')}</option>
-                  </select>
+                  </SelectInput>
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterType', 'Tipo')}</span>
-                  <select
-                    className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
+                  <SelectInput
+                    selectClassName="text-xs font-semibold"
+                    size="sm"
+                    variant="slate"
                     onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
                     value={typeFilter}
                   >
                     <option value="all">{t('calendar.typeAll', 'Todos')}</option>
                     <option value="task">{t('entryForm.typeTask')}</option>
                     <option value="event">{t('entryForm.typeEvent')}</option>
-                  </select>
+                  </SelectInput>
                 </label>
 
                 <label className="flex flex-col gap-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterAssignee')}</span>
-                  <select
-                    className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
+                  <SelectInput
+                    selectClassName="text-xs font-semibold"
+                    size="sm"
+                    variant="slate"
                     onChange={(event) => setAssigneeFilter(event.target.value)}
                     value={assigneeFilter}
                   >
@@ -494,7 +501,7 @@ export default function Calendar() {
                         {profile.name}
                       </option>
                     ))}
-                  </select>
+                  </SelectInput>
                 </label>
               </div>
 

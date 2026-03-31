@@ -4,8 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import TopBar from './ui/TopBar';
+import Button from './ui/Button';
+import Card from './ui/Card';
 import DataStatusBanner from './ui/DataStatusBanner';
+import ErrorBanner from './ui/ErrorBanner';
+import FormField from './ui/FormField';
+import Modal from './ui/Modal';
 import QueryErrorState from './ui/QueryErrorState';
+import TextInput from './ui/TextInput';
 import ExpensesList from './expenses/ExpensesList';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { centsToCurrency } from '../lib/expenseUtils';
@@ -94,76 +100,73 @@ export default function ExpensesDashboard() {
 
   return (
     <div className="pb-28">
-      {isSettlementSheetOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6">
-          <button
-            aria-label={t('expenses.settlement.closeSheet')}
-            className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm"
-            onClick={() => setSettlementSheetOpen(false)}
-            type="button"
-          />
-          <div className="relative w-full max-w-md rounded-3xl border border-primary/20 bg-[#102620] p-5 shadow-2xl shadow-black/50">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
-            <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
-            <p className="mt-2 text-sm text-slate-300">
-              {balance?.direction === 'you_are_owed'
-                ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
-                : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
-            </p>
+      <Modal
+        className="items-end justify-center pb-6"
+        onClose={() => setSettlementSheetOpen(false)}
+        open={isSettlementSheetOpen}
+        overlayAriaLabel={t('expenses.settlement.closeSheet')}
+        panelClassName="max-w-md"
+      >
+        <Card className="relative w-full bg-[#102620] shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
+          <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
+          <p className="mt-2 text-sm text-slate-300">
+            {balance?.direction === 'you_are_owed'
+              ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
+              : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
+          </p>
 
-            <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-slate-400">
-              {t('expenses.settlement.noteOptional')}
-            </label>
-            <input
-              className="mt-2 h-12 w-full rounded-xl border border-primary/20 bg-primary/5 px-4 text-sm text-slate-100 placeholder:text-slate-500"
+          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <TextInput
               maxLength={200}
               placeholder={t('expenses.settlement.notePlaceholder')}
+              size="md"
+              type="text"
+              variant="soft"
               {...register('note')}
             />
-            {errors.note && <p className="mt-2 text-xs text-red-400">{t(errors.note.message!)}</p>}
+          </FormField>
+          {errors.note && <p className="mt-2 text-xs text-red-400">{t(errors.note.message!)}</p>}
 
-            <button
-              className="mt-5 h-12 w-full rounded-2xl bg-primary text-lg font-bold text-background-dark shadow-lg shadow-primary/20 disabled:opacity-50"
-              disabled={createSettlementMutation.isPending}
-              onClick={handleConfirmSettlement}
-              type="button"
-            >
-              {createSettlementMutation.isPending ? t('common.saving') : t('expenses.settlement.confirmButton')}
-            </button>
-            <button
-              className="mt-2 h-12 w-full rounded-2xl border border-primary/20 text-sm font-semibold text-slate-300"
-              onClick={() => setSettlementSheetOpen(false)}
-              type="button"
-            >
-              {t('cta.cancel')}
-            </button>
-          </div>
-        </div>
-      )}
+          <Button
+            className="mt-5 text-lg font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
+            disabled={createSettlementMutation.isPending}
+            onClick={handleConfirmSettlement}
+            fullWidth
+          >
+            {createSettlementMutation.isPending ? t('common.saving') : t('expenses.settlement.confirmButton')}
+          </Button>
+          <Button
+            className="mt-2 border-primary/20 text-sm font-semibold text-slate-300"
+            onClick={() => setSettlementSheetOpen(false)}
+            fullWidth
+            variant="subtle"
+          >
+            {t('cta.cancel')}
+          </Button>
+        </Card>
+      </Modal>
 
       <TopBar
         title={t('expenses.dashboardTitle')}
         titleIcon="payments"
         rightSlot={(
-          <button
+          <Button
             aria-label={t('expenses.openSearch')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-100 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            className="text-slate-100"
             onClick={() => navigate({ to: '/expenses/list' })}
-            type="button"
+            size="icon"
+            variant="icon"
           >
             <span className="material-symbols-outlined">search</span>
-          </button>
+          </Button>
         )}
       />
 
       <main className="mx-auto max-w-md px-4 pt-5">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
-        {actionError && (
-          <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
-            {actionError}
-          </p>
-        )}
+        {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <section className="relative overflow-hidden rounded-[2.5rem] bg-[#102620] p-7 shadow-2xl shadow-black/40 border border-primary/10">
           <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
@@ -186,14 +189,15 @@ export default function ExpensesDashboard() {
             </p>
 
             {balance?.direction !== 'settled' && (
-              <button
-                className="mt-8 flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-primary text-xl font-bold text-[#102620] shadow-lg shadow-primary/20 transition-transform active:scale-[0.98]"
+              <Button
+                className="mt-8 gap-3 text-xl font-bold text-[#102620] shadow-lg shadow-primary/20"
                 onClick={() => setSettlementSheetOpen(true)}
-                type="button"
+                fullWidth
+                size="lg"
               >
                 <span className="material-symbols-outlined filled-icon">payments</span>
                 {t('expenses.settleDebt')}
-              </button>
+              </Button>
             )}
 
             {balance?.direction === 'settled' && (
@@ -208,13 +212,12 @@ export default function ExpensesDashboard() {
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-2xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
-
           </div>
 
           {activityItems.length === 0 ? (
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center text-sm text-slate-300">
+            <Card className="text-center text-sm text-slate-300" padding="lg" radius="2xl" variant="surface">
               {t('expenses.emptyFirstExpense')}
-            </div>
+            </Card>
           ) : (
             <ExpensesList
               currentProfileId={profileId}
@@ -239,14 +242,14 @@ export default function ExpensesDashboard() {
         </section>
       </main>
 
-      <button
+      <Button
         aria-label={t('expenses.newExpense')}
-        className="fixed bottom-28 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-background-dark shadow-2xl shadow-primary/30"
+        className="fixed bottom-28 right-6 z-30 h-16 w-16 rounded-full p-0 text-background-dark shadow-2xl shadow-primary/30"
         onClick={() => navigate({ to: '/expenses/new' })}
-        type="button"
+        variant="primary"
       >
         <span className="material-symbols-outlined text-4xl">add</span>
-      </button>
+      </Button>
     </div>
   );
 }

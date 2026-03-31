@@ -7,7 +7,9 @@ import type { Task } from '../../lib/types';
 import TaskAvatars from './TaskAvatars';
 import Snackbar from '../ui/Snackbar';
 import Badge from '../ui/Badge';
+import Button from '../ui/Button';
 import ListRow from '../ui/ListRow';
+import SectionHeader from '../ui/SectionHeader';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -104,9 +106,11 @@ export default function TodayTasksWidget() {
           <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-lg bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
         )}
 
-        <button
-          className={`w-[22px] h-[22px] flex items-center justify-center flex-shrink-0 transition-colors ${
-            isCompleted ? 'text-emerald-500 bg-transparent' : 'rounded-[6px] border-2 border-[#415047] bg-transparent'
+        <Button
+          className={`h-[22px] w-[22px] shrink-0 p-0 transition-colors ${
+            isCompleted
+              ? 'rounded-md text-emerald-500 hover:bg-transparent'
+              : 'rounded-[6px] border-2 border-[#415047] text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
             if (isCompleted) {
@@ -115,9 +119,11 @@ export default function TodayTasksWidget() {
               handleComplete(e, task.id);
             }
           }}
+          size="icon"
+          variant="icon"
         >
           {isCompleted && <CheckCircle2 className="w-6 h-6 fill-emerald-500/20" />}
-        </button>
+        </Button>
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
@@ -178,10 +184,10 @@ export default function TodayTasksWidget() {
 
         return (
           <div key={block} className="mb-6 relative">
-            <h3 className="text-[10px] font-bold text-gray-400 mb-3 tracking-widest uppercase flex items-center gap-2">
+            <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-gray-400">
               {t(`dashboard.timeBlocks.${block}`)}
               <div className="h-[1px] flex-1 bg-white/5"></div>
-            </h3>
+            </SectionHeader>
             <div>
               {blockTasks.map(renderTask)}
             </div>
