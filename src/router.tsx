@@ -13,7 +13,7 @@ import { useAuthContextQuery } from './lib/queryHooks';
 import BottomNav from './components/ui/BottomNav';
 import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
 
-const Dashboard = React.lazy(() => import('./components/Dashboard'));
+const Dashboard = React.lazy(() => import('./components/dashboard'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
 const Metrics = React.lazy(() => import('./components/Metrics'));
 const ShoppingList = React.lazy(() => import('./components/ShoppingList'));
@@ -25,12 +25,12 @@ const ExpensesDashboard = React.lazy(() => import('./components/ExpensesDashboar
 const CreateExpense = React.lazy(() => import('./components/CreateExpense'));
 const ExpensesListPage = React.lazy(() => import('./components/ExpensesListPage'));
 const ExpenseDetails = React.lazy(() => import('./components/ExpenseDetails'));
-const Login = React.lazy(() => import('./components/auth/Login'));
-const Register = React.lazy(() => import('./components/auth/Register'));
-const ForgotPassword = React.lazy(() => import('./components/auth/ForgotPassword'));
-const ResetPassword = React.lazy(() => import('./components/auth/ResetPassword'));
-const VerifyEmail = React.lazy(() => import('./components/auth/VerifyEmail'));
-const PendingAccess = React.lazy(() => import('./components/auth/PendingAccess'));
+const Login = React.lazy(() => import('./components/Auth/Login'));
+const Register = React.lazy(() => import('./components/Auth/Register'));
+const ForgotPassword = React.lazy(() => import('./components/Auth/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./components/Auth/ResetPassword'));
+const VerifyEmail = React.lazy(() => import('./components/Auth/VerifyEmail'));
+const PendingAccess = React.lazy(() => import('./components/Auth/PendingAccess'));
 const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
