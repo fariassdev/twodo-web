@@ -5,11 +5,11 @@ import { cn } from '../../../utils';
 const wrapperVariants = cva('flex items-center gap-3 transition-all', {
   variants: {
     variant: {
-      surface: 'rounded-lg border border-primary/20 bg-background-dark px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      elevated: 'rounded-xl border border-primary/20 bg-slate-800/60 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      surface: 'rounded-lg border border-border-strong bg-background-dark px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      elevated: 'rounded-xl border border-border-subtle bg-surface-2/60 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      chip: 'rounded-full border border-primary/25 bg-[#10223d]/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      slate: 'rounded-lg border border-slate-700 bg-slate-800 px-2 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      chip: 'rounded-full border border-primary/25 bg-surface-1/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      slate: 'rounded-lg border border-border-subtle bg-surface-2 px-2 has-[:focus]:ring-1 has-[:focus]:ring-primary',
     },
     size: {
       sm: 'h-9',

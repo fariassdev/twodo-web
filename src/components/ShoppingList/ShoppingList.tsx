@@ -113,7 +113,7 @@ export default function ShoppingList() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-24">
+    <div className="flex flex-col min-h-screen pb-24 bg-background-dark">
       <TopBar title={t('shopping.title')} titleIcon="shopping_cart" />
 
       <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
@@ -157,7 +157,7 @@ export default function ShoppingList() {
           )}
 
           {toBuy.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 bg-slate-800/40 p-4 rounded-xl border border-primary/10 shadow-sm transition-all active:scale-[0.98]">
+            <div key={item.id} className="flex items-center gap-4 bg-surface-2/40 p-4 rounded-xl border border-border-strong shadow-sm transition-all active:scale-[0.98]">
               <div className="flex-1 flex items-center gap-4">
                 <div className="relative flex items-center justify-center">
                   <input
@@ -203,7 +203,7 @@ export default function ShoppingList() {
               {t('shopping.purchasedWithCount', { count: purchased.length })}
             </h2>
             {purchased.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 bg-slate-800/20 p-4 rounded-xl border border-primary/5 shadow-sm opacity-60">
+              <div key={item.id} className="flex items-center gap-4 bg-surface-2/20 p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
                 <div className="flex-1 flex items-center gap-4">
                   <div className="relative flex items-center justify-center">
                     <input

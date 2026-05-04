@@ -110,7 +110,7 @@ export default function TodayTasksWidget() {
           className={`h-[22px] w-[22px] shrink-0 p-0 transition-colors ${
             isCompleted
               ? 'rounded-md text-emerald-500 hover:bg-transparent'
-              : 'rounded-[6px] border-2 border-[#415047] text-transparent hover:bg-transparent'
+              : 'rounded-[6px] border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
             if (isCompleted) {
@@ -127,7 +127,7 @@ export default function TodayTasksWidget() {
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
-            isCompleted ? 'line-through text-gray-500' : 'text-white'
+            isCompleted ? 'line-through text-slate-500' : 'text-slate-100'
           }`}>
             {task.title}
             {isHighPriority && !isCompleted && (
@@ -186,7 +186,7 @@ export default function TodayTasksWidget() {
           <div key={block} className="mb-6 relative">
             <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-gray-400">
               {t(`dashboard.timeBlocks.${block}`)}
-              <div className="h-[1px] flex-1 bg-white/5"></div>
+              <div className="h-[1px] flex-1 bg-surface-1"></div>
             </SectionHeader>
             <div>
               {blockTasks.map(renderTask)}
@@ -196,7 +196,7 @@ export default function TodayTasksWidget() {
       })}
 
       {tasks.length === 0 && overdueTasks.length === 0 && (
-        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-gray-500" variant="default">
+        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-slate-500" variant="default">
           {t('dashboard.noTasksFound')}
         </ListRow>
       )}
@@ -222,7 +222,7 @@ export default function TodayTasksWidget() {
             </div>
             <div className="flex items-center gap-3">
               <Badge
-                className={`size-6 rounded-full p-0 text-[#2a1a19] ${allOverdueCompleted ? 'bg-emerald-400 text-[#0f281f]' : 'bg-[#bb6156] text-[#2a1a19]'}`}
+                className={`size-6 rounded-full p-0 text-background-dark ${allOverdueCompleted ? 'bg-emerald-400 text-background-dark' : 'bg-danger/80 text-background-dark'}`}
                 size="sm"
                 tone="neutral"
               >

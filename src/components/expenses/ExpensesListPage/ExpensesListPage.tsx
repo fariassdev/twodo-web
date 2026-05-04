@@ -282,7 +282,7 @@ export default function ExpensesListPage() {
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-background-dark min-h-screen">
       <TopBar
         title={t('expenses.allExpenses')}
         leftAction={{
@@ -294,7 +294,7 @@ export default function ExpensesListPage() {
 
       <main className="mx-auto max-w-md px-4 pt-4 pb-8">
         <TextInput
-          className="rounded-2xl border-slate-700/45 bg-slate-900/75"
+          className="rounded-2xl border-border-subtle bg-surface-2"
           inputMode="search"
           leading={<span className="material-symbols-outlined text-slate-400">search</span>}
           placeholder={t('expenses.searchExpensesPlaceholder')}
@@ -360,7 +360,7 @@ export default function ExpensesListPage() {
           </SelectInput>
 
           <Button
-            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-primary/25 bg-[#10223d]/75 px-3 text-sm font-semibold text-slate-100"
+            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-border-subtle bg-surface-1 px-3 text-sm font-semibold text-slate-100"
             onClick={() => setIsDateRangeOpen((current) => !current)}
             variant="subtle"
           >
@@ -371,7 +371,7 @@ export default function ExpensesListPage() {
         </div>
 
         {isDateRangeOpen && (
-          <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-slate-900/70 p-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-border-subtle bg-surface-2 p-3">
             <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               <span>{t('expenses.dateFrom')}</span>
               <TextInput
@@ -419,11 +419,11 @@ export default function ExpensesListPage() {
           if (isEmpty) {
             return (
               <div className="mt-10 flex flex-col items-center px-2 text-center">
-                <Card className="relative flex h-52 w-52 items-center justify-center rounded-full border-primary/20 bg-slate-900/35 shadow-[0_0_120px_rgba(23,207,145,0.12)]" padding="none" radius="3xl" variant="surface">
+                <Card className="relative flex h-52 w-52 items-center justify-center rounded-full border-border-subtle bg-surface-1 shadow-[0_0_120px_rgba(23,207,145,0.12)]" padding="none" radius="3xl" variant="surface">
                   <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">
                     receipt_long
                   </span>
-                  <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-primary/25 bg-slate-900">
+                  <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface-2">
                     <span className="material-symbols-outlined text-xl text-primary">search_off</span>
                   </div>
                 </Card>

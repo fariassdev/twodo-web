@@ -5,10 +5,10 @@ import { cn } from '../../../utils';
 const listRowVariants = cva('relative flex items-center gap-4 border p-4 transition-all', {
   variants: {
     variant: {
-      default: 'rounded-xl border-white/5 bg-[#1c221e]',
-      subtle: 'rounded-xl border-white/5 bg-[#141d1b]',
+      default: 'rounded-xl border-border-subtle bg-surface-2',
+      subtle: 'rounded-xl border-border-subtle bg-surface-1',
       transparent: 'rounded-xl border-transparent bg-transparent',
-      alert: 'rounded-xl border-red-500/10 bg-[#2a1a19] text-white/90',
+      alert: 'rounded-xl border-rose-500/10 bg-rose-950/20 text-white/90',
       success: 'rounded-xl border-emerald-500/20 bg-emerald-950/20 text-emerald-100',
     },
     interactive: {

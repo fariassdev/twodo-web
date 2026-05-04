@@ -13,7 +13,7 @@ export default function Dashboard() {
   const isOnline = useOnlineStatus();
 
   return (
-    <div className="flex flex-col h-full bg-[#131815] relative min-h-screen">
+    <div className="flex flex-col h-full bg-background-dark relative min-h-screen">
       {!isOnline && <DataStatusBanner isOffline={!isOnline} isStale={false} /> }
 
       <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">

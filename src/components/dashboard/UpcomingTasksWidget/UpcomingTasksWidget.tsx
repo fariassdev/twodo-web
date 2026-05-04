@@ -47,7 +47,7 @@ export default function UpcomingTasksWidget() {
               as="div"
               key={task.id}
               onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-              className="justify-between overflow-hidden p-4 hover:bg-[#1a201c]"
+              className="justify-between overflow-hidden p-4 hover:bg-surface-3 transition-colors"
               interactive
               variant="default"
             >

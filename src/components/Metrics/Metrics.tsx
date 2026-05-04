@@ -79,7 +79,7 @@ export default function Metrics() {
   const weeklyDeltaDisplay = `${weeklyDelta >= 0 ? '+' : ''}${weeklyDelta}`;
 
   return (
-    <div className="pb-24 flex flex-col min-h-screen">
+    <div className="pb-24 flex flex-col min-h-screen bg-background-dark">
       <TopBar title={t('metrics.title')} titleIcon="monitoring" />
 
       <main className="flex-1 overflow-y-auto custom-scrollbar max-w-md mx-auto w-full">
@@ -151,7 +151,7 @@ export default function Metrics() {
         {/* Weekly Pulse */}
         <section className="px-4 py-2 mt-4">
           <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 ml-1">{t('metrics.weeklyPulse')}</h4>
-          <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl">
+          <div className="bg-surface-1 border border-border-subtle p-4 rounded-xl">
             <p className="text-xs text-slate-400 mb-1">{t('metrics.weeklyTasksCompleted')}</p>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-slate-100">{pulse?.completedThisWeek ?? 0}</span>

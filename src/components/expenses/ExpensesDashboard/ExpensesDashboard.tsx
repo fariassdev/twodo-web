@@ -99,7 +99,7 @@ export default function ExpensesDashboard() {
   }
 
   return (
-    <div className="pb-28">
+    <div className="pb-28 bg-background-dark min-h-screen">
       <Modal
         className="items-end justify-center pb-6"
         onClose={() => setSettlementSheetOpen(false)}
@@ -107,7 +107,7 @@ export default function ExpensesDashboard() {
         overlayAriaLabel={t('expenses.settlement.closeSheet')}
         panelClassName="max-w-md"
       >
-        <Card className="relative w-full bg-[#102620] shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
+        <Card className="relative w-full bg-surface-1 shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
           <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
           <p className="mt-2 text-sm text-slate-300">
@@ -168,7 +168,7 @@ export default function ExpensesDashboard() {
 
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-[#102620] p-7 shadow-2xl shadow-black/40 border border-primary/10">
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-2xl shadow-black/40 border border-border-strong">
           <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-10 -right-6 opacity-[0.07] pointer-events-none">
             <span className="material-symbols-outlined !text-[12rem] select-none">
@@ -190,7 +190,7 @@ export default function ExpensesDashboard() {
 
             {balance?.direction !== 'settled' && (
               <Button
-                className="mt-8 gap-3 text-xl font-bold text-[#102620] shadow-lg shadow-primary/20"
+                className="mt-8 gap-3 text-xl font-bold text-background-dark shadow-lg shadow-primary/20"
                 onClick={() => setSettlementSheetOpen(true)}
                 fullWidth
                 size="lg"

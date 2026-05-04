@@ -346,7 +346,7 @@ export default function Calendar() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden relative">
+    <div className="flex h-[100dvh] flex-col overflow-hidden relative bg-background-dark">
       <div ref={calendarRef} className="shrink-0 flex flex-col">
         <TopBar
           title={t('calendar.title')}
@@ -368,11 +368,11 @@ export default function Calendar() {
       />
 
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
-        <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-800">
+        <button onClick={prevMonth} className="p-2 rounded-full hover:bg-surface-3 transition-colors">
           <span className="material-symbols-outlined">chevron_left</span>
         </button>
         <h2 className="text-base font-bold">{monthName} {year}</h2>
-        <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-800">
+        <button onClick={nextMonth} className="p-2 rounded-full hover:bg-surface-3 transition-colors">
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
       </div>
@@ -402,7 +402,7 @@ export default function Calendar() {
                   !cd.isCurrentMonth ? 'text-slate-700' :
                   isSelected ? 'bg-primary text-background-dark font-bold shadow-lg shadow-primary/20' :
                   isToday ? 'bg-primary/20 text-primary font-bold' :
-                  'hover:bg-slate-800'
+                  'hover:bg-surface-3'
                 }`}
               >
                 <span className="text-sm font-medium">{cd.day}</span>
@@ -426,7 +426,7 @@ export default function Calendar() {
       <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
         <div className="mx-auto w-full max-w-md pointer-events-auto">
           <div
-            className={`rounded-t-2xl border border-slate-800 bg-slate-900/95 shadow-2xl backdrop-blur-sm transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
+            className={`rounded-t-2xl border border-border-subtle bg-surface-1/95 shadow-2xl backdrop-blur-xl transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
             style={{
               height: `${currentSheetHeight}px`,
             }}
@@ -440,7 +440,7 @@ export default function Calendar() {
               onPointerUp={handleSheetPointerUp}
               type="button"
             >
-              <span className="h-1.5 w-12 rounded-full bg-slate-600 transition-colors group-hover:bg-slate-500" />
+              <span className="h-1.5 w-12 rounded-full bg-surface-3 transition-colors group-hover:bg-slate-500" />
             </button>
 
             <div className="h-[calc(100%-1.5rem)] overflow-y-auto px-4 pb-5">
@@ -527,7 +527,7 @@ export default function Calendar() {
                     <div
                       key={task.id}
                       onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-                      className={`flex items-center gap-4 p-4 bg-slate-800/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
+                      className={`flex items-center gap-4 p-4 bg-surface-2/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
                     >
                       {task.status === 'completed' ? (
                         <div className="w-12 h-12 shrink-0 rounded-2xl bg-emerald-500/20 flex items-center justify-center">

@@ -20,7 +20,7 @@ export default function CompactHeader() {
   const formattedDate = dateStr.toUpperCase();
 
   return (
-    <div className="flex items-center justify-between pb-4 pt-2 border-b border-[#232b27]">
+    <div className="flex items-center justify-between pb-4 pt-2 border-b border-border-subtle">
       <div className="flex flex-col">
         <h1 className="text-xs font-bold text-emerald-400 tracking-wider mb-0.5">{formattedDate}</h1>
         <h2 className="text-2xl font-bold text-white">Bubis</h2>
@@ -34,7 +34,7 @@ export default function CompactHeader() {
           {profiles.slice(0, 2).map((p, i) => (
             <div
               key={p.id}
-              className={`w-9 h-9 rounded-full border-2 border-[#131815] flex items-center justify-center overflow-hidden bg-emerald-500/20 ${
+              className={`w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden bg-emerald-500/20 ${
                 i === 0 ? 'z-10' : 'z-0'
               }`}
             >
