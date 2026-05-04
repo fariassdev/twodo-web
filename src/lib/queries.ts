@@ -16,7 +16,7 @@ import type {
   TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
-import { EFFORT_POINTS, type EffortLevel } from './schemas';
+import { EFFORT_POINTS, type EffortLevel } from '../constants';
 
 function isNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
