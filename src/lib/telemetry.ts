@@ -127,12 +127,12 @@ export function attachReactQueryTelemetry(queryClient: QueryClient): () => void 
 export function exposeTelemetryOnWindow(): void {
   if (typeof window === 'undefined') return;
   const withTelemetry = window as Window & {
-    __coupleOrganizerTelemetry?: {
+    __twodoTelemetry?: {
       snapshot: typeof getTelemetrySnapshot;
     };
   };
 
-  withTelemetry.__coupleOrganizerTelemetry = {
+  withTelemetry.__twodoTelemetry = {
     snapshot: getTelemetrySnapshot,
   };
 }

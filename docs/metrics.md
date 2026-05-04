@@ -347,4 +347,4 @@ Siempre al fondo de la pantalla, nunca protagonista.
 
 ---
 
-*Documento generado en sesión de diseño de producto · Couple Organizer · Marzo 2026*
+*Documento generado en sesión de diseño de producto · Twodo · Marzo 2026*

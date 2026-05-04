@@ -70,7 +70,7 @@ The app uses TanStack Query v5 with persistent cache in IndexedDB.
 ### Observability quick use
 
 - Telemetry is exposed in browser runtime as:
-   - `window.__coupleOrganizerTelemetry.snapshot()`
+   - `window.__twodoTelemetry.snapshot()`
 - Snapshot includes:
    - `requestsByRoute`
    - `mutationErrorsByRoute`

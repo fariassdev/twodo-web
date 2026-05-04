@@ -89,7 +89,7 @@ const asyncStorage = {
 };
 
 export const queryPersister = createAsyncStoragePersister({
-  key: 'couple-organizer-query-cache-v2',
+  key: 'twodo-query-cache-v1',
   storage: asyncStorage,
   throttleTime: 1000,
 });
