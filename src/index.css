@@ -40,25 +40,26 @@
 }
 
 @theme {
-  --color-primary: #17cf91;
-  --color-background-light: #f6f8f7;
-  --color-background-dark: #131815;
-  --color-surface-1: #141d1b;
-  --color-surface-2: #1c221e;
-  --color-surface-3: #2a302c;
-  --color-border-subtle: rgb(255 255 255 / 0.05);
-  --color-border-strong: rgb(23 207 145 / 0.2);
-  --color-success: #2ecc71;
-  --color-warning: #facc15;
-  --color-danger: #f87171;
-  --color-dot-task: #3b82f6;
-  --color-dot-event: #e55381;
+  --color-primary: #CF7455;
+  --color-background-light: #F4EBD9;
+  --color-background-dark: #F4EBD9;
+  --color-surface-1: #EADDC3;
+  --color-surface-2: #493421;
+  --color-surface-3: #513823;
+  --color-border-subtle: rgb(73 52 33 / 0.1);
+  --color-border-strong: rgb(207 116 85 / 0.2);
+  --color-success: #8BA888;
+  --color-warning: #D4A373;
+  --color-danger: #BC6C25;
+  --color-dot-task: #CF7455;
+  --color-dot-event: #493421;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
-  --shadow-card-sm: 0 2px 8px rgb(0 0 0 / 0.2);
-  --shadow-glow-primary: 0 4px 14px rgb(52 211 153 / 0.3);
+  --shadow-card-sm: 0 2px 8px rgb(73 52 33 / 0.08);
+  --shadow-glow-primary: 0 4px 14px rgb(207 116 85 / 0.3);
+  --color-hover: rgb(73 52 33 / 0.05);
   --motion-fast: 75ms;
   --motion-base: 200ms;
   --motion-slow: 250ms;
@@ -70,14 +71,14 @@
 body {
   font-family: "Plus Jakarta Sans", sans-serif;
   background-color: var(--color-background-dark);
-  color: #f1f5f9;
+  color: #493421;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(23, 207, 145, 0.2);
+  background: rgba(207, 116, 85, 0.2);
   border-radius: 10px;
 }
 
