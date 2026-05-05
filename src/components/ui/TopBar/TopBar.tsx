@@ -94,7 +94,7 @@ export default function TopBar({
               <button
                 aria-label={leftAction.ariaLabel}
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-full text-slate-100 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
+                  'flex size-10 items-center justify-center rounded-full text-surface-2 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
                   leftAction.className,
                 )}
                 disabled={leftAction.disabled}
@@ -124,7 +124,7 @@ export default function TopBar({
               <>
                 <button
                   aria-label={rightMenu.ariaLabel}
-                  className="flex size-10 items-center justify-center rounded-full text-slate-100 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+                  className="flex size-10 items-center justify-center rounded-full text-surface-2 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
                   onClick={() => setMenuOpen(!menuOpen)}
                   type="button"
                 >
@@ -141,17 +141,17 @@ export default function TopBar({
                     />
                     <div
                       className={cn(
-                        'absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 py-1 shadow-xl',
+                        'absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 py-1 shadow-xl',
                         rightMenu.menuClassName,
                       )}
                     >
                       {rightMenu.items.map((item) => (
                         <React.Fragment key={item.id}>
-                          {item.separatorBefore ? <div className="mx-3 h-px bg-slate-700/60" /> : null}
+                          {item.separatorBefore ? <div className="mx-3 h-px bg-border-subtle" /> : null}
                           <button
                             className={cn(
-                              'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50',
-                              item.danger ? 'text-rose-500' : 'text-slate-100',
+                              'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50',
+                              item.danger ? 'text-danger' : 'text-surface-2',
                             )}
                             disabled={item.disabled}
                             onClick={() => {
@@ -161,7 +161,7 @@ export default function TopBar({
                             type="button"
                           >
                             {item.icon ? (
-                              <span className={cn('material-symbols-outlined text-[20px]', item.danger ? 'text-rose-500' : 'text-slate-400')}>
+                              <span className={cn('material-symbols-outlined text-[20px]', item.danger ? 'text-danger' : 'text-surface-2/60')}>
                                 {item.icon}
                               </span>
                             ) : null}

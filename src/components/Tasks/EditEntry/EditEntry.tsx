@@ -276,7 +276,7 @@ export default function EditEntry() {
     }
   }
 
-  const labelClass = 'text-slate-100 text-sm font-semibold leading-normal pb-2';
+  const labelClass = 'text-surface-2 text-sm font-semibold leading-normal pb-2';
 
   if (loading) {
     return (
@@ -291,17 +291,17 @@ export default function EditEntry() {
       <Modal open={editModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setEditModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
-            <h3 className="mb-2 text-lg font-bold text-slate-100">{t('entryEdit.recurringModalTitle')}</h3>
-            <p className="text-sm text-slate-400">{t('entryEdit.recurringModalDescription')}</p>
+            <h3 className="mb-2 text-lg font-bold text-surface-2">{t('entryEdit.recurringModalTitle')}</h3>
+            <p className="text-sm text-surface-2/60">{t('entryEdit.recurringModalDescription')}</p>
           </div>
-          <div className="flex flex-col divide-y divide-slate-700 border-t border-slate-700">
+          <div className="flex flex-col divide-y divide-border-subtle border-t border-border-subtle">
             <Button className="justify-start" onClick={() => handleSubmit((data) => saveChanges('single', data))()} size="menu" variant="modalAction">
               {t('entryEdit.recurringModalOnlyThis')}
             </Button>
             <Button className="justify-start" onClick={() => handleSubmit((data) => saveChanges('following', data))()} size="menu" variant="modalAction">
               {t('entryEdit.recurringModalThisAndFollowing')}
             </Button>
-            <Button className="justify-center bg-slate-800/50 text-slate-400" onClick={() => setEditModalOpen(false)} size="menu" variant="modalAction">
+            <Button className="justify-center bg-surface-1 text-surface-2/60" onClick={() => setEditModalOpen(false)} size="menu" variant="modalAction">
               {t('cta.cancel')}
             </Button>
           </div>
@@ -450,8 +450,8 @@ export default function EditEntry() {
         <FormSection>
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <p className="text-slate-100 text-base font-bold leading-tight">{t('entryForm.recurring')}</p>
-              <p className="text-primary/60 text-sm font-normal leading-normal">{t('entryForm.recurringDescription')}</p>
+              <p className="text-surface-2 text-base font-bold leading-tight">{t('entryForm.recurring')}</p>
+              <p className="text-surface-2/60 text-sm font-normal leading-normal">{t('entryForm.recurringDescription')}</p>
             </div>
             <label className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${isRecurring ? 'justify-end bg-primary' : 'bg-primary/20'}`}>
               <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
@@ -460,7 +460,7 @@ export default function EditEntry() {
           </div>
           {isRecurring && (
             <div className="mt-2">
-              <p className="text-slate-100 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
+              <p className="text-surface-2 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
               <SegmentedControl>
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
                   <SegmentedControlItem active={frequency === f} key={f}>
@@ -503,7 +503,7 @@ export default function EditEntry() {
                 {assignmentCategory === 'team_work' && <div className="w-3 h-3 rounded-full bg-primary" />}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentTeamTitle')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentTeamTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
               <input type="radio" className="hidden" value="team_work" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'team_work'); setValue('isRotating', false); }} />
@@ -514,7 +514,7 @@ export default function EditEntry() {
                 {assignmentCategory === 'anyone' && <div className="w-3 h-3 rounded-full bg-primary" />}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentAnyoneTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
               </div>
               <input type="radio" className="hidden" value="anyone" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'anyone'); setValue('isRotating', false); }} />
@@ -525,13 +525,13 @@ export default function EditEntry() {
                 <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
                   {assignmentCategory === 'individual' && <div className="w-3 h-3 rounded-full bg-primary" />}
                 </div>
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentIndividual')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentIndividual')}</span>
                 <input type="radio" className="hidden" value="individual" {...register('assignmentCategory')} />
               </label>
 
               {assignmentCategory === 'individual' && (
                 <div className="flex flex-col gap-4 pl-9">
-                  <div className="flex h-11 items-center justify-center rounded-xl border border-primary/20 bg-background-dark/50 p-1">
+                  <div className="flex h-11 items-center justify-center rounded-xl border border-primary/20 bg-surface-2/5 p-1">
                     {profiles.map(p => (
                       <button
                         key={p.id}
@@ -576,7 +576,7 @@ export default function EditEntry() {
           )}
         >
           <textarea
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
+            className="flex w-full rounded-xl text-surface-2 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
             placeholder={t('entryForm.descriptionPlaceholder')}
             {...register('description')}
           />

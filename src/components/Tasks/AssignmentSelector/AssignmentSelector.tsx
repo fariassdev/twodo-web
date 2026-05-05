@@ -59,18 +59,18 @@ export default function AssignmentSelector({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={onCancel} />
+      <div className="absolute inset-0 bg-surface-2/60 backdrop-blur-sm" onClick={onCancel} />
       <Card className="relative z-10 w-full max-w-sm overflow-hidden pointer-events-auto flex flex-col" padding="none" variant="modal">
         <div className="p-6 pb-4">
-          <h3 className="text-lg font-bold text-slate-100 mb-2">
+          <h3 className="text-lg font-bold text-surface-2 mb-2">
             {title ?? t('taskCompletion.selectAssignment')}
           </h3>
         </div>
 
         <div className="px-4 pb-4 space-y-3">
           <Button className="h-auto rounded-xl p-3" fullWidth onClick={() => onChange(defaultSelection)} variant="selector">
-            <p className="text-sm font-semibold text-slate-100">{t('taskCompletion.defaultAssignment')}</p>
-            <p className="text-xs text-slate-400">{t(`taskDetails.assignment.${defaultAssignmentType === 'strict_rotation' ? 'strictRotation' : defaultAssignmentType === 'team_work' ? 'teamWork' : defaultAssignmentType}`)}</p>
+            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.defaultAssignment')}</p>
+            <p className="text-xs text-surface-2/60">{t(`taskDetails.assignment.${defaultAssignmentType === 'strict_rotation' ? 'strictRotation' : defaultAssignmentType === 'team_work' ? 'teamWork' : defaultAssignmentType}`)}</p>
           </Button>
 
           <Button
@@ -80,12 +80,12 @@ export default function AssignmentSelector({
             onClick={() => onChange({ type: 'team_work', assignedTo: [] })}
             variant="selector"
           >
-            <p className="text-sm font-semibold text-slate-100">{t('taskCompletion.teamWork')}</p>
+            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.teamWork')}</p>
           </Button>
 
           <div
             className={`w-full rounded-xl border p-3 text-left ${
-              value.type === 'individual' ? 'border-primary bg-primary/10' : 'border-slate-700'
+              value.type === 'individual' ? 'border-primary bg-primary/10' : 'border-border-subtle'
             }`}
           >
             <Button
@@ -95,7 +95,7 @@ export default function AssignmentSelector({
               size="sm"
               variant="ghost"
             >
-              <p className="text-sm font-semibold text-slate-100">{t('taskCompletion.individual')}</p>
+              <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.individual')}</p>
             </Button>
             <SelectInput
               className="mt-2"
@@ -119,15 +119,15 @@ export default function AssignmentSelector({
             onClick={() => onChange({ type: 'anyone', assignedTo: [] })}
             variant="selector"
           >
-            <p className="text-sm font-semibold text-slate-100">{t('taskCompletion.anyone')}</p>
+            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.anyone')}</p>
           </Button>
         </div>
 
-        <div className="flex flex-col border-t border-slate-700 divide-y divide-slate-700">
+        <div className="flex flex-col border-t border-border-subtle divide-y divide-border-subtle">
           <Button fullWidth loading={loading} onClick={onConfirm} size="menu" variant="modalAction">
             {loading ? t('taskDetails.processing') : (confirmLabel ?? t('taskCompletion.confirmAssignment'))}
           </Button>
-          <Button className="bg-slate-800/50 text-slate-400" fullWidth onClick={onCancel} size="menu" variant="modalAction">
+          <Button className="bg-surface-1 text-surface-2/60" fullWidth onClick={onCancel} size="menu" variant="modalAction">
             {t('cta.cancel')}
           </Button>
         </div>

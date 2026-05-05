@@ -138,7 +138,7 @@ export default function CreateExpense() {
         <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5">
           <label className="text-sm uppercase tracking-wider text-primary/80">{t('expenses.amount')}</label>
           <div className="mt-2 flex items-end gap-2">
-            <span className="pb-2 text-5xl font-bold text-slate-200">€</span>
+            <span className="pb-2 text-5xl font-bold text-surface-2">€</span>
             <Controller
               name="amountInput"
               control={control}
@@ -146,7 +146,7 @@ export default function CreateExpense() {
                 <NumericInput
                   {...field}
                   autoFocus
-                  className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-slate-100 focus:outline-none"
+                  className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-surface-2 focus:outline-none"
                   placeholder="0.00"
                 />
               )}
@@ -165,7 +165,7 @@ export default function CreateExpense() {
           />
         </FormField>
 
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.category')}</p>
+        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-surface-2/60">{t('expenses.category')}</p>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {categories.map((category) => {
             const active = selectedCategoryId === category.id;
@@ -177,7 +177,7 @@ export default function CreateExpense() {
                 className={`flex h-12 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors ${
                   active
                     ? 'border-primary bg-primary text-background-dark'
-                    : 'border-primary/20 bg-primary/5 text-slate-300'
+                    : 'border-primary/20 bg-primary/5 text-surface-2/60'
                 }`}
                 onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
                 type="button"
@@ -190,7 +190,7 @@ export default function CreateExpense() {
         </div>
         {errors.categoryId && <p className="mt-2 text-xs text-red-400">{t(errors.categoryId.message!)}</p>}
 
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-300">{t('expenses.paidBy')}</p>
+        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-surface-2/60">{t('expenses.paidBy')}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
           {orderedProfiles.map((profile) => {
             const active = paidByProfileId === profile.id;
@@ -198,7 +198,7 @@ export default function CreateExpense() {
               <button
                 key={profile.id}
                 className={`h-12 rounded-xl text-sm font-bold transition-colors ${
-                  active ? 'bg-primary text-background-dark' : 'text-slate-300'
+                  active ? 'bg-primary text-background-dark' : 'text-surface-2/60'
                 }`}
                 onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
                 type="button"

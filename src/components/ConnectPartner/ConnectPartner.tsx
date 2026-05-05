@@ -250,13 +250,13 @@ export default function ConnectPartner() {
   // ─── Initial view (manual choice: create or join) ───
   if (view === 'initial') {
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
+      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10 bg-background-dark">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={handleSignOut} className="text-slate-400 hover:text-slate-200 transition-colors" aria-label={t('topBar.back')}>
+          <button onClick={handleSignOut} className="text-surface-2/40 hover:text-surface-2 transition-colors" aria-label={t('topBar.back')}>
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-100">{t('partner.title')}</h1>
+          <h1 className="text-lg font-bold text-surface-2">{t('partner.title')}</h1>
         </div>
 
         {/* Hero */}
@@ -266,13 +266,13 @@ export default function ConnectPartner() {
               <span className="material-symbols-outlined filled-icon text-primary text-5xl">favorite</span>
             </div>
             <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-background-dark text-lg">add</span>
+              <span className="material-symbols-outlined text-surface-1 text-lg">add</span>
             </div>
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-100 leading-tight mb-3">
+          <h2 className="text-2xl font-extrabold text-surface-2 leading-tight mb-3">
             {t('partner.heroTitle')}
           </h2>
-          <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+          <p className="text-sm text-surface-2/60 leading-relaxed max-w-xs">
             {t('partner.heroSubtitle')}
           </p>
         </div>
@@ -291,13 +291,13 @@ export default function ConnectPartner() {
                 </button>
               )}
             </div>
-            <p className="text-xs text-slate-400 text-center">{t('partner.prepareInvite')}</p>
+            <p className="text-xs text-surface-2/60 text-center">{t('partner.prepareInvite')}</p>
           </div>
         ) : (
           <button
             onClick={handleCreateHousehold}
             disabled={createMutation.isPending}
-            className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 mb-6"
+            className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 mb-6"
           >
             {createMutation.isPending ? t('auth.loading') : t('partner.createCta')}
           </button>
@@ -306,12 +306,12 @@ export default function ConnectPartner() {
         {!householdId && (
           <>
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-slate-700" />
-              <span className="text-xs text-slate-500 uppercase">{t('partner.or')}</span>
-              <div className="flex-1 h-px bg-slate-700" />
+              <div className="flex-1 h-px bg-border-subtle" />
+              <span className="text-xs text-surface-2/40 uppercase">{t('partner.or')}</span>
+              <div className="flex-1 h-px bg-border-subtle" />
             </div>
 
-            <p className="text-sm text-slate-400 text-center mb-2">{t('partner.haveLink')}</p>
+            <p className="text-sm text-surface-2/60 text-center mb-2">{t('partner.haveLink')}</p>
             <button
               onClick={() => setView('enter-code')}
               className="text-sm font-semibold text-primary text-center hover:underline"
@@ -331,13 +331,13 @@ export default function ConnectPartner() {
     return (
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => { setView(inviteData ? 'invite-created' : 'initial'); setError(null); }} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={() => { setView(inviteData ? 'invite-created' : 'initial'); setError(null); }} className="text-surface-2/40 hover:text-surface-2 transition-colors">
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-100">{t('partner.enterCodeTitle')}</h1>
+          <h1 className="text-lg font-bold text-surface-2">{t('partner.enterCodeTitle')}</h1>
         </div>
 
-        <p className="text-sm text-slate-400 mb-6">{t('partner.enterCodeDescription')}</p>
+        <p className="text-sm text-surface-2/60 mb-6">{t('partner.enterCodeDescription')}</p>
 
         <input
           type="text"
@@ -348,14 +348,14 @@ export default function ConnectPartner() {
           }}
           placeholder="ABCD1234"
           maxLength={8}
-          className="w-full h-14 rounded-2xl border border-primary/30 bg-primary/5 px-4 text-center text-lg font-mono tracking-widest text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary/60 mb-4"
+          className="w-full h-14 rounded-2xl border border-primary/30 bg-primary/5 px-4 text-center text-lg font-mono tracking-widest text-surface-2 placeholder:text-surface-2/40 focus:outline-none focus:border-primary/60 mb-4"
         />
         {manualCodeErrors.code && <p className="-mt-2 mb-3 text-xs text-red-400">{t(manualCodeErrors.code.message!)}</p>}
 
         <button
           onClick={handleEnterCode}
           disabled={manualCode.trim().length < 4}
-          className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-40"
+          className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-40"
         >
           {t('partner.joinCta')}
         </button>
@@ -371,14 +371,14 @@ export default function ConnectPartner() {
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => setView('initial')} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={() => setView('initial')} className="text-surface-2/40 hover:text-surface-2 transition-colors">
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-100">{t('partner.title')}</h1>
+          <h1 className="text-lg font-bold text-surface-2">{t('partner.title')}</h1>
           {/* sign out icon on right side */}
           <button
             onClick={handleSignOut}
-            className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
+            className="ml-auto text-surface-2/40 hover:text-surface-2 transition-colors"
             aria-label={t('auth.signOut')}
           >
             <span className="material-symbols-outlined text-xl">logout</span>
@@ -405,11 +405,11 @@ export default function ConnectPartner() {
 
         {/* Email invite card */}
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 mb-4">
-          <h3 className="font-bold text-slate-100 mb-1">{t('partner.inviteByEmail')}</h3>
-          <p className="text-xs text-slate-400 mb-4">{t('partner.inviteByEmailDesc')}</p>
+          <h3 className="font-bold text-surface-2 mb-1">{t('partner.inviteByEmail')}</h3>
+          <p className="text-xs text-surface-2/60 mb-4">{t('partner.inviteByEmailDesc')}</p>
 
-          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-background-dark/40 px-3 h-12 mb-3">
-            <span className="material-symbols-outlined text-slate-500 text-lg">mail</span>
+          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-surface-2/10 px-3 h-12 mb-3">
+            <span className="material-symbols-outlined text-surface-2/40 text-lg">mail</span>
             <input
               type="email"
               {...registerEmail('email')}
@@ -419,7 +419,7 @@ export default function ConnectPartner() {
                 setEmailSent(false);
               }}
               placeholder={t('partner.emailPlaceholder')}
-              className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-surface-2 placeholder:text-surface-2/40 focus:outline-none"
             />
           </div>
           {emailErrors.email && <p className="mb-3 text-xs text-red-400">{t(emailErrors.email.message!)}</p>}
@@ -427,19 +427,19 @@ export default function ConnectPartner() {
           <button
             onClick={handleSendEmail}
             disabled={sendEmailMutation.isPending || !emailInput || emailSent}
-            className="w-full h-12 rounded-xl bg-primary font-bold text-background-dark text-sm transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-primary font-bold text-surface-1 text-sm transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {emailSent ? t('partner.emailSentSuccess') : sendEmailMutation.isPending ? t('auth.loading') : t('partner.sendInvitation')}
             {!emailSent && !sendEmailMutation.isPending && <span className="material-symbols-outlined text-lg">send</span>}
           </button>
 
-          <p className="mt-4 mb-1 text-xs text-slate-400">{t('partner.inviteLinkLabel')}</p>
-          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-background-dark/40 p-2">
+          <p className="mt-4 mb-1 text-xs text-surface-2/60">{t('partner.inviteLinkLabel')}</p>
+          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-surface-2/10 p-2">
             <input
               type="text"
               readOnly
               value={inviteUrl}
-              className="flex-1 bg-transparent text-xs text-slate-200 focus:outline-none"
+              className="flex-1 bg-transparent text-xs text-surface-2/80 focus:outline-none"
             />
             <button
               type="button"
@@ -450,8 +450,8 @@ export default function ConnectPartner() {
             </button>
           </div>
 
-          <p className="mt-3 mb-1 text-xs text-slate-400">{t('partner.codeLabel')}</p>
-          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-background-dark/40 px-3 py-2">
+          <p className="mt-3 mb-1 text-xs text-surface-2/60">{t('partner.codeLabel')}</p>
+          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-surface-2/10 px-3 py-2">
             <p className="text-sm font-mono tracking-widest text-primary">{inviteData.invite_code}</p>
             <button
               type="button"
@@ -471,9 +471,9 @@ export default function ConnectPartner() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-xs text-slate-500 uppercase">{t('partner.or')}</span>
-          <div className="flex-1 h-px bg-slate-700" />
+          <div className="flex-1 h-px bg-border-subtle" />
+          <span className="text-xs text-surface-2/40 uppercase">{t('partner.or')}</span>
+          <div className="flex-1 h-px bg-border-subtle" />
         </div>
 
         {/* Share link button */}
@@ -488,7 +488,7 @@ export default function ConnectPartner() {
         {/* QR Code button */}
         <button
           onClick={() => setShowQR(!showQR)}
-          className="w-full h-12 rounded-xl border border-slate-600 text-slate-300 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-slate-800/50 transition-colors"
+          className="w-full h-12 rounded-xl border border-border-subtle text-surface-2/60 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface-2/5 transition-colors"
         >
           <span className="material-symbols-outlined text-lg">qr_code_2</span>
           {t('partner.showQR')}
@@ -499,15 +499,15 @@ export default function ConnectPartner() {
           <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-6" onClick={() => setShowQR(false)}>
             <div className="bg-background-dark rounded-2xl border border-primary/20 p-8 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-100">{t('partner.qrTitle')}</h3>
-                <button onClick={() => setShowQR(false)} className="text-slate-400 hover:text-slate-200">
+                <h3 className="text-lg font-bold text-surface-2">{t('partner.qrTitle')}</h3>
+                <button onClick={() => setShowQR(false)} className="text-surface-2/40 hover:text-surface-2">
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
               <div className="flex justify-center mb-4 bg-white rounded-xl p-4">
                 <QRCodeSVG value={inviteUrl} size={200} />
               </div>
-              <p className="text-center text-xs text-slate-400">{t('partner.qrDescription')}</p>
+              <p className="text-center text-xs text-surface-2/60">{t('partner.qrDescription')}</p>
               <p className="text-center text-lg font-mono tracking-widest text-primary mt-3">{inviteData.invite_code}</p>
             </div>
           </div>
@@ -515,7 +515,7 @@ export default function ConnectPartner() {
 
         {/* Enter code link */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-slate-400">{t('partner.haveLink')}</p>
+          <p className="text-sm text-surface-2/60">{t('partner.haveLink')}</p>
           <button
             onClick={() => setView('enter-code')}
             className="text-sm font-semibold text-primary hover:underline"
@@ -547,13 +547,13 @@ export default function ConnectPartner() {
     return (
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => { setView('initial'); setPendingCode(null); sessionStorage.removeItem('pendingInviteCode'); setError(null); }} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={() => { setView('initial'); setPendingCode(null); sessionStorage.removeItem('pendingInviteCode'); setError(null); }} className="text-surface-2/40 hover:text-surface-2 transition-colors">
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-100">{t('partner.joinTitle')}</h1>
+          <h1 className="text-lg font-bold text-surface-2">{t('partner.joinTitle')}</h1>
           <button
             onClick={handleSignOut}
-            className="ml-auto text-slate-400 hover:text-slate-200 transition-colors"
+            className="ml-auto text-surface-2/40 hover:text-surface-2 transition-colors"
             aria-label={t('auth.signOut')}
           >
             <span className="material-symbols-outlined text-xl">logout</span>
@@ -569,30 +569,30 @@ export default function ConnectPartner() {
         {!isLoading && info && !inviteFound && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
-            <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteNotFound')}</p>
-            <p className="text-sm text-slate-400">{t('partner.inviteNotFoundDesc')}</p>
+            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteNotFound')}</p>
+            <p className="text-sm text-surface-2/60">{t('partner.inviteNotFoundDesc')}</p>
           </div>
         )}
 
         {!isLoading && inviteFound && info?.is_expired && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">schedule</span>
-            <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteExpired')}</p>
-            <p className="text-sm text-slate-400">{t('partner.inviteExpiredDesc')}</p>
+            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteExpired')}</p>
+            <p className="text-sm text-surface-2/60">{t('partner.inviteExpiredDesc')}</p>
           </div>
         )}
 
         {!isLoading && inviteFound && !info?.is_expired && info?.is_accepted && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">check_circle</span>
-            <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.inviteAlreadyUsed')}</p>
+            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteAlreadyUsed')}</p>
           </div>
         )}
 
         {!isLoading && inviteFound && (info?.member_count ?? 0) >= 2 && !info?.is_accepted && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">group</span>
-            <p className="text-slate-300 text-lg font-semibold mb-2">{t('partner.householdFull')}</p>
+            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.householdFull')}</p>
           </div>
         )}
 
@@ -605,13 +605,13 @@ export default function ConnectPartner() {
                 <span className="material-symbols-outlined text-primary text-4xl">person</span>
               )}
             </div>
-            <p className="text-xl font-bold text-slate-100 mb-2">{info?.creator_name}</p>
-            <p className="text-sm text-slate-400 text-center mb-8">{t('partner.joinDescription')}</p>
+            <p className="text-xl font-bold text-surface-2 mb-2">{info?.creator_name}</p>
+            <p className="text-sm text-surface-2/60 text-center mb-8">{t('partner.joinDescription')}</p>
 
             <button
               onClick={() => handleAcceptInvite(pendingCode!)}
               disabled={acceptMutation.isPending}
-              className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60"
+              className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60"
             >
               {acceptMutation.isPending ? t('auth.loading') : t('partner.acceptInvite')}
             </button>
@@ -637,46 +637,46 @@ export default function ConnectPartner() {
       <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => navigate({ to: '/' })} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={() => navigate({ to: '/' })} className="text-surface-2/40 hover:text-surface-2 transition-colors">
             <span className="material-symbols-outlined text-xl">close</span>
           </button>
-          <h1 className="text-lg font-bold text-slate-100">{t('partner.successTitle')}</h1>
+          <h1 className="text-lg font-bold text-surface-2">{t('partner.successTitle')}</h1>
         </div>
 
         <div className="flex-1 flex flex-col items-center pt-4">
           {/* Celebration image placeholder */}
           <div className="w-full max-w-xs aspect-[4/3] rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8 relative overflow-hidden">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined filled-icon text-background-dark text-4xl">favorite</span>
+              <span className="material-symbols-outlined filled-icon text-surface-1 text-4xl">favorite</span>
             </div>
-            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-700/60 flex items-center justify-center">
+            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface-2/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-xl">celebration</span>
             </div>
-            <div className="absolute bottom-4 left-4 w-10 h-10 rounded-full bg-slate-700/60 flex items-center justify-center">
+            <div className="absolute bottom-4 left-4 w-10 h-10 rounded-full bg-surface-2/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-xl">group</span>
             </div>
           </div>
 
-          <h2 className="text-2xl font-extrabold text-slate-100 text-center mb-3">
+          <h2 className="text-2xl font-extrabold text-surface-2 text-center mb-3">
             {t('partner.successHeading')}
           </h2>
-          <p className="text-sm text-slate-400 text-center max-w-xs mb-8">
+          <p className="text-sm text-surface-2/60 text-center max-w-xs mb-8">
             {t('partner.successDescription')}
           </p>
 
           {/* Active link card */}
           <div className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-4 mb-8">
             <div className="flex -space-x-2">
-              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-background-dark flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-surface-1 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-sm">person</span>
               </div>
-              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-background-dark flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-surface-1 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-sm">person</span>
               </div>
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-primary">{t('partner.activeBond')}</p>
-              <p className="text-xs text-slate-400">{t('partner.activeBondDesc')}</p>
+              <p className="text-xs text-surface-2/60">{t('partner.activeBondDesc')}</p>
             </div>
             <span className="material-symbols-outlined filled-icon text-primary">verified</span>
           </div>
@@ -685,12 +685,12 @@ export default function ConnectPartner() {
         {/* Go to dashboard */}
         <button
           onClick={handleGoDashboard}
-          className="w-full h-14 rounded-2xl bg-primary font-bold text-background-dark text-base transition-all hover:brightness-110 active:scale-[.98] flex items-center justify-center gap-2"
+          className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] flex items-center justify-center gap-2"
         >
           {t('partner.goToDashboard')}
           <span className="material-symbols-outlined text-lg">arrow_forward</span>
         </button>
-        <p className="text-xs text-slate-500 text-center mt-3">{t('partner.startSharing')}</p>
+        <p className="text-xs text-surface-2/40 text-center mt-3">{t('partner.startSharing')}</p>
       </div>
     );
   }

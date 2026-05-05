@@ -15,7 +15,7 @@ export default function SectionHeader({
 
   return (
     <Component
-      className={cn('px-1 text-sm font-bold uppercase tracking-widest text-slate-500', className)}
+      className={cn('px-1 text-sm font-bold uppercase tracking-widest text-surface-2/60', className)}
       {...props}
     >
       {children}

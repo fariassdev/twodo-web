@@ -92,8 +92,8 @@ export default function Metrics() {
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-6">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-xl font-bold text-slate-100">{t('metrics.houseHarmony')}</h3>
-                <p className="text-sm text-primary/70">{t('metrics.houseHarmonySubtitle')}</p>
+                <h3 className="text-xl font-bold text-surface-2">{t('metrics.houseHarmony')}</h3>
+                <p className="text-sm text-surface-2/60">{t('metrics.houseHarmonySubtitle')}</p>
               </div>
               <div className="bg-primary/20 p-3 rounded-full">
                 <span className="material-symbols-outlined text-primary text-3xl">favorite</span>
@@ -109,22 +109,22 @@ export default function Metrics() {
                       <div key={member.id}>
                         <div className="flex justify-between items-end mb-2">
                           <div className="flex items-center gap-2">
-                            <div className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold ${highlighted ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-slate-400'}`}>
+                            <div className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold ${highlighted ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-surface-2/40'}`}>
                               {member.avatarUrl ? (
                                 <img src={member.avatarUrl} alt={member.name} className="size-full object-cover" />
                               ) : (
                                 member.name.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <span className="text-sm font-medium">{t('metrics.tasksOf', { name: member.name })}</span>
+                            <span className="text-sm font-medium text-surface-2">{t('metrics.tasksOf', { name: member.name })}</span>
                           </div>
-                          <span className={`text-lg font-bold ${highlighted ? 'text-primary' : 'text-slate-300'}`}>
+                          <span className={`text-lg font-bold ${highlighted ? 'text-primary' : 'text-surface-2/60'}`}>
                             {member.percentage}%
                           </span>
                         </div>
                         <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${highlighted ? 'bg-primary' : 'bg-slate-500'}`}
+                            className={`h-full rounded-full transition-all duration-500 ${highlighted ? 'bg-primary' : 'bg-border-subtle'}`}
                             style={{ width: `${member.percentage}%` }}
                           ></div>
                         </div>
@@ -150,15 +150,15 @@ export default function Metrics() {
 
         {/* Weekly Pulse */}
         <section className="px-4 py-2 mt-4">
-          <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 ml-1">{t('metrics.weeklyPulse')}</h4>
+          <h4 className="text-sm font-bold uppercase tracking-wider text-surface-2/60 mb-3 ml-1">{t('metrics.weeklyPulse')}</h4>
           <div className="bg-surface-1 border border-border-subtle p-4 rounded-xl">
-            <p className="text-xs text-slate-400 mb-1">{t('metrics.weeklyTasksCompleted')}</p>
+            <p className="text-xs text-surface-2/60 mb-1">{t('metrics.weeklyTasksCompleted')}</p>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-slate-100">{pulse?.completedThisWeek ?? 0}</span>
+              <span className="text-2xl font-bold text-surface-2">{pulse?.completedThisWeek ?? 0}</span>
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
                 weeklyDelta >= 0
                   ? 'bg-primary/20 text-primary'
-                  : 'bg-red-500/20 text-red-500'
+                  : 'bg-danger/20 text-danger'
               }`}>
                 {t('metrics.thisWeekDelta', { delta: weeklyDeltaDisplay })}
               </span>
@@ -168,7 +168,7 @@ export default function Metrics() {
 
         {/* Points Breakdown */}
         <section className="px-4 mt-6">
-          <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 ml-1">{t('metrics.pointsReceived')}</h4>
+          <h4 className="text-sm font-bold uppercase tracking-wider text-surface-2/60 mb-3 ml-1">{t('metrics.pointsReceived')}</h4>
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-6">
             <div className="space-y-4">
               {points.map((p, i) => {
@@ -187,21 +187,21 @@ export default function Metrics() {
                             p.name.charAt(0).toUpperCase()
                           )}
                         </div>
-                        <span className="text-sm font-medium">{p.name}</span>
+                        <span className="text-sm font-medium text-surface-2">{p.name}</span>
                       </div>
-                      <span className={`text-sm font-bold ${isFirst ? 'text-primary' : 'text-slate-400'}`}>{t('metrics.pointsShort', { value: p.totalPoints })}</span>
+                      <span className={`text-sm font-bold ${isFirst ? 'text-primary' : 'text-surface-2/60'}`}>{t('metrics.pointsShort', { value: p.totalPoints })}</span>
                     </div>
                     <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden flex">
                       <div
-                        className={`h-full ${isFirst ? 'bg-primary shadow-[0_0_8px_rgba(23,207,145,0.4)]' : 'bg-primary opacity-80'}`}
+                        className={`h-full ${isFirst ? 'bg-primary' : 'bg-primary opacity-80'}`}
                         style={{ width: `${taskPercent * barWidth / 100}%` }}
                       ></div>
                       <div
-                        className={`h-full ${isFirst ? 'bg-teal-300/60' : 'bg-teal-300/40'}`}
+                        className={`h-full ${isFirst ? 'bg-primary/40' : 'bg-primary/20'}`}
                         style={{ width: `${kudosPercent * barWidth / 100}%` }}
                       ></div>
                     </div>
-                    <p className={`text-[10px] mt-1.5 font-medium ${isFirst ? 'text-primary/60' : 'text-slate-500'}`}>
+                    <p className={`text-[10px] mt-1.5 font-medium ${isFirst ? 'text-primary/60' : 'text-surface-2/40'}`}>
                       {t('metrics.pointsBreakdown', { taskPoints: p.taskPoints, kudosPoints: p.kudosPoints })}
                     </p>
                   </div>
@@ -216,8 +216,8 @@ export default function Metrics() {
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 p-6 border border-primary/20">
             <div className="relative z-10">
               <h5 className="font-bold text-primary mb-2">{t('metrics.feelingGrateful')}</h5>
-              <p className="text-sm text-slate-300 mb-4">{t('metrics.sendThanksDescription')}</p>
-              <button className="bg-primary hover:bg-primary/90 text-background-dark font-bold py-2 px-6 rounded-lg text-sm transition-colors">
+              <p className="text-sm text-surface-2/80 mb-4">{t('metrics.sendThanksDescription')}</p>
+              <button className="bg-primary hover:bg-primary/90 text-surface-1 font-bold py-2 px-6 rounded-lg text-sm transition-colors">
                 {t('metrics.sendKudos')}
               </button>
             </div>

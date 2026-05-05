@@ -296,7 +296,7 @@ export default function ExpensesListPage() {
         <TextInput
           className="rounded-2xl border-border-subtle bg-surface-2"
           inputMode="search"
-          leading={<span className="material-symbols-outlined text-slate-400">search</span>}
+          leading={<span className="material-symbols-outlined text-surface-2/60">search</span>}
           placeholder={t('expenses.searchExpensesPlaceholder')}
           size="md"
           trailing={
@@ -309,7 +309,7 @@ export default function ExpensesListPage() {
             ) : hasSearchText ? (
               <Button
                 aria-label={t('expenses.clearSearch')}
-                className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100"
+                className="h-8 w-8 text-surface-2/60 hover:bg-hover hover:text-surface-2"
                 onClick={clearSearchText}
                 size="icon"
                 variant="icon"
@@ -327,7 +327,7 @@ export default function ExpensesListPage() {
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           <SelectInput
             className="min-w-[10.5rem] flex-1"
-            leading={<span className="material-symbols-outlined text-slate-300">category</span>}
+            leading={<span className="material-symbols-outlined text-surface-2/60">category</span>}
             selectClassName="text-sm font-semibold"
             size="md"
             value={categoryId}
@@ -344,7 +344,7 @@ export default function ExpensesListPage() {
 
           <SelectInput
             className="min-w-[10.5rem] flex-1"
-            leading={<span className="material-symbols-outlined text-slate-300">person</span>}
+            leading={<span className="material-symbols-outlined text-surface-2/60">person</span>}
             selectClassName="text-sm font-semibold"
             size="md"
             value={paidByProfileId}
@@ -360,19 +360,19 @@ export default function ExpensesListPage() {
           </SelectInput>
 
           <Button
-            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-border-subtle bg-surface-1 px-3 text-sm font-semibold text-slate-100"
+            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-border-subtle bg-surface-1 px-3 text-sm font-semibold text-surface-2"
             onClick={() => setIsDateRangeOpen((current) => !current)}
             variant="subtle"
           >
-            <span className="material-symbols-outlined text-slate-200">calendar_month</span>
+            <span className="material-symbols-outlined text-surface-2/60">calendar_month</span>
             <span className="truncate">{t('expenses.dateRange')}</span>
-            <span className="material-symbols-outlined ml-auto text-slate-300">expand_more</span>
+            <span className="material-symbols-outlined ml-auto text-surface-2/60">expand_more</span>
           </Button>
         </div>
 
         {isDateRangeOpen && (
           <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-border-subtle bg-surface-2 p-3">
-            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-background-light/60">
               <span>{t('expenses.dateFrom')}</span>
               <TextInput
                 className="h-10 border-primary/25 bg-background-dark"
@@ -387,7 +387,7 @@ export default function ExpensesListPage() {
               />
             </label>
 
-            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-background-light/60">
               <span>{t('expenses.dateTo')}</span>
               <TextInput
                 className="h-10 border-primary/25 bg-background-dark"
@@ -409,7 +409,7 @@ export default function ExpensesListPage() {
             return (
               <div className="mt-20 flex flex-col items-center justify-center gap-4 text-center">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <p className="text-sm font-medium text-slate-400">{t('expenses.searchLoading')}</p>
+                <p className="text-sm font-medium text-surface-2/60">{t('expenses.searchLoading')}</p>
               </div>
             );
           }
@@ -428,10 +428,10 @@ export default function ExpensesListPage() {
                   </div>
                 </Card>
 
-                <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-slate-100">
+                <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-surface-2">
                   {t('expenses.emptyNoResultsTitle')}
                 </h2>
-                <p className="mt-3 max-w-sm text-lg leading-relaxed text-slate-300">{emptySubtitle}</p>
+                <p className="mt-3 max-w-sm text-lg leading-relaxed text-surface-2/60">{emptySubtitle}</p>
 
                 <Button
                   className="mt-8 h-16 w-full max-w-[22rem] gap-2 rounded-3xl px-6 text-lg font-black shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"

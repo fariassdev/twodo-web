@@ -6,10 +6,11 @@ const cardVariants = cva('border', {
   variants: {
     variant: {
       surface: 'border-primary/20 bg-primary/5',
-      elevated: 'border-white/5 bg-surface-2 shadow-sm',
-      modal: 'border-border-subtle bg-surface-2 shadow-xl',
+      elevated: 'border-primary/10 bg-surface-1 text-surface-2',
+      default: 'rounded-xl border-border-subtle bg-surface-1 text-surface-2',
+      modal: 'border-border-subtle bg-surface-1 shadow-xl',
       info: 'border-primary/30 bg-primary/10',
-      error: 'border-rose-400/30 bg-rose-500/10',
+      error: 'border-danger/30 bg-danger/10',
       subtle: 'border-primary/10 bg-background-dark/80 backdrop-blur-md',
     },
     radius: {

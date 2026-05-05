@@ -7,7 +7,7 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
     variant: {
       plain: '',
       surface: 'rounded-lg border border-primary/20 bg-background-dark px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      elevated: 'rounded-xl border border-primary/20 bg-slate-800/60 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      elevated: 'rounded-xl border border-primary/20 bg-surface-1 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
     },
     size: {
@@ -22,7 +22,7 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
   },
 });
 
-const inputVariants = cva('w-full bg-transparent text-slate-100 placeholder:text-primary/40 focus:outline-none', {
+const inputVariants = cva('w-full bg-transparent text-surface-2 placeholder:text-primary/40 focus:outline-none', {
   variants: {
     typography: {
       base: 'text-base font-normal',
@@ -56,9 +56,9 @@ export default function TextInput({
 }: Readonly<TextInputProps>): React.ReactElement {
   return (
     <div className={cn(wrapperVariants({ variant, size }), className)}>
-      {leading ? <span className="shrink-0 text-slate-400">{leading}</span> : null}
+      {leading ? <span className="shrink-0 text-surface-2/60">{leading}</span> : null}
       <input className={cn(inputVariants({ typography }), inputClassName)} id={id} {...props} />
-      {trailing ? <span className="shrink-0 text-slate-400">{trailing}</span> : null}
+      {trailing ? <span className="shrink-0 text-surface-2/60">{trailing}</span> : null}
     </div>
   );
 }

@@ -176,7 +176,7 @@ export default function ExpenseDetails() {
   if (!expense) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <p className="text-sm text-slate-300">{t('expenses.notFound')}</p>
+        <p className="text-sm text-surface-2/60">{t('expenses.notFound')}</p>
         <Button onClick={goBackToExpenses} size="sm" variant="ghost">
           {t('taskDetails.back')}
         </Button>
@@ -201,7 +201,7 @@ export default function ExpenseDetails() {
         rightSlot={(
           <Button
             aria-label={t('expenses.deleteExpense')}
-            className="text-slate-200"
+            className="text-surface-2"
             onClick={handleDelete}
             size="icon"
             variant="icon"
@@ -215,29 +215,29 @@ export default function ExpenseDetails() {
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <section className="rounded-3xl border border-primary/20 bg-primary/10 p-6">
-          <p className="text-center text-7xl font-black text-slate-100">{amountLabel}</p>
-          <p className="mt-3 text-center text-2xl text-slate-300">{expense.description || categoryLabel}</p>
+          <p className="text-center text-7xl font-black text-surface-2">{amountLabel}</p>
+          <p className="mt-3 text-center text-2xl font-bold text-primary">{expense.description || categoryLabel}</p>
 
-          <div className="mt-8 space-y-4 rounded-2xl border border-primary/15 bg-background-dark/30 p-4">
+          <div className="mt-8 space-y-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
             <div className="flex items-center justify-between border-b border-primary/10 pb-3">
-              <span className="text-slate-400">{t('expenses.paidBy')}</span>
-              <span className="font-semibold text-slate-100">
+              <span className="text-surface-2/60">{t('expenses.paidBy')}</span>
+              <span className="font-semibold text-surface-2">
                 {expense.paid_by_profile_id === profileId
                   ? t('expenses.meWithName', { name: expense.paid_by_profile?.name ?? t('expenses.me') })
                   : expense.paid_by_profile?.name}
               </span>
             </div>
             <div className="flex items-center justify-between border-b border-primary/10 pb-3">
-              <span className="text-slate-400">{t('expenses.category')}</span>
-              <span className="font-semibold text-slate-100">{categoryLabel}</span>
+              <span className="text-surface-2/60">{t('expenses.category')}</span>
+              <span className="font-semibold text-surface-2">{categoryLabel}</span>
             </div>
             <div className="flex items-center justify-between border-b border-primary/10 pb-3">
-              <span className="text-slate-400">{t('expenses.splitTitle')}</span>
-              <span className="font-semibold text-slate-100">{t('expenses.splitShared')}</span>
+              <span className="text-surface-2/60">{t('expenses.splitTitle')}</span>
+              <span className="font-semibold text-surface-2">{t('expenses.splitShared')}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">{t('expenses.date')}</span>
-              <span className="font-semibold text-slate-100">
+              <span className="text-surface-2/60">{t('expenses.date')}</span>
+              <span className="font-semibold text-surface-2">
                 {new Date(`${expense.expense_date}T12:00:00`).toLocaleDateString(i18n.language, {
                   day: 'numeric',
                   month: 'long',
@@ -257,7 +257,7 @@ export default function ExpenseDetails() {
                 render={({ field }) => (
                   <NumericInput
                     {...field}
-                    className="h-12 w-full rounded-xl border border-primary/20 bg-background-dark px-3 text-sm"
+                    className="h-12 w-full rounded-xl border border-primary/20 bg-primary/5 px-3 text-sm text-surface-2"
                   />
                 )}
               />
@@ -315,7 +315,7 @@ export default function ExpenseDetails() {
           {isEditing ? (
             <div className="grid grid-cols-2 gap-2">
               <Button
-                className="border-primary/20 text-sm font-semibold text-slate-300"
+                className="border-primary/20 text-sm font-semibold text-surface-2/60"
                 onClick={() => setIsEditing(false)}
                 variant="subtle"
               >

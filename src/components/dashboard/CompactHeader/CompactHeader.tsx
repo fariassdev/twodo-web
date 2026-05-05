@@ -22,8 +22,8 @@ export default function CompactHeader() {
   return (
     <div className="flex items-center justify-between pb-4 pt-2 border-b border-border-subtle">
       <div className="flex flex-col">
-        <h1 className="text-xs font-bold text-emerald-400 tracking-wider mb-0.5">{formattedDate}</h1>
-        <h2 className="text-2xl font-bold text-white">Bubis</h2>
+        <h1 className="text-xs font-bold text-primary tracking-wider mb-0.5">{formattedDate}</h1>
+        <h2 className="text-2xl font-bold text-surface-2">Bubis</h2>
       </div>
 
       <div className="flex items-center gap-4">
@@ -34,14 +34,14 @@ export default function CompactHeader() {
           {profiles.slice(0, 2).map((p, i) => (
             <div
               key={p.id}
-              className={`w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden bg-emerald-500/20 ${
+              className={`w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden bg-primary/20 ${
                 i === 0 ? 'z-10' : 'z-0'
               }`}
             >
               {p.avatar_url ? (
                 <img src={p.avatar_url} alt={p.name || ''} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xs font-semibold text-emerald-400">
+                <span className="text-xs font-semibold text-primary">
                   {p.name?.[0]?.toUpperCase() || '?'}
                 </span>
               )}
@@ -51,7 +51,7 @@ export default function CompactHeader() {
 
         <Button
           aria-label={t('expenses.openSearch')}
-          className="text-gray-300 hover:text-white"
+          className="text-surface-2/60 hover:text-surface-2"
           onClick={() => navigate({ to: '/expenses/list' })}
           size="icon"
           variant="icon"

@@ -30,9 +30,9 @@ export default function PendingAccess() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md shadow-xl" padding="xl" radius="2xl" variant="surface">
-        <h1 className="text-2xl font-bold text-slate-100">{t('auth.pending.title')}</h1>
-        <p className="mt-3 text-sm text-slate-300">{t('auth.pending.description')}</p>
-        <p className="mt-3 rounded-xl border border-primary/20 bg-background-dark/40 px-3 py-2 text-sm text-primary">
+        <h1 className="text-2xl font-bold text-surface-2">{t('auth.pending.title')}</h1>
+        <p className="mt-3 text-sm text-surface-2/60">{t('auth.pending.description')}</p>
+        <p className="mt-3 rounded-xl border border-primary/20 bg-surface-2/10 px-3 py-2 text-sm text-primary">
           {pendingReason}
         </p>
 

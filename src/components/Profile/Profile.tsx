@@ -100,7 +100,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-background-dark text-slate-100 pb-40">
+    <div className="min-h-screen bg-background-dark text-surface-2 pb-40">
       <TopBar
         title={t('profile.title')}
         titleIcon="person"
@@ -126,7 +126,7 @@ export default function Profile() {
             {profileOptions.map((member) => (
               <span
                 key={member.id}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${member.id === currentProfileId ? 'bg-primary text-background-dark' : 'bg-slate-800 text-slate-200'}`}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${member.id === currentProfileId ? 'bg-primary text-surface-1' : 'bg-surface-2/10 text-surface-2/60'}`}
               >
                 {member.name}
               </span>
@@ -150,7 +150,7 @@ export default function Profile() {
                 <span className="material-symbols-outlined text-4xl text-primary">person</span>
               )}
             </div>
-            <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-background-dark rounded-full flex items-center justify-center shadow-lg border-4 border-background-dark hover:scale-105 transition-transform">
+            <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-lg border-4 border-surface-1 hover:scale-105 transition-transform">
               <span className="material-symbols-outlined text-[18px]">photo_camera</span>
             </button>
           </div>
@@ -170,31 +170,31 @@ export default function Profile() {
 
         {/* Personal Information */}
         <section>
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+          <h3 className="text-sm font-bold text-surface-2/60 uppercase tracking-wider mb-4">
             {t('profile.personalInfo')}
           </h3>
           <div className="space-y-4">
             <div>
-              <label htmlFor="displayName" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.displayName')}</label>
+              <label htmlFor="displayName" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.displayName')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">person</span>
                 <input
                   id="displayName"
                   type="text"
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
                   {...register('name')}
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="emailAddress" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.emailAddress')}</label>
+              <label htmlFor="emailAddress" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.emailAddress')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">mail</span>
                 <input
                   id="emailAddress"
                   type="email"
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
                   {...register('email')}
                 />
               </div>
@@ -204,14 +204,14 @@ export default function Profile() {
             </div>
 
             <div>
-              <label htmlFor="avatarUrl" className="block text-sm text-slate-300 mb-1.5 ml-1">{t('profile.avatarUrlLabel')}</label>
+              <label htmlFor="avatarUrl" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.avatarUrlLabel')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">link</span>
                 <input
                   id="avatarUrl"
                   type="url"
                   placeholder={t('profile.avatarUrlPlaceholder')}
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-slate-100 placeholder:text-slate-500 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
                   {...register('avatarUrl')}
                 />
               </div>
@@ -224,7 +224,7 @@ export default function Profile() {
 
         {/* App Settings */}
         <section>
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+          <h3 className="text-sm font-bold text-surface-2/60 uppercase tracking-wider mb-4">
             {t('profile.appSettings')}
           </h3>
           <div className="bg-primary/5 border border-primary/20 rounded-2xl divide-y divide-primary/10">
@@ -234,19 +234,19 @@ export default function Profile() {
                 <span className="material-symbols-outlined text-primary text-xl">language</span>
                 <div>
                   <h4 className="font-semibold text-[15px]">{t('profile.language')}</h4>
-                  <p className="text-xs text-slate-400">{t('profile.preferredLanguage')}</p>
+                  <p className="text-xs text-surface-2/60">{t('profile.preferredLanguage')}</p>
                 </div>
               </div>
-              <div className="bg-slate-800 rounded-lg p-0.5 flex text-xs font-bold">
+              <div className="bg-surface-2/5 rounded-lg p-0.5 flex text-xs font-bold">
                 <button 
                   onClick={() => i18n.changeLanguage('en')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('en') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('en') ? 'bg-primary text-surface-1' : 'text-surface-2/40 hover:text-surface-2'}`}
                 >
                   {t('profile.langEn')}
                 </button>
                 <button 
                   onClick={() => i18n.changeLanguage('es')}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('es') ? 'bg-primary text-background-dark' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${i18n.language.startsWith('es') ? 'bg-primary text-surface-1' : 'text-surface-2/40 hover:text-surface-2'}`}
                 >
                   {t('profile.langEs')}
                 </button>
@@ -259,12 +259,12 @@ export default function Profile() {
                 <span className="material-symbols-outlined text-primary text-xl">notifications</span>
                 <div>
                   <h4 className="font-semibold text-[15px]">{t('profile.jointNotifications')}</h4>
-                  <p className="text-xs text-slate-400">{t('profile.syncAlerts')}</p>
+                  <p className="text-xs text-surface-2/60">{t('profile.syncAlerts')}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setNotifications(!notifications)}
-                className={`w-12 h-6 rounded-full relative transition-colors ${notifications ? 'bg-primary' : 'bg-slate-700'}`}
+                className={`w-12 h-6 rounded-full relative transition-colors ${notifications ? 'bg-primary' : 'bg-surface-2/20'}`}
               >
                 <span 
                   className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifications ? 'right-1' : 'left-1'}`}
@@ -279,7 +279,7 @@ export default function Profile() {
           <button 
             type="submit"
             disabled={saving}
-            className="w-full bg-primary text-background-dark font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+            className="w-full bg-primary text-surface-1 font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
             {saving ? (
               <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />

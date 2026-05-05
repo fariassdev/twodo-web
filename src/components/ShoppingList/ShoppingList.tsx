@@ -119,7 +119,7 @@ export default function ShoppingList() {
       <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
         {actionError && (
-          <p className="mb-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
+          <p className="mb-3 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-medium text-danger">
             {actionError}
           </p>
         )}
@@ -132,7 +132,7 @@ export default function ShoppingList() {
                 registerRef(el);
                 (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
               }}
-              className="w-full bg-primary/5 border-none rounded-xl h-16 px-6 text-xl placeholder:text-slate-600 focus:ring-2 focus:ring-primary focus:bg-primary/10 transition-all font-display"
+              className="w-full bg-primary/5 border border-primary/20 rounded-xl h-16 px-6 text-xl placeholder:text-surface-2/30 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 transition-all font-display text-surface-2"
               id="new-item"
               placeholder={t('shopping.newItemPlaceholder')}
               type="text"
@@ -148,16 +148,16 @@ export default function ShoppingList() {
         </form>
 
         <div className="space-y-4 mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-surface-2/60 mb-2">
             {t('shopping.toBuyWithCount', { count: toBuy.length })}
           </h2>
 
           {toBuy.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">{t('shopping.emptyToBuy')}</p>
+            <p className="text-surface-2/40 text-sm text-center py-4">{t('shopping.emptyToBuy')}</p>
           )}
 
           {toBuy.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 bg-surface-2/40 p-4 rounded-xl border border-border-strong shadow-sm transition-all active:scale-[0.98]">
+            <div key={item.id} className="flex items-center gap-4 bg-surface-1 p-4 rounded-2xl border border-primary/10 shadow-sm transition-all active:scale-[0.98]">
               <div className="flex-1 flex items-center gap-4">
                 <div className="relative flex items-center justify-center">
                   <input
@@ -167,7 +167,7 @@ export default function ShoppingList() {
                     onChange={() => handleToggle(item)}
                   />
                 </div>
-                <span className="text-lg font-medium">{item.name}</span>
+                <span className="text-lg font-bold text-surface-2">{item.name}</span>
                 <div className="flex items-center gap-3 bg-primary/10 rounded-lg p-1 px-2 mx-2">
                   <button
                     type="button"
@@ -188,7 +188,7 @@ export default function ShoppingList() {
               </div>
               <button
                 type="button"
-                className="text-slate-400 hover:text-red-400 transition-colors"
+                className="text-surface-2/40 hover:text-danger transition-colors p-2"
                 onClick={() => handleDelete(item.id)}
               >
                 <span className="material-symbols-outlined">delete</span>
@@ -199,11 +199,11 @@ export default function ShoppingList() {
 
         {purchased.length > 0 && (
           <div className="space-y-4 mb-24">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-surface-2/60 mb-2">
               {t('shopping.purchasedWithCount', { count: purchased.length })}
             </h2>
             {purchased.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 bg-surface-2/20 p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
+              <div key={item.id} className="flex items-center gap-4 bg-surface-1/50 p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
                 <div className="flex-1 flex items-center gap-4">
                   <div className="relative flex items-center justify-center">
                     <input
@@ -213,11 +213,11 @@ export default function ShoppingList() {
                       onChange={() => handleToggle(item)}
                     />
                   </div>
-                  <span className="text-lg font-medium line-through text-slate-500">{item.name}</span>
+                  <span className="text-lg font-medium line-through text-surface-2/40">{item.name}</span>
                 </div>
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-red-400 transition-colors"
+                  className="text-surface-2/40 hover:text-danger transition-colors p-2"
                   onClick={() => handleDelete(item.id)}
                 >
                   <span className="material-symbols-outlined">delete</span>

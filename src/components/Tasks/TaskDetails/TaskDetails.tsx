@@ -39,9 +39,9 @@ type MetaChipProps = {
 
 function MetaChip({ icon, label, iconClassName }: Readonly<MetaChipProps>): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-1.5">
+    <div className="flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-3 py-1.5">
       <span className={`material-symbols-outlined text-lg ${iconClassName ?? 'text-primary'}`}>{icon}</span>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium text-surface-2">{label}</span>
     </div>
   );
 }
@@ -303,7 +303,7 @@ export default function TaskDetails() {
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-slate-400">{t('taskDetails.notFound')}</p>
+        <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
         <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">
           {t('taskDetails.back')}
         </Button>
@@ -316,10 +316,10 @@ export default function TaskDetails() {
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
-            <h3 className="mb-2 text-lg font-bold text-slate-100">{t('taskDetails.deleteRecurringTitle')}</h3>
-            <p className="text-sm text-slate-400">{t('taskDetails.deleteRecurringDescription')}</p>
+            <h3 className="mb-2 text-lg font-bold text-surface-2">{t('taskDetails.deleteRecurringTitle')}</h3>
+            <p className="text-sm text-surface-2/60">{t('taskDetails.deleteRecurringDescription')}</p>
           </div>
-          <div className="flex flex-col divide-y divide-slate-700 border-t border-slate-700">
+          <div className="flex flex-col divide-y divide-border-subtle border-t border-border-subtle">
             <Button className="justify-start" onClick={handleDeleteSingle} size="menu" variant="modalAction">
               {t('taskDetails.deleteOnlyThis')}
             </Button>
@@ -329,7 +329,7 @@ export default function TaskDetails() {
             <Button className="justify-start text-rose-500" onClick={handleDeleteAll} size="menu" variant="modalAction">
               {t('taskDetails.deleteAll')}
             </Button>
-            <Button className="justify-center bg-slate-800/50 text-slate-400" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
+            <Button className="justify-center bg-surface-1 text-surface-2/60" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
               {t('cta.cancel')}
             </Button>
           </div>
@@ -435,11 +435,11 @@ export default function TaskDetails() {
               </Badge>
             )}
             {assignedProfile && (
-              <span className="text-slate-400 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
+              <span className="text-surface-2/60 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
             )}
           </div>
           {task.date && (
-            <p className="text-slate-400 text-sm font-medium mb-1 capitalize">
+            <p className="text-primary text-sm font-medium mb-1 capitalize">
               {new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
@@ -449,7 +449,7 @@ export default function TaskDetails() {
             {task.type === 'task' && (
               <MetaChip
                 icon="priority_high"
-                iconClassName={task.priority === 'high' ? 'text-rose-500' : 'text-primary'}
+                iconClassName={task.priority === 'high' ? 'text-danger' : 'text-primary'}
                 label={urgencyLabels[task.priority] || task.priority}
               />
             )}
@@ -480,18 +480,18 @@ export default function TaskDetails() {
           </div>
 
           {task.description && (
-            <p className="text-slate-400 mt-4 leading-relaxed">{task.description}</p>
+            <p className="text-surface-2 mt-4 leading-relaxed">{task.description}</p>
           )}
 
           {task.type === 'event' && task.location && (
-            <div className="flex items-center gap-2 mt-3 text-slate-400">
+            <div className="flex items-center gap-2 mt-3 text-surface-2/60">
               <span className="material-symbols-outlined text-primary text-sm">location_on</span>
               <span className="text-sm">{task.location}</span>
             </div>
           )}
 
           {task.type === 'event' && (task.start_time || task.end_time) && (
-            <div className="flex items-center gap-2 mt-2 text-slate-400">
+            <div className="flex items-center gap-2 mt-2 text-surface-2/60">
               <span className="material-symbols-outlined text-primary text-sm">schedule</span>
               <span className="text-sm">
                 {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}{task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
@@ -514,7 +514,7 @@ export default function TaskDetails() {
                 {acting ? t('taskDetails.processing') : t('taskDetails.markCompleted')}
               </Button>
               <Button
-                className="justify-center border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700/60"
+                className="justify-center"
                 fullWidth
                 onClick={handlePostpone}
                 disabled={acting}
@@ -532,7 +532,7 @@ export default function TaskDetails() {
               <span className="material-symbols-outlined text-primary filled-icon">favorite</span>
               <h3 className="text-lg font-bold">{t('dashboard.loveNoteTitle')}</h3>
             </div>
-            <div className="bg-slate-800/40 p-5 rounded-xl border border-slate-700 italic text-slate-300 leading-relaxed relative overflow-hidden">
+            <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 italic text-primary leading-relaxed relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-10">
                 <span className="material-symbols-outlined text-8xl">format_quote</span>
               </div>
@@ -543,17 +543,17 @@ export default function TaskDetails() {
 
         <div className="space-y-4">
           <SectionHeader>{t('taskDetails.assignmentDetails')}</SectionHeader>
-          <div className="bg-slate-800/40 rounded-xl border border-slate-700 divide-y divide-slate-700">
+          <div className="bg-surface-1 rounded-xl border border-border-subtle divide-y divide-border-subtle">
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.rotationType')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.rotationType')}</span>
               <span className="font-medium">{assignmentLabels[task.assignment_type]}</span>
             </div>
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.lastDoneBy')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.lastDoneBy')}</span>
               <span className="font-medium">{lastDoneByProfile?.name || t('taskDetails.none')}</span>
             </div>
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.currentReward')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.currentReward')}</span>
               <span className="font-medium text-primary">{t('taskDetails.pointsReward', { points: task.points })}</span>
             </div>
           </div>

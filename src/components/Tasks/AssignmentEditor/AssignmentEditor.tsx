@@ -24,14 +24,14 @@ export default function AssignmentEditor(props: Readonly<AssignmentEditorProps>)
   return (
     <>
       {props.open && (
-        <div className="mb-4 rounded-xl border border-slate-700 bg-slate-800/40 p-4">
-          <h4 className="mb-2 text-sm font-bold text-slate-300">{t('taskCompletion.currentAssignment')}</h4>
+        <div className="mb-4 rounded-xl border border-border-subtle bg-surface-1 p-4">
+          <h4 className="mb-2 text-sm font-bold text-surface-2">{t('taskCompletion.currentAssignment')}</h4>
           {completions.length === 0 ? (
-            <p className="text-xs text-slate-400">{t('taskDetails.none')}</p>
+            <p className="text-xs text-surface-2/60">{t('taskDetails.none')}</p>
           ) : (
             <ul className="space-y-1">
               {completions.map((completion) => (
-                <li key={completion.id} className="text-sm text-slate-200">
+                <li key={completion.id} className="text-sm text-surface-2">
                   {completion.profile?.name ?? completion.completed_by}: +{completion.points_earned}
                 </li>
               ))}

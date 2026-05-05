@@ -103,13 +103,13 @@ export default function TodayTasksWidget() {
       >
         {/* Glow left edge for high priority/morning like the design */}
         {!isCompleted && isHighPriority && (
-          <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-lg bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+          <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-lg bg-primary shadow-[0_0_8px_rgba(207,116,85,0.6)]"></div>
         )}
 
         <Button
           className={`h-[22px] w-[22px] shrink-0 p-0 transition-colors ${
             isCompleted
-              ? 'rounded-md text-emerald-500 hover:bg-transparent'
+              ? 'rounded-md text-primary hover:bg-transparent'
               : 'rounded-[6px] border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
@@ -122,16 +122,16 @@ export default function TodayTasksWidget() {
           size="icon"
           variant="icon"
         >
-          {isCompleted && <CheckCircle2 className="w-6 h-6 fill-emerald-500/20" />}
+          {isCompleted && <CheckCircle2 className="w-6 h-6 fill-primary/20" />}
         </Button>
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
-            isCompleted ? 'line-through text-slate-500' : 'text-slate-100'
+            isCompleted ? 'line-through opacity-40' : ''
           }`}>
             {task.title}
             {isHighPriority && !isCompleted && (
-              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <Zap className="w-4 h-4 text-primary fill-primary" />
             )}
             {showSize && !isCompleted && (
               <Badge size="xs" tone={task.effort_level === 'XL' ? 'warning' : 'success'}>
@@ -140,7 +140,7 @@ export default function TodayTasksWidget() {
             )}
           </div>
           {isCompleted && (
-            <div className="text-xs text-emerald-500/80 mt-1 font-medium italic">
+            <div className="text-xs text-primary/80 mt-1 font-medium italic">
               {isTeamWork 
                 ? t('dashboard.completedByBoth') 
                 : t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
@@ -175,7 +175,7 @@ export default function TodayTasksWidget() {
       />
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-white">{t('dashboard.today')}</h2>
+        <h2 className="text-2xl font-bold text-surface-2">{t('dashboard.today')}</h2>
       </div>
 
       {TIME_BLOCKS.map(block => {
@@ -184,9 +184,9 @@ export default function TodayTasksWidget() {
 
         return (
           <div key={block} className="mb-6 relative">
-            <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-gray-400">
+            <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-surface-2/60">
               {t(`dashboard.timeBlocks.${block}`)}
-              <div className="h-[1px] flex-1 bg-surface-1"></div>
+              <div className="h-[1px] flex-1 bg-primary/20"></div>
             </SectionHeader>
             <div>
               {blockTasks.map(renderTask)}
@@ -196,7 +196,7 @@ export default function TodayTasksWidget() {
       })}
 
       {tasks.length === 0 && overdueTasks.length === 0 && (
-        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-slate-500" variant="default">
+        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-surface-2/40" variant="default">
           {t('dashboard.noTasksFound')}
         </ListRow>
       )}
@@ -212,26 +212,26 @@ export default function TodayTasksWidget() {
           >
             <div className="flex items-center gap-3">
               {allOverdueCompleted ? (
-                <Check className="w-5 h-5 text-emerald-400" strokeWidth={3} />
+                <Check className="w-5 h-5 text-primary" strokeWidth={3} />
               ) : (
-                <History className="w-5 h-5 text-rose-300" />
+                <History className="w-5 h-5 text-danger" />
               )}
-              <span className={`font-semibold text-[15px] ${allOverdueCompleted ? 'text-emerald-100' : 'text-rose-100'}`}>
+              <span className={`font-semibold text-[15px] ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`}>
                 {t('dashboard.overdueSection')}
               </span>
             </div>
             <div className="flex items-center gap-3">
               <Badge
-                className={`size-6 rounded-full p-0 text-background-dark ${allOverdueCompleted ? 'bg-emerald-400 text-background-dark' : 'bg-danger/80 text-background-dark'}`}
+                className={`size-6 rounded-full p-0 text-surface-1 ${allOverdueCompleted ? 'bg-primary text-surface-1' : 'bg-danger/80 text-surface-1'}`}
                 size="sm"
                 tone="neutral"
               >
                 {overdueTasks.filter(t => t.status !== 'completed').length}
               </Badge>
               {isPendingExpanded ? (
-                <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
+                <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />
               ) : (
-                <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
+                <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />
               )}
             </div>
           </ListRow>

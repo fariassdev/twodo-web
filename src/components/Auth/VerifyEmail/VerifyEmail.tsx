@@ -41,7 +41,7 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
   return (
     <div className="min-h-screen flex flex-col px-5 pt-12 pb-8 bg-background-dark">
       <div className="flex items-center gap-2 mb-8">
-        <Button className="gap-2 text-sm text-slate-400 hover:text-slate-200" onClick={handleSignOut} size="sm" variant="ghost">
+        <Button className="gap-2 text-sm text-surface-2/40 hover:text-surface-2" onClick={handleSignOut} size="sm" variant="ghost">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -55,19 +55,19 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-slate-100 mb-3">{t('auth.verifyEmail.title')}</h1>
+        <h1 className="text-3xl font-bold text-surface-2 mb-3">{t('auth.verifyEmail.title')}</h1>
         {email ? (
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm text-surface-2/60 leading-relaxed">
             {t('auth.verifyEmail.descriptionWithEmail', { email })}
           </p>
         ) : (
-          <p className="text-sm text-slate-400 leading-relaxed">{t('auth.verifyEmail.description')}</p>
+          <p className="text-sm text-surface-2/60 leading-relaxed">{t('auth.verifyEmail.description')}</p>
         )}
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
         <Card padding="md" radius="2xl" variant="surface">
-          <p className="text-sm text-slate-300 leading-relaxed">{t('auth.verifyEmail.hint')}</p>
+          <p className="text-sm text-surface-2/50 leading-relaxed">{t('auth.verifyEmail.hint')}</p>
         </Card>
 
         {resendSuccess && (
@@ -90,7 +90,7 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
           </Button>
         )}
 
-        <p className="mt-auto text-center text-sm text-slate-400">
+        <p className="mt-auto text-center text-sm text-surface-2/60">
           {t('auth.verifyEmail.wrongAccount')}{' '}
           <Link to="/auth/login" className="font-semibold text-primary hover:text-primary/80" onClick={handleSignOut}>
             {t('auth.verifyEmail.signOut')}

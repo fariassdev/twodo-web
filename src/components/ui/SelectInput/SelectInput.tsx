@@ -9,7 +9,7 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
       elevated: 'rounded-xl border border-border-subtle bg-surface-2/60 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       chip: 'rounded-full border border-primary/25 bg-surface-1/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      slate: 'rounded-lg border border-border-subtle bg-surface-2 px-2 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      slate: 'rounded-lg border border-border-subtle bg-surface-1 px-2 has-[:focus]:ring-1 has-[:focus]:ring-primary',
     },
     size: {
       sm: 'h-9',
@@ -23,7 +23,7 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
   },
 });
 
-const selectVariants = cva('w-full appearance-none bg-transparent text-slate-100 focus:outline-none', {
+const selectVariants = cva('w-full appearance-none bg-transparent text-surface-2 focus:outline-none', {
   variants: {
     typography: {
       base: 'text-sm font-normal',
@@ -62,15 +62,15 @@ const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>(functi
 ) {
   const indicator = hideIndicator
     ? null
-    : (trailing ?? <span className="material-symbols-outlined text-base text-slate-300">expand_more</span>);
+    : (trailing ?? <span className="material-symbols-outlined text-base text-surface-2/60">expand_more</span>);
 
   return (
     <div className={cn(wrapperVariants({ variant, size }), className)}>
-      {leading ? <span className="shrink-0 text-slate-400">{leading}</span> : null}
+      {leading ? <span className="shrink-0 text-surface-2/60">{leading}</span> : null}
       <select className={cn(selectVariants({ typography }), selectClassName)} id={id} ref={ref} {...props}>
         {children}
       </select>
-      {indicator ? <span className="pointer-events-none shrink-0 text-slate-400">{indicator}</span> : null}
+      {indicator ? <span className="pointer-events-none shrink-0 text-surface-2/60">{indicator}</span> : null}
     </div>
   );
 });

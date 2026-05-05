@@ -35,7 +35,7 @@ export default function UpcomingTasksWidget() {
   return (
     <div className="mt-8 mb-24">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white pr-2 tracking-tight">{t('dashboard.upcomingTasks')}</h2>
+        <h2 className="text-2xl font-bold text-surface-2 pr-2 tracking-tight">{t('dashboard.upcomingTasks')}</h2>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -47,16 +47,16 @@ export default function UpcomingTasksWidget() {
               as="div"
               key={task.id}
               onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-              className="justify-between overflow-hidden p-4 hover:bg-surface-3 transition-colors"
+              className="justify-between overflow-hidden p-4 hover:bg-hover transition-colors"
               interactive
               variant="default"
             >
               <div className="flex items-center gap-4 flex-1 truncate">
                 <div className="flex flex-col items-center justify-center min-w-[36px]">
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">{dow}</span>
-                  <span className="text-xl font-bold text-white leading-none mt-0.5">{day}</span>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{dow}</span>
+                  <span className="text-xl font-bold text-surface-2 leading-none mt-0.5">{day}</span>
                 </div>
-                <div className="flex-1 truncate font-semibold text-white text-[15px]">
+                <div className="flex-1 truncate font-semibold text-[15px]">
                   {task.title}
                 </div>
               </div>

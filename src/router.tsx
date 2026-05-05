@@ -59,7 +59,7 @@ function RootComponent() {
 
   return (
     <AuthQueryContext.Provider value={authContextQuery}>
-      <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
+      <div className="bg-background-dark text-surface-2 min-h-screen font-display flex flex-col">
         <Outlet />
       </div>
     </AuthQueryContext.Provider>

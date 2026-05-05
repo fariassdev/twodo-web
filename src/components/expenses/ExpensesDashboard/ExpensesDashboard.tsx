@@ -109,14 +109,14 @@ export default function ExpensesDashboard() {
       >
         <Card className="relative w-full bg-surface-1 shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
-          <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-xl font-bold text-surface-2">{t('expenses.settlement.title')}</h2>
+          <p className="mt-2 text-sm text-surface-2/80">
             {balance?.direction === 'you_are_owed'
               ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
               : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
           </p>
 
-          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-surface-2/60">
             <TextInput
               maxLength={200}
               placeholder={t('expenses.settlement.notePlaceholder')}
@@ -137,7 +137,7 @@ export default function ExpensesDashboard() {
             {createSettlementMutation.isPending ? t('common.saving') : t('expenses.settlement.confirmButton')}
           </Button>
           <Button
-            className="mt-2 border-primary/20 text-sm font-semibold text-slate-300"
+            className="mt-2 border-primary/20 text-sm font-semibold text-surface-2/60"
             onClick={() => setSettlementSheetOpen(false)}
             fullWidth
             variant="subtle"
@@ -153,7 +153,7 @@ export default function ExpensesDashboard() {
         rightSlot={(
           <Button
             aria-label={t('expenses.openSearch')}
-            className="text-slate-100"
+            className="text-surface-2"
             onClick={() => navigate({ to: '/expenses/list' })}
             size="icon"
             variant="icon"
@@ -180,11 +180,11 @@ export default function ExpensesDashboard() {
             <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-primary/60">
               {t('expenses.currentBalance')}
             </p>
-            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-white`}>
+            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-surface-2`}>
               {balanceHeadline}
             </h2>
 
-            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-slate-400' : 'text-primary'}`}>
+            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-surface-2/40' : 'text-primary'}`}>
               {amountLabel}
             </p>
 
@@ -211,11 +211,11 @@ export default function ExpensesDashboard() {
 
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-surface-2">{t('expenses.historyTitle')}</h3>
           </div>
 
           {activityItems.length === 0 ? (
-            <Card className="text-center text-sm text-slate-300" padding="lg" radius="2xl" variant="surface">
+            <Card className="text-center text-sm text-surface-2/60" padding="lg" radius="2xl" variant="surface">
               {t('expenses.emptyFirstExpense')}
             </Card>
           ) : (
