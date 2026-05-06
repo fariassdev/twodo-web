@@ -46,6 +46,9 @@
   --color-surface-1: #EADDC3;
   --color-surface-2: #493421;
   --color-surface-3: #513823;
+  --color-toast-bg: #2D1E12;
+  --color-toast-text: #F9F3E9;
+  --color-toast-border: rgba(207, 116, 85, 0.2);
   --color-border-subtle: rgb(73 52 33 / 0.1);
   --color-border-strong: rgb(207 116 85 / 0.2);
   --color-success: #8BA888;
@@ -60,6 +63,7 @@
   --shadow-card-sm: 2px 2px 8px rgb(73 52 33 / 0.15);
   --shadow-card-md: 2px 4px 10px rgb(73 52 33 / 0.2);
   --shadow-card-lg: 2px 4px 14px rgb(73 52 33 / 0.25);
+  --shadow-toast: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2), 0 25px 50px -12px rgb(0 0 0 / 0.3);
   --shadow-button: 4px 8px 14px rgb(73 52 33 / 0.4);
   --shadow-glow-primary: 0 4px 14px rgb(207 116 85 / 0.3);
   --color-hover: rgb(73 52 33 / 0.05);

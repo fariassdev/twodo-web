@@ -14,6 +14,7 @@ import {
   exposeTelemetryOnWindow,
   markAppBoot,
 } from './lib/telemetry';
+import { Toaster } from './components/ui/Snackbar';
 import './index.css';
 import './i18n';
 
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
       }}
     >
       <RouterProvider router={router} />
+      <Toaster />
     </PersistQueryClientProvider>
   </StrictMode>,
 );

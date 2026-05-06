@@ -1,2 +1,2 @@
-export * from './Snackbar';
-export { default } from './Snackbar';
+export * from './SonnerToaster';
+export { toast } from 'sonner';

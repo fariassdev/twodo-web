@@ -17,6 +17,7 @@ import Button from '../ui/Button';
 import TextInput from '../ui/TextInput';
 import FormField from '../ui/FormField';
 import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
+import { toast } from '../ui/Snackbar';
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -95,10 +96,10 @@ export default function Profile() {
         bio: updated.bio ?? '',
         avatarUrl: updated.avatar_url ?? '',
       });
-      alert(t('profile.alertSaved'));
+      toast.success(t('profile.alertSaved'));
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert(t('profile.alertSaveError'));
+      toast.error(t('profile.alertSaveError'));
     }
   }
 
