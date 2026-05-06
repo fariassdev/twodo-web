@@ -10,8 +10,8 @@ import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
-import IconBox from '../../ui/IconBox';
 import TextInput from '../../ui/TextInput';
+import TwodoLogo from '../../ui/TwodoLogo';
 
 type PageState = 'loading' | 'ready' | 'expired' | 'success';
 
@@ -73,68 +73,52 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-5 pt-12 pb-8 bg-background-dark">
-      <Link
-        to="/auth/login"
-        className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 mb-8 self-start"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span className="font-semibold">twodo</span>
-      </Link>
-
-      <div className="mb-8">
-        <IconBox className="mb-6" size="lg" tone="primary">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </IconBox>
-        <h1 className="text-3xl font-bold text-slate-100 mb-3">{t('auth.resetPassword.title')}</h1>
-        <p className="text-sm text-slate-400 leading-relaxed">{t('auth.resetPassword.description')}</p>
-      </div>
-
-      {pageState === 'loading' && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md shadow-xl" padding="xl" variant="surface">
+        <div className="mb-6 text-center">
+          <TwodoLogo width={180} className="mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-surface-2">{t('auth.resetPassword.title')}</h1>
+          <p className="mt-2 text-sm text-surface-2/60">{t('auth.resetPassword.description')}</p>
         </div>
-      )}
 
-      {pageState === 'expired' && (
-        <div className="flex-1 flex flex-col">
-          <Card className="mb-6" padding="lg" variant="error">
-            <p className="text-sm font-semibold text-rose-200 mb-1">{t('auth.resetPassword.expiredTitle')}</p>
-            <p className="text-sm text-slate-300">{t('auth.resetPassword.expiredDescription')}</p>
-          </Card>
-          <Link
-            to="/auth/forgot-password"
-            className="h-14 flex items-center justify-center rounded-2xl bg-primary font-bold text-background-dark text-base transition-colors hover:bg-primary/90"
-          >
-            {t('auth.resetPassword.requestNew')}
-          </Link>
-        </div>
-      )}
+        {pageState === 'loading' && (
+          <div className="py-12 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+          </div>
+        )}
 
-      {pageState === 'success' && (
-        <div className="flex-1 flex flex-col">
-          <Card className="mb-6" padding="lg" variant="info">
-            <p className="text-sm font-semibold text-primary mb-1">{t('auth.resetPassword.successTitle')}</p>
-            <p className="text-sm text-slate-300">{t('auth.resetPassword.successDescription')}</p>
-          </Card>
-        </div>
-      )}
+        {pageState === 'expired' && (
+          <div className="space-y-6 text-center">
+            <Card padding="md" variant="error">
+              <p className="text-sm font-semibold text-danger mb-1">{t('auth.resetPassword.expiredTitle')}</p>
+              <p className="text-sm text-surface-2/70">{t('auth.resetPassword.expiredDescription')}</p>
+            </Card>
+            <Link
+              to="/auth/forgot-password"
+              className="block w-full"
+            >
+              <Button fullWidth>{t('auth.resetPassword.requestNew')}</Button>
+            </Link>
+          </div>
+        )}
 
-      {pageState === 'ready' && (
-        <form className="flex-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4 mb-4">
+        {pageState === 'success' && (
+          <div className="py-6">
+            <Card padding="md" variant="info" className="text-center">
+              <p className="text-sm font-semibold text-primary mb-1">{t('auth.resetPassword.successTitle')}</p>
+              <p className="text-sm text-surface-2/70">{t('auth.resetPassword.successDescription')}</p>
+            </Card>
+          </div>
+        )}
+
+        {pageState === 'ready' && (
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <FormField error={errors.password ? t(errors.password.message!) : null} htmlFor="reset-password" label={t('auth.password')}>
               <TextInput
                 autoComplete="new-password"
                 id="reset-password"
                 placeholder={t('auth.passwordPlaceholder')}
-                size="lg"
                 type="password"
-                variant="elevated"
                 {...register('password')}
               />
             </FormField>
@@ -148,23 +132,22 @@ export default function ResetPassword() {
                 autoComplete="new-password"
                 id="reset-confirm-password"
                 placeholder={t('auth.confirmPasswordPlaceholder')}
-                size="lg"
                 type="password"
-                variant="elevated"
                 {...register('confirmPassword')}
               />
             </FormField>
-          </div>
 
-          {serverError && (
-            <ErrorBanner className="mb-4" message={serverError} />
-          )}
+            {serverError && (
+              <ErrorBanner message={serverError} />
+            )}
 
-          <Button className="mt-2" fullWidth loading={loading} size="lg" type="submit">
-            {t('auth.resetPassword.cta')}
-          </Button>
-        </form>
-      )}
+            <Button fullWidth loading={loading} type="submit">
+              {t('auth.resetPassword.cta')}
+            </Button>
+          </form>
+        )}
+      </Card>
     </div>
   );
 }
+
