@@ -17,10 +17,16 @@
     "hourSuffix": "h"
   },
   "runtimeBoundary": {
-    "title": "Algo fallo en esta seccion",
-    "description": "No pudimos renderizar {{section}}. Puedes reintentar sin salir de la app.",
-    "retry": "Reintentar",
-    "defaultSection": "esta area"
+    "title": "Un pequeño bache en el camino",
+    "description": "No hemos podido cargar {{section}}, pero podemos intentarlo de nuevo juntos.",
+    "retry": "Intentar de nuevo",
+    "defaultSection": "esta parte"
+  },
+  "errorPage": {
+    "notFoundTitle": "Página no encontrada",
+    "notFoundDescription": "Parece que te has desviado del camino. No te preocupes, ¡te ayudamos a volver!",
+    "backHome": "Volver al inicio",
+    "oops": "¡Ups! Algo ha salido mal"
   },
   "dataStatus": {
     "offline": "Modo sin conexion: mostrando datos en cache.",
@@ -28,10 +34,10 @@
     "syncing": "Sincronizando datos recientes..."
   },
   "queryState": {
-    "loadErrorTitle": "No se pudo cargar esta seccion",
-    "loadErrorDescription": "Revisa tu conexion e intentalo de nuevo.",
-    "retry": "Reintentar",
-    "mutationError": "No pudimos guardar tu ultima accion. Intentalo de nuevo."
+    "loadErrorTitle": "Vaya, algo no ha cargado bien",
+    "loadErrorDescription": "Parece que hay un problema de conexión. ¿Lo intentamos de nuevo?",
+    "retry": "Volver a intentar",
+    "mutationError": "No hemos podido guardar tu último cambio. Por favor, inténtalo de nuevo."
   },
   "topBar": {
     "back": "Volver",

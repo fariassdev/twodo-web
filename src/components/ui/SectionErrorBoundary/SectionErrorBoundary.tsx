@@ -1,6 +1,7 @@
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
+import ErrorPage from '../ErrorPage';
 
 function isRecoverableModuleLoadError(error: Error): boolean {
   const message = error.message.toLowerCase();
@@ -46,18 +47,13 @@ export default function SectionErrorBoundary({
         const normalizedError = error instanceof Error ? error : new Error(String(error));
 
         return (
-          <div className="mx-auto my-4 w-full max-w-md rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm">
-            <p className="font-semibold text-rose-200">{t('runtimeBoundary.title')}</p>
-            <p className="mt-1 text-rose-100/80">{t('runtimeBoundary.description', { section: sectionName ?? t('runtimeBoundary.defaultSection') })}</p>
-            {import.meta.env.DEV && <p className="mt-2 break-words text-xs text-rose-100/70">{normalizedError.message}</p>}
-            <button
-              className="mt-3 rounded-lg bg-rose-500/20 px-3 py-1.5 text-xs font-bold text-rose-100 transition-colors hover:bg-rose-500/30"
-              onClick={() => handleRetry(normalizedError, resetErrorBoundary)}
-              type="button"
-            >
-              {t('runtimeBoundary.retry')}
-            </button>
-          </div>
+          <ErrorPage
+            error={normalizedError}
+            onRetry={() => handleRetry(normalizedError, resetErrorBoundary)}
+            description={t('runtimeBoundary.description', {
+              section: sectionName ?? t('runtimeBoundary.defaultSection'),
+            })}
+          />
         );
       }}
     >

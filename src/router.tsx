@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import i18n from './i18n';
 import {
   Navigate,
   Outlet,
@@ -12,6 +13,7 @@ import { useScreenTelemetry } from './hooks/useScreenTelemetry';
 import { useAuthContextQuery } from './lib/queryHooks';
 import BottomNav from './components/ui/BottomNav';
 import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
+import ErrorPage from './components/ui/ErrorPage';
 
 const Dashboard = React.lazy(() => import('./components/dashboard'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
@@ -504,7 +506,21 @@ const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({ 
+  routeTree,
+  defaultErrorComponent: ({ error, reset }) => (
+    <ErrorPage 
+      error={error} 
+      onRetry={reset} 
+    />
+  ),
+  defaultNotFoundComponent: () => (
+    <ErrorPage 
+      title={i18n.t('errorPage.notFoundTitle')} 
+      description={i18n.t('errorPage.notFoundDescription')} 
+    />
+  ),
+});
 
 declare module '@tanstack/react-router' {
   interface Register {

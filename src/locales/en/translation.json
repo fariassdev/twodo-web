@@ -17,10 +17,16 @@
     "hourSuffix": "h"
   },
   "runtimeBoundary": {
-    "title": "Something went wrong in this section",
-    "description": "We couldn't render {{section}}. You can retry without leaving the app.",
+    "title": "A little bump in the road",
+    "description": "We couldn't load {{section}}, but we can try again together.",
     "retry": "Try again",
-    "defaultSection": "this area"
+    "defaultSection": "this part"
+  },
+  "errorPage": {
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "It seems you've strayed from the path. Don't worry, we'll help you get back!",
+    "backHome": "Back to home",
+    "oops": "Oops! Something went wrong"
   },
   "dataStatus": {
     "offline": "Offline mode: showing cached data.",
@@ -28,10 +34,10 @@
     "syncing": "Syncing latest data..."
   },
   "queryState": {
-    "loadErrorTitle": "Couldn't load this section",
-    "loadErrorDescription": "Check your connection and try again.",
-    "retry": "Retry",
-    "mutationError": "We couldn't save your latest action. Please try again."
+    "loadErrorTitle": "Oops, something didn't load right",
+    "loadErrorDescription": "It looks like there's a connection issue. Shall we try again?",
+    "retry": "Try again",
+    "mutationError": "We couldn't save your last change. Please try again."
   },
   "topBar": {
     "back": "Go back",
