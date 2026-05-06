@@ -310,7 +310,7 @@ export default function TaskDetails() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-32">
+    <div className="flex flex-col min-h-screen">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
@@ -414,7 +414,7 @@ export default function TaskDetails() {
         } : undefined}
       />
 
-      <main className="flex-1 px-4 max-w-md mx-auto w-full">
+      <main className="px-4 max-w-md mx-auto w-full pb-20">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
         <div className="pt-4 pb-6">

@@ -282,7 +282,7 @@ export default function ExpensesListPage() {
   }
 
   return (
-    <div className="pb-24 bg-background-dark min-h-screen">
+    <div className="bg-background-dark min-h-screen">
       <PageHeader
         title={t('expenses.allExpenses')}
         subtitle={t('nav.expenses')}
@@ -291,7 +291,7 @@ export default function ExpensesListPage() {
         }}
       />
 
-      <main className="mx-auto max-w-md px-4 pt-4 pb-8">
+      <main className="mx-auto max-w-md w-full px-4 pt-4 pb-20">
         <TextInput
           className="rounded-2xl border-border-subtle bg-surface-2"
           inputMode="search"

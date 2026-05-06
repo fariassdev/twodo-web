@@ -98,7 +98,7 @@ export default function Profile() {
 
 
   return (
-    <div className="min-h-screen bg-background-dark text-surface-2 pb-40">
+    <div className="min-h-screen bg-background-dark text-surface-2">
       <PageHeader
         title={t('profile.title')}
         subtitle={t('nav.profile')}
@@ -107,7 +107,7 @@ export default function Profile() {
         }}
       />
 
-      <main className="max-w-md mx-auto px-6 pt-6 space-y-8">
+      <main className="max-w-md mx-auto px-6 pt-6 pb-20 space-y-8">
         {authError && (
           <p className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100">
             {authError}

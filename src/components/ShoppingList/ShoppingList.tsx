@@ -113,10 +113,10 @@ export default function ShoppingList() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-24 bg-background-dark">
+    <div className="flex flex-col min-h-screen bg-background-dark">
       <PageHeader title={t('shopping.title')} subtitle={t('nav.shopping')} />
 
-      <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
+      <main className="px-6 max-w-md mx-auto w-full pb-20">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
         {actionError && (
           <p className="mb-3 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-medium text-danger">

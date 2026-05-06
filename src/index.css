@@ -66,8 +66,9 @@
   --motion-fast: 75ms;
   --motion-base: 200ms;
   --motion-slow: 250ms;
-  --z-modal: 50;
-  --z-fab: 50;
+  --z-index-modal: 50;
+  --z-index-fab: 50;
+  --z-index-nav: 60;
   --font-display: "Plus Jakarta Sans", sans-serif;
 }
 
@@ -81,7 +82,7 @@ body {
   width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(207, 116, 85, 0.2);
+  background: rgba(207, 116, 85, 0.3);
   border-radius: 10px;
 }
 

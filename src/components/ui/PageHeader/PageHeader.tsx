@@ -75,7 +75,7 @@ export default function PageHeader({
   }, [menuOpen]);
 
   return (
-    <div className={cn("flex items-center justify-between px-4 p-6 border-b border-border-subtle bg-background-dark", className)}>
+    <div className={cn("sticky top-0 z-50 flex items-center justify-between px-4 py-6 border-b border-border-subtle bg-background-dark/90 backdrop-blur-xl", className)}>
       <div className="flex items-center gap-4">
         {backAction && (
           <Button

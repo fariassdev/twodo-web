@@ -279,10 +279,12 @@ export const mainLayoutRoute = createRoute({
   id: 'mainLayout',
   getParentRoute: () => privateGateRoute,
   component: () => (
-    <>
-      <Outlet />
+    <div className="flex h-screen flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+        <Outlet />
+      </div>
       <BottomNav />
-    </>
+    </div>
   ),
 });
 

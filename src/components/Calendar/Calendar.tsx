@@ -346,7 +346,7 @@ export default function Calendar() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden relative bg-background-dark">
+    <div className="flex h-full flex-col overflow-hidden relative bg-background-dark">
       <div ref={calendarRef} className="shrink-0 flex flex-col">
       <PageHeader
         title={t('calendar.title')}

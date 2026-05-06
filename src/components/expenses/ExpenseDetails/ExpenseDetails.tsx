@@ -213,7 +213,7 @@ export default function ExpenseDetails() {
         )}
       />
 
-      <main className="mx-auto max-w-md px-4 pt-6">
+      <main className="mx-auto max-w-md px-4 pt-6 pb-20">
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <section className="rounded-3xl border border-primary/20 bg-primary/10 p-6">

@@ -77,10 +77,10 @@ export default function Metrics() {
   const weeklyDeltaDisplay = `${weeklyDelta >= 0 ? '+' : ''}${weeklyDelta}`;
 
   return (
-    <div className="pb-24 flex flex-col min-h-screen bg-background-dark">
+    <div className="flex flex-col min-h-screen bg-background-dark">
       <PageHeader title={t('metrics.title')} subtitle={t('nav.metrics')} />
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar max-w-md mx-auto w-full">
+      <main className="custom-scrollbar max-w-md mx-auto w-full pb-20">
         <div className="px-4 pt-2">
           <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
         </div>
