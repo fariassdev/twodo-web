@@ -136,7 +136,7 @@ export default function Profile() {
         {/* Avatar Section */}
         <div className="flex flex-col items-center">
           <div className="relative">
-            <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-primary/20 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-surface-1 flex items-center justify-center">
               {avatarUrlValue ? (
                 <img 
                   src={avatarUrlValue}
@@ -144,7 +144,9 @@ export default function Profile() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="material-symbols-outlined text-4xl text-primary">person</span>
+                <span className="text-5xl font-bold text-primary">
+                  {nameValue?.[0]?.toUpperCase() || '?'}
+                </span>
               )}
             </div>
             <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-lg border-4 border-surface-1 hover:scale-105 transition-transform">
