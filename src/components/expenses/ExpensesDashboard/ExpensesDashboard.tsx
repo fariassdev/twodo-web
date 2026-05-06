@@ -168,7 +168,7 @@ export default function ExpensesDashboard() {
 
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-2xl shadow-black/40 border border-border-strong">
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-lg shadow-black/10 border border-border-strong">
           <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-10 -right-6 opacity-[0.07] pointer-events-none">
             <span className="material-symbols-outlined !text-[12rem] select-none">

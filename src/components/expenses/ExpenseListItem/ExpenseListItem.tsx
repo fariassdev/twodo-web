@@ -84,7 +84,7 @@ export default function ExpenseListItem({
 
       {/* Info Container */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-xl font-bold tracking-tight text-surface-2">
+        <h3 className="truncate text-base font-bold tracking-tight text-surface-2">
           {expense.description?.trim() || categoryName}
         </h3>
         <p className="text-sm font-medium text-surface-2/60">
