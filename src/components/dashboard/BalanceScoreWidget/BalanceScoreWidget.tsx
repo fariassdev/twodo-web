@@ -39,12 +39,24 @@ export default function BalanceScoreWidget() {
 
     const pct = Math.round((myScore / total) * 100);
 
-    if (pct >= 40 && pct <= 60) {
-      return { percentage: pct, colorClass: 'text-primary stroke-primary', secondaryText: t('dashboard.balanceScoreText') };
-    } else if (pct < 30 || pct > 70) {
-      return { percentage: pct, colorClass: 'text-danger stroke-danger', secondaryText: t('dashboard.balanceScoreImbalance') };
+    if (pct >= 42 && pct <= 58) {
+      return { 
+        percentage: pct, 
+        colorClass: 'text-success stroke-success', 
+        secondaryText: t('dashboard.balanceScoreText') 
+      };
+    } else if (pct >= 30 && pct <= 70) {
+      return { 
+        percentage: pct, 
+        colorClass: 'text-warning stroke-warning', 
+        secondaryText: t('dashboard.balanceScoreImbalance') 
+      };
     } else {
-      return { percentage: pct, colorClass: 'text-warning stroke-warning', secondaryText: t('dashboard.balanceScoreImbalance') };
+      return { 
+        percentage: pct, 
+        colorClass: 'text-danger stroke-danger', 
+        secondaryText: t('dashboard.balanceScoreImbalance') 
+      };
     }
   }, [scoreData, profile, profiles, t]);
 
@@ -89,7 +101,7 @@ export default function BalanceScoreWidget() {
       </div>
       <div className="flex flex-col">
         <div className="flex items-center gap-2 mb-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${colorClass.includes('primary') ? 'bg-primary' : colorClass.includes('danger') ? 'bg-danger' : 'bg-warning'}`}></div>
+          <div className={`w-1.5 h-1.5 rounded-full ${colorClass.includes('success') ? 'bg-success' : colorClass.includes('danger') ? 'bg-danger' : colorClass.includes('warning') ? 'bg-warning' : 'bg-primary'}`}></div>
           <Badge className="bg-transparent p-0 font-bold uppercase tracking-wider text-surface-2/60" size="xs" tone="neutral">
             {t('dashboard.balanceBadge')}
           </Badge>

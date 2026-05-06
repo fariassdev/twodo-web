@@ -36,7 +36,7 @@ export default function DataStatusBanner({
 
   if (isOffline) {
     return (
-      <div className="mb-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-100">
+      <div className="mb-3 rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">
         {t('dataStatus.offline')}
       </div>
     );
@@ -47,7 +47,7 @@ export default function DataStatusBanner({
   }
 
   return (
-    <div className="mb-3 rounded-xl border border-slate-400/40 bg-slate-500/10 px-3 py-2 text-xs font-medium text-slate-200">
+    <div className="mb-3 rounded-xl border border-surface-2/40 bg-surface-2/10 px-3 py-2 text-xs font-medium text-surface-2">
       {t('dataStatus.stale')}
     </div>
   );
