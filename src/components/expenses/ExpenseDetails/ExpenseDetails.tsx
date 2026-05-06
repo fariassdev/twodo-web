@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
@@ -191,17 +191,16 @@ export default function ExpenseDetails() {
 
   return (
     <div className="min-h-screen pb-24">
-      <TopBar
-        title={t('expenses.expenseDetail')}
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+      <PageHeader
+        title={expense.description || categoryLabel}
+        subtitle={t('expenses.expenseDetail')}
+        backAction={{
           onClick: goBackToExpenses,
         }}
         rightSlot={(
           <Button
             aria-label={t('expenses.deleteExpense')}
-            className="text-surface-2"
+            className="text-surface-2/60 hover:text-surface-2"
             onClick={handleDelete}
             size="icon"
             variant="icon"

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import DataStatusBanner from '../../ui/DataStatusBanner';
@@ -147,13 +147,13 @@ export default function ExpensesDashboard() {
         </Card>
       </Modal>
 
-      <TopBar
+      <PageHeader
         title={t('expenses.dashboardTitle')}
-        titleIcon="payments"
+        subtitle={t('nav.expenses')}
         rightSlot={(
           <Button
             aria-label={t('expenses.openSearch')}
-            className="text-surface-2"
+            className="text-surface-2/60 hover:text-surface-2"
             onClick={() => navigate({ to: '/expenses/list' })}
             size="icon"
             variant="icon"

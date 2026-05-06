@@ -9,7 +9,7 @@ import {
 } from '../../lib/queryHooks';
 import { queryKeys } from '../../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../ui/TopBar';
+import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
@@ -80,7 +80,7 @@ export default function Metrics() {
 
   return (
     <div className="pb-24 flex flex-col min-h-screen bg-background-dark">
-      <TopBar title={t('metrics.title')} titleIcon="monitoring" />
+      <PageHeader title={t('metrics.title')} subtitle={t('nav.metrics')} />
 
       <main className="flex-1 overflow-y-auto custom-scrollbar max-w-md mx-auto w-full">
         <div className="px-4 pt-2">

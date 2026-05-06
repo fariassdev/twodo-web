@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import QueryErrorState from '../../ui/QueryErrorState';
@@ -283,11 +283,10 @@ export default function ExpensesListPage() {
 
   return (
     <div className="pb-24 bg-background-dark min-h-screen">
-      <TopBar
+      <PageHeader
         title={t('expenses.allExpenses')}
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+        subtitle={t('nav.expenses')}
+        backAction={{
           onClick: () => navigate({ to: '/expenses' }),
         }}
       />

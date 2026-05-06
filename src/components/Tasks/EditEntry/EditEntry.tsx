@@ -11,7 +11,7 @@ import {
 import type { UpdateTaskInput, CreateTaskInput } from '../../../lib/queries';
 import type { Task, Profile } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import FormField from '../../ui/FormField';
@@ -308,12 +308,10 @@ export default function EditEntry() {
         </Card>
       </Modal>
 
-      <TopBar
+      <PageHeader
         title={t('entryEdit.title')}
-        titleIcon="edit_note"
-        leftAction={{
-          ariaLabel: t('topBar.close'),
-          icon: 'close',
+        subtitle={type === 'task' ? t('entryForm.typeTask') : t('entryForm.typeEvent')}
+        backAction={{
           onClick: () => router.history.back(),
         }}
         rightSlot={(

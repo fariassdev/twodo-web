@@ -13,7 +13,7 @@ import {
 import { queryKeys } from '../../lib/queryKeys';
 import type { ShoppingItem as ShoppingItemType } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../ui/TopBar';
+import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
@@ -114,7 +114,7 @@ export default function ShoppingList() {
 
   return (
     <div className="flex flex-col min-h-screen pb-24 bg-background-dark">
-      <TopBar title={t('shopping.title')} titleIcon="shopping_cart" />
+      <PageHeader title={t('shopping.title')} subtitle={t('nav.shopping')} />
 
       <main className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />

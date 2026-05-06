@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
@@ -111,11 +111,10 @@ export default function CreateExpense() {
 
   return (
     <div className="min-h-screen">
-      <TopBar
+      <PageHeader
         title={t('expenses.newExpense')}
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+        subtitle={t('nav.expenses')}
+        backAction={{
           onClick: () => navigate({ to: '/expenses' }),
         }}
         rightSlot={(

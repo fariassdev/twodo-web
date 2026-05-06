@@ -9,7 +9,7 @@ import {
 import { queryKeys } from '../../lib/queryKeys';
 import type { Profile, Task } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../ui/TopBar';
+import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import SelectInput from '../ui/SelectInput';
@@ -348,9 +348,9 @@ export default function Calendar() {
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden relative bg-background-dark">
       <div ref={calendarRef} className="shrink-0 flex flex-col">
-        <TopBar
-          title={t('calendar.title')}
-        titleIcon="calendar_month"
+      <PageHeader
+        title={t('calendar.title')}
+        subtitle={t('nav.calendar')}
         rightMenu={{
           ariaLabel: t('topBar.openMenu'),
           closeAriaLabel: t('topBar.closeMenu'),

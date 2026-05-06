@@ -117,7 +117,7 @@
     }
   },
   "calendar": {
-    "title": "Our Calendar",
+    "title": "Our schedule",
     "hideDeleted": "Hide deleted",
     "showDeleted": "Show deleted",
     "addEvent": "+ Add Event",
@@ -299,7 +299,7 @@
     "alertSaveError": "An error occurred while saving the profile."
   },
   "shopping": {
-    "title": "Shopping List",
+    "title": "Grocery list",
     "addToList": "Add to list",
     "newItemPlaceholder": "What's missing?",
     "toBuyWithCount": "To Buy ({{count}})",
@@ -307,7 +307,7 @@
     "purchasedWithCount": "Purchased ({{count}})"
   },
   "expenses": {
-    "dashboardTitle": "Expenses",
+    "dashboardTitle": "Shared finances",
     "allExpenses": "All expenses",
     "expenseDetail": "Expense details",
     "newExpense": "New expense",

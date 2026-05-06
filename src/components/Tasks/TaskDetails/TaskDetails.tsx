@@ -15,7 +15,7 @@ import {
 } from '../../../lib/queryHooks';
 import { queryKeys } from '../../../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import DataStatusBanner from '../../ui/DataStatusBanner';
 import QueryErrorState from '../../ui/QueryErrorState';
 import Button from '../../ui/Button';
@@ -368,12 +368,10 @@ export default function TaskDetails() {
         />
       )}
 
-      <TopBar
-        title={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
-        titleIcon={task.type === 'event' ? 'event' : 'task_alt'}
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+      <PageHeader
+        title={task.title}
+        subtitle={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
+        backAction={{
           onClick: () => navigate({ to: '/' }),
         }}
         rightMenu={!task.deleted_at ? {

@@ -11,7 +11,7 @@ import {
   useUpdateProfileMutation,
 } from '../../lib/queryHooks';
 import type { Profile } from '../../lib/types';
-import TopBar from '../ui/TopBar';
+import PageHeader from '../ui/PageHeader';
 import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
 
 export default function Profile() {
@@ -101,12 +101,10 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background-dark text-surface-2 pb-40">
-      <TopBar
+      <PageHeader
         title={t('profile.title')}
-        titleIcon="person"
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+        subtitle={t('nav.profile')}
+        backAction={{
           onClick: () => navigate({ to: '/' }),
         }}
       />

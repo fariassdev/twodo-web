@@ -117,7 +117,7 @@
     }
   },
   "calendar": {
-    "title": "Nuestro calendario",
+    "title": "Nuestra agenda",
     "hideDeleted": "Ocultar eliminadas",
     "showDeleted": "Ver eliminadas",
     "addEvent": "+ Añadir evento",
@@ -297,7 +297,7 @@
     "alertSaveError": "Ocurrió un error al guardar el perfil."
   },
   "shopping": {
-    "title": "Lista de compra",
+    "title": "Cesta de la compra",
     "addToList": "Añadir a la lista",
     "newItemPlaceholder": "¿Qué falta?",
     "toBuyWithCount": "Por comprar ({{count}})",
@@ -305,7 +305,7 @@
     "purchasedWithCount": "Comprados ({{count}})"
   },
   "expenses": {
-    "dashboardTitle": "Gastos",
+    "dashboardTitle": "Cuentas comunes",
     "allExpenses": "Todos los gastos",
     "expenseDetail": "Detalle de gasto",
     "newExpense": "Nuevo gasto",

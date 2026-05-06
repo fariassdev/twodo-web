@@ -5,7 +5,7 @@ import { useCreateTasksMutation, useProfilesQuery, useTaskCatalogQuery } from '.
 import type { CreateTaskInput } from '../../../lib/queries';
 import type { Profile, TaskCatalogItem } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../../../helpers/schemas';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -351,11 +351,10 @@ export default function CreateEntry() {
   if (step === 'catalog') {
     return (
       <div className="flex flex-col min-h-screen bg-background-dark">
-        <TopBar
+        <PageHeader
           title={t('entryCreate.selectTask')}
-          leftAction={{
-            ariaLabel: t('topBar.back'),
-            icon: 'arrow_back',
+          subtitle={t('nav.calendar')}
+          backAction={{
             onClick: handleBackFromCatalog,
           }}
         />
@@ -429,12 +428,10 @@ export default function CreateEntry() {
   // ═══════════════════════════════════════════════════════════════
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
-      <TopBar
+      <PageHeader
         title={t('entryCreate.title')}
-        titleIcon="edit_note"
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+        subtitle={type === 'task' ? t('entryForm.typeTask') : t('entryForm.typeEvent')}
+        backAction={{
           onClick: handleBackFromForm,
         }}
         rightSlot={(
