@@ -14,6 +14,8 @@ import type { Profile } from '../../lib/types';
 import PageHeader from '../ui/PageHeader';
 import FullPageLoading from '../ui/FullPageLoading';
 import Button from '../ui/Button';
+import TextInput from '../ui/TextInput';
+import FormField from '../ui/FormField';
 import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
 
 export default function Profile() {
@@ -35,11 +37,17 @@ export default function Profile() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { name: '', email: '', bio: '', avatarUrl: '' },
   });
+
+  const PREDEFINED_AVATARS = [
+    { id: '1', url: '/avatars/avatar-01.png' },
+    { id: '2', url: '/avatars/avatar-02.png' },
+  ];
 
   const avatarUrlValue = watch('avatarUrl');
   const nameValue = watch('name');
@@ -47,6 +55,7 @@ export default function Profile() {
   // Settings state (visual only for now)
   const [notifications, setNotifications] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -134,9 +143,9 @@ export default function Profile() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
         {/* Avatar Section */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center space-y-6">
           <div className="relative">
-            <div className="w-32 h-32 rounded-full border-2 border-primary overflow-hidden bg-surface-1 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full border-4 border-primary shadow-xl overflow-hidden bg-surface-1 flex items-center justify-center transition-all duration-300">
               {avatarUrlValue ? (
                 <img 
                   src={avatarUrlValue}
@@ -149,12 +158,101 @@ export default function Profile() {
                 </span>
               )}
             </div>
-            <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-lg border-4 border-surface-1 hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+            <button 
+              type="button"
+              onClick={() => setShowAvatarSelector(!showAvatarSelector)}
+              className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-lg border-4 border-surface-1 hover:scale-105 transition-transform"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {showAvatarSelector ? 'close' : 'photo_camera'}
+              </span>
             </button>
           </div>
+
+          {showAvatarSelector && (
+            <div className="w-full space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="text-center mb-2">
+                <p className="text-[10px] font-bold text-surface-2/40 uppercase tracking-widest">{t('profile.selectAvatar')}</p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-3">
+                {PREDEFINED_AVATARS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setValue('avatarUrl', option.url, { shouldDirty: true })}
+                    className={`relative group flex flex-col items-center space-y-2 p-2 rounded-2xl transition-all ${
+                      avatarUrlValue === option.url 
+                        ? 'bg-primary/10 ring-2 ring-primary' 
+                        : 'bg-primary/5 hover:bg-primary/10 ring-1 ring-primary/20'
+                    }`}
+                  >
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform">
+                      <img 
+                        src={option.url} 
+                        alt={t(`profile.avatarOption${option.id}`)} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-tight ${
+                      avatarUrlValue === option.url ? 'text-primary' : 'text-surface-2/60'
+                    }`}>
+                      {t(`profile.avatarOption${option.id}`)}
+                    </span>
+                    {avatarUrlValue === option.url && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md">
+                        <span className="material-symbols-outlined text-[12px] font-bold">check</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (PREDEFINED_AVATARS.some(a => a.url === avatarUrlValue)) {
+                      setValue('avatarUrl', '', { shouldDirty: true });
+                    }
+                  }}
+                  className={`relative group flex flex-col items-center space-y-2 p-2 rounded-2xl transition-all ${
+                    !PREDEFINED_AVATARS.some(a => a.url === avatarUrlValue)
+                      ? 'bg-primary/10 ring-2 ring-primary' 
+                      : 'bg-primary/5 hover:bg-primary/10 ring-1 ring-primary/20'
+                  }`}
+                >
+                  <div className="w-14 h-14 rounded-full bg-surface-1 flex items-center justify-center border-2 border-dashed border-primary/30 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-2xl text-primary/60">link</span>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-tight ${
+                    !PREDEFINED_AVATARS.some(a => a.url === avatarUrlValue) ? 'text-primary' : 'text-surface-2/60'
+                  }`}>
+                    {t('profile.avatarOptionCustom')}
+                  </span>
+                  {!PREDEFINED_AVATARS.some(a => a.url === avatarUrlValue) && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md">
+                      <span className="material-symbols-outlined text-[12px] font-bold">check</span>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {!PREDEFINED_AVATARS.some(a => a.url === avatarUrlValue) && (
+                <FormField
+                  error={errors.avatarUrl && t(errors.avatarUrl.message!)}
+                  className="pt-1 animate-in fade-in slide-in-from-top-2 duration-300"
+                >
+                  <TextInput
+                    placeholder={t('profile.avatarUrlPlaceholder')}
+                    variant="soft"
+                    leading={<span className="material-symbols-outlined text-lg">link</span>}
+                    {...register('avatarUrl')}
+                  />
+                </FormField>
+              )}
+            </div>
+          )}
           
-          <div className="mt-4 text-center">
+          <div className="text-center w-full">
             <h2 className="text-2xl font-bold">{nameValue || t('profile.noName')}</h2>
             <div className="mt-1 relative max-w-xs mx-auto">
                <input
@@ -173,51 +271,32 @@ export default function Profile() {
             {t('profile.personalInfo')}
           </h3>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="displayName" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.displayName')}</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">person</span>
-                <input
-                  id="displayName"
-                  type="text"
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
-                  {...register('name')}
-                />
-              </div>
-            </div>
+            <FormField
+              label={t('profile.displayName')}
+              htmlFor="displayName"
+              error={errors.name && t(errors.name.message!)}
+            >
+              <TextInput
+                id="displayName"
+                variant="soft"
+                leading={<span className="material-symbols-outlined text-xl">person</span>}
+                {...register('name')}
+              />
+            </FormField>
             
-            <div>
-              <label htmlFor="emailAddress" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.emailAddress')}</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">mail</span>
-                <input
-                  id="emailAddress"
-                  type="email"
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
-                  {...register('email')}
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 ml-1 text-xs font-medium text-rose-300">{t(errors.email.message!)}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="avatarUrl" className="block text-sm text-surface-2/60 mb-1.5 ml-1">{t('profile.avatarUrlLabel')}</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-xl">link</span>
-                <input
-                  id="avatarUrl"
-                  type="url"
-                  placeholder={t('profile.avatarUrlPlaceholder')}
-                  className="w-full pl-10 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-1 focus:ring-primary focus:border-primary text-surface-2 placeholder:text-surface-2/40 transition-all font-medium"
-                  {...register('avatarUrl')}
-                />
-              </div>
-              {errors.avatarUrl && (
-                <p className="mt-1 ml-1 text-xs font-medium text-rose-300">{t(errors.avatarUrl.message!)}</p>
-              )}
-            </div>
+            <FormField
+              label={t('profile.emailAddress')}
+              htmlFor="emailAddress"
+              error={errors.email && t(errors.email.message!)}
+            >
+              <TextInput
+                id="emailAddress"
+                type="email"
+                variant="soft"
+                leading={<span className="material-symbols-outlined text-xl">mail</span>}
+                {...register('email')}
+              />
+            </FormField>
           </div>
         </section>
 
