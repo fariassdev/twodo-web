@@ -114,9 +114,11 @@ export default function PageHeader({
             {profiles.slice(0, 2).map((p, i) => (
               <div
                 key={p.id}
-                className={`w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden bg-primary/20 ${
-                  i === 0 ? 'z-10' : 'z-0'
-                }`}
+                className={cn(
+                  "w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden",
+                  i === 0 ? "bg-surface-1" : "bg-primary/20",
+                  i === 0 ? "z-10" : "z-0"
+                )}
               >
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt={p.name || ''} className="w-full h-full object-cover" />
