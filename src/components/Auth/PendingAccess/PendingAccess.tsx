@@ -47,11 +47,12 @@ export default function PendingAccess() {
         </p>
 
         <Button
-          className="mt-6 border-primary/40 text-sm font-semibold text-primary"
+          className="mt-6"
           onClick={handleSignOut}
           disabled={loading}
           fullWidth
           variant="subtle"
+          size="lg"
         >
           {loading ? t('auth.loading') : t('auth.pending.signOut')}
         </Button>

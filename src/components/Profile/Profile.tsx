@@ -13,6 +13,7 @@ import {
 import type { Profile } from '../../lib/types';
 import PageHeader from '../ui/PageHeader';
 import FullPageLoading from '../ui/FullPageLoading';
+import Button from '../ui/Button';
 import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
 
 export default function Profile() {
@@ -270,36 +271,30 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* Save Button */}
-        <div className="pt-4">
-          <button 
+        {/* Buttons Section */}
+        <div className="pt-2 space-y-3">
+          <Button
             type="submit"
-            disabled={saving}
-            className="w-full bg-primary text-surface-1 font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+            loading={saving}
+            fullWidth
+            size="lg"
+            startIcon={!saving && <span className="material-symbols-outlined">save</span>}
           >
-            {saving ? (
-              <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
-            ) : (
-              <>
-                <span className="material-symbols-outlined mr-2">save</span>
-                <span>{t('profile.saveChanges')}</span>
-              </>
-            )}
-          </button>
-        </div>
-        </form>
+            {t('profile.saveChanges')}
+          </Button>
 
-        <div className="pt-0 pb-4">
-          <button
-            type="button"
+          <Button
+            variant="subtle"
             onClick={handleSignOut}
-            disabled={signOutMutation.isPending}
-            className="mt-3 w-full rounded-2xl border border-primary/30 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+            loading={signOutMutation.isPending}
+            fullWidth
+            size="lg"
           >
-            {signOutMutation.isPending ? t('auth.loading') : t('auth.signOut')}
-          </button>
+            {t('auth.signOut')}
+          </Button>
         </div>
-      </main>
+      </form>
+    </main>
     </div>
   );
 }
