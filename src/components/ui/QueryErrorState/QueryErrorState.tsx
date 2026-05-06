@@ -1,33 +1,38 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
+import { useNavigate } from '@tanstack/react-router';
 import Button from '../Button';
-import Card from '../Card';
 
 type QueryErrorStateProps = {
   onRetry: () => void;
-  variant?: 'inline' | 'full';
+  onBack?: () => void;
   title?: string;
   description?: string;
 };
 
 export default function QueryErrorState({ 
   onRetry, 
-  variant = 'inline',
+  onBack,
   title,
   description
 }: QueryErrorStateProps): React.ReactElement {
   const { t } = useTranslation();
-
-  const containerClasses = variant === 'full' 
-    ? "relative flex min-h-[60vh] w-full flex-col items-center justify-center overflow-hidden px-6 py-12 text-center"
-    : "flex w-full items-center justify-center p-4 py-12 text-center";
+  const navigate = useNavigate();
 
   const displayTitle = title ?? t('queryState.loadErrorTitle');
   const displayDescription = description ?? t('queryState.loadErrorDescription');
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      void navigate({ to: '/' });
+    }
+  };
+
   return (
-    <div className={containerClasses}>
+    <div className="relative flex min-h-[300px] w-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12 text-center">
       {/* Background blobs for premium feel */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -43,7 +48,7 @@ export default function QueryErrorState({
       />
 
       <div className="relative z-10 flex max-w-sm flex-col items-center">
-        {/* Stylized Icon Area like ErrorPage */}
+        {/* Stylized Icon Area */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -73,12 +78,12 @@ export default function QueryErrorState({
           </p>
         </motion.div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-8 w-full"
+          className="mt-8 flex w-full flex-col gap-3"
         >
           <Button
             variant="primary"
@@ -89,6 +94,16 @@ export default function QueryErrorState({
             className="shadow-glow-primary"
           >
             {t('queryState.retry')}
+          </Button>
+
+          <Button
+            variant="subtle"
+            size="lg"
+            onClick={handleBack}
+            startIcon={<span className="material-symbols-outlined !text-lg">arrow_back</span>}
+            fullWidth
+          >
+            {t('cta.back')}
           </Button>
         </motion.div>
       </div>

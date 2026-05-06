@@ -170,7 +170,12 @@ export default function ExpenseDetails() {
   }
 
   if (expenseQuery.isError) {
-    return <QueryErrorState onRetry={() => expenseQuery.refetch()} />;
+    return (
+      <QueryErrorState 
+        onRetry={() => expenseQuery.refetch()} 
+        onBack={goBackToExpenses}
+      />
+    );
   }
 
   if (!expense) {
@@ -178,7 +183,7 @@ export default function ExpenseDetails() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <p className="text-sm text-surface-2/60">{t('expenses.notFound')}</p>
         <Button onClick={goBackToExpenses} size="sm" variant="ghost">
-          {t('taskDetails.back')}
+          {t('cta.back')}
         </Button>
       </div>
     );

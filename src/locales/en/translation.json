@@ -10,7 +10,8 @@
   "cta": {
     "add": "Add",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "back": "Back"
   },
   "common": {
     "saving": "...",
@@ -409,7 +410,6 @@
       "individual": "Individual"
     },
     "notFound": "Task not found",
-    "back": "Back",
     "deleteRecurringTitle": "Delete recurring event",
     "deleteRecurringDescription": "This event repeats. What do you want to delete?",
     "deleteOnlyThis": "Only this event",

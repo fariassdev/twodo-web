@@ -305,7 +305,7 @@ export default function TaskDetails() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
         <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">
-          {t('taskDetails.back')}
+          {t('cta.back')}
         </Button>
       </div>
     );

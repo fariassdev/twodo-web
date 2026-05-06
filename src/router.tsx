@@ -401,7 +401,7 @@ interface TaskDetailsSearch {
 }
 
 export const taskDetailsRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/task/$taskId',
   validateSearch: (search: Record<string, unknown>): TaskDetailsSearch => ({
     editAssignment:
@@ -417,7 +417,7 @@ export const taskDetailsRoute = createRoute({
 });
 
 export const editEntryRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/task/$taskId/edit',
   component: () => (
     <RouteShell sectionName="edit-entry">
@@ -434,7 +434,7 @@ interface CreateEntrySearch {
 }
 
 export const createEntryRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/create',
   validateSearch: (search: Record<string, unknown>): CreateEntrySearch => {
     return {
@@ -455,7 +455,7 @@ export const createEntryRoute = createRoute({
 });
 
 export const createExpenseRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/expenses/new',
   component: () => (
     <RouteShell sectionName="expenses-new">
@@ -465,7 +465,7 @@ export const createExpenseRoute = createRoute({
 });
 
 export const expenseDetailsRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/expenses/$expenseId',
   validateSearch: (search: Record<string, unknown>): ExpenseDetailsSearch => ({
     from: readExpenseFromSearch(search?.from),
@@ -497,12 +497,12 @@ const routeTree = rootRoute.addChildren([
       profileRoute,
       expensesDashboardRoute,
       expensesListRoute,
+      taskDetailsRoute,
+      editEntryRoute,
+      createEntryRoute,
+      createExpenseRoute,
+      expenseDetailsRoute,
     ]),
-    taskDetailsRoute,
-    editEntryRoute,
-    createEntryRoute,
-    createExpenseRoute,
-    expenseDetailsRoute,
   ]),
 ]);
 

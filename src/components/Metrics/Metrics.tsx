@@ -60,7 +60,6 @@ export default function Metrics() {
   if (hasQueryError && !balance && points.length === 0) {
     return (
       <QueryErrorState
-        variant="full"
         onRetry={() => {
           if (!householdId) return;
 

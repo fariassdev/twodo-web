@@ -96,7 +96,7 @@ export default function ExpensesDashboard() {
   }
 
   if ((dashboardQuery.isError && !dashboardData) || (activityQuery.isError && activityItems.length === 0)) {
-    return <QueryErrorState variant="full" onRetry={retryQuery} />;
+    return <QueryErrorState onRetry={retryQuery} />;
   }
 
   return (

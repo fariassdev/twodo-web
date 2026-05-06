@@ -106,7 +106,6 @@ export default function ShoppingList() {
   if (shoppingItemsQuery.isError && items.length === 0) {
     return (
       <QueryErrorState
-        variant="full"
         onRetry={() => {
           if (!householdId) return;
           void queryClient.refetchQueries({ queryKey: queryKeys.shopping.list(householdId) });

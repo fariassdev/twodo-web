@@ -10,7 +10,8 @@
   "cta": {
     "add": "Añadir",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "back": "Volver"
   },
   "common": {
     "saving": "...",
@@ -407,7 +408,6 @@
       "individual": "Individual"
     },
     "notFound": "Tarea no encontrada",
-    "back": "Volver",
     "deleteRecurringTitle": "Eliminar evento recurrente",
     "deleteRecurringDescription": "Este evento se repite. ¿Qué quieres eliminar?",
     "deleteOnlyThis": "Solo este evento",
