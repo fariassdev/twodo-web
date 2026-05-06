@@ -13,6 +13,7 @@ import { useScreenTelemetry } from './hooks/useScreenTelemetry';
 import { useAuthContextQuery } from './lib/queryHooks';
 import BottomNav from './components/ui/BottomNav';
 import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
+import FullPageLoading from './components/ui/FullPageLoading';
 import ErrorPage from './components/ui/ErrorPage';
 
 const Dashboard = React.lazy(() => import('./components/dashboard'));
@@ -37,13 +38,11 @@ const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
 
+
 function RouteLoadingFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-    </div>
-  );
+  return <FullPageLoading message={i18n.t('loading')} />;
 }
+
 
 function RouteShell({ children, sectionName }: { children: React.ReactNode; sectionName: string }) {
   return (

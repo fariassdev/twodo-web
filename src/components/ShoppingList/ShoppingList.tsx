@@ -18,6 +18,7 @@ import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import Button from '../ui/Button';
+import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
 
@@ -96,12 +97,9 @@ export default function ShoppingList() {
   const purchased = items.filter((i) => i.is_purchased);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   if (shoppingItemsQuery.isError && items.length === 0) {
     return (

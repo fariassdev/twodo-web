@@ -28,6 +28,8 @@ import TextInput from '../ui/TextInput';
 import Card from '../ui/Card';
 import IconBox from '../ui/IconBox';
 import TwodoLogo from '../ui/TwodoLogo';
+import FullPageLoading from '../ui/FullPageLoading';
+
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
 
@@ -598,11 +600,8 @@ export default function ConnectPartner() {
         />
 
         <div className="flex-1 flex flex-col px-5 pt-10 pb-10 max-w-lg mx-auto w-full">
-          {isLoading && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
-            </div>
-          )}
+          {isLoading && <FullPageLoading message={t('loading')} />}
+
 
           {!isLoading && info && !inviteFound && (
             <div className="flex-1 flex flex-col items-center justify-center text-center">

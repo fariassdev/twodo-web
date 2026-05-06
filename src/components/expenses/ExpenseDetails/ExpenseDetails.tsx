@@ -11,6 +11,7 @@ import QueryErrorState from '../../ui/QueryErrorState';
 import { NumericInput } from '../../ui/NumericInput';
 import SelectInput from '../../ui/SelectInput';
 import TextInput from '../../ui/TextInput';
+import FullPageLoading from '../../ui/FullPageLoading';
 import {
   useAuthScope,
   useDeleteExpenseMutation,
@@ -162,12 +163,9 @@ export default function ExpenseDetails() {
   });
 
   if (expenseQuery.isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   if (expenseQuery.isError) {
     return (

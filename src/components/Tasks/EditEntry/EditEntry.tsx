@@ -18,9 +18,9 @@ import FormField from '../../ui/FormField';
 import FormSection from '../../ui/FormSection';
 import Modal from '../../ui/Modal';
 import TextInput from '../../ui/TextInput';
+import FullPageLoading from '../../ui/FullPageLoading';
 import { SegmentedControl, SegmentedControlItem } from '../../ui/SegmentedControl';
 import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../../../helpers/schemas';
-
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
 export default function EditEntry() {
@@ -279,12 +279,9 @@ export default function EditEntry() {
   const labelClass = 'text-surface-2 text-sm font-semibold leading-normal pb-2';
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background-dark">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">

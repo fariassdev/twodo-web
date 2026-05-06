@@ -13,6 +13,7 @@ import FormField from '../../ui/FormField';
 import Modal from '../../ui/Modal';
 import QueryErrorState from '../../ui/QueryErrorState';
 import TextInput from '../../ui/TextInput';
+import FullPageLoading from '../../ui/FullPageLoading';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
@@ -23,6 +24,7 @@ import {
   useExpensesDashboardQuery,
 } from '../../../lib/queryHooks';
 import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
+
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
@@ -88,12 +90,9 @@ export default function ExpensesDashboard() {
   }
 
   if (dashboardQuery.isPending || activityQuery.isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   if ((dashboardQuery.isError && !dashboardData) || (activityQuery.isError && activityItems.length === 0)) {
     return <QueryErrorState onRetry={retryQuery} />;

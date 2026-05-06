@@ -24,10 +24,12 @@ import Badge from '../../ui/Badge';
 import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
 import SectionHeader from '../../ui/SectionHeader';
+import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import AssignmentSelector, { type AssignmentSelection } from '../AssignmentSelector';
 import AssignmentEditor from '../AssignmentEditor';
 import type { TaskAssignmentOverrideType } from '../../../lib/queries';
+
 
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 
@@ -282,11 +284,7 @@ export default function TaskDetails() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
 
   if (!task) {

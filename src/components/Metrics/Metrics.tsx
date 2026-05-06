@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
+import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 
 export default function Metrics() {
@@ -50,12 +51,9 @@ export default function Metrics() {
     pointsQuery.isFetching;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   if (hasQueryError && !balance && points.length === 0) {
     return (

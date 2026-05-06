@@ -12,6 +12,7 @@ import {
 } from '../../lib/queryHooks';
 import type { Profile } from '../../lib/types';
 import PageHeader from '../ui/PageHeader';
+import FullPageLoading from '../ui/FullPageLoading';
 import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
 
 export default function Profile() {
@@ -92,12 +93,9 @@ export default function Profile() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   return (
     <div className="min-h-screen bg-background-dark text-surface-2 pb-40">
