@@ -15,6 +15,15 @@ export default function PendingAccess() {
     return <ConnectPartner />;
   }
 
+  // If status changed to signed_out or linked, router will soon navigate away.
+  if (status !== 'pending_profile') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-dark">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   const loading = signOutMutation.isPending;
   const pendingReason = status === 'pending_profile'
     ? t('auth.pending.reasonProfile')

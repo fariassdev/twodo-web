@@ -22,6 +22,11 @@ import {
   type PartnerInviteCodeFormValues,
   type PartnerInviteEmailFormValues,
 } from '../../helpers/schemas';
+import PageHeader from '../ui/PageHeader';
+import Button from '../ui/Button';
+import TextInput from '../ui/TextInput';
+import Card from '../ui/Card';
+import IconBox from '../ui/IconBox';
 import TwodoLogo from '../ui/TwodoLogo';
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
@@ -171,7 +176,7 @@ export default function ConnectPartner() {
       await acceptMutation.mutateAsync(code);
       sessionStorage.removeItem('pendingInviteCode');
       setView('join-success');
-    } catch (err) {
+    } catch {
       setError(t('partner.joinError'));
     }
   }
@@ -251,71 +256,85 @@ export default function ConnectPartner() {
   // ─── Initial view (manual choice: create or join) ───
   if (view === 'initial') {
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10 bg-background-dark">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={handleSignOut} className="text-surface-2/40 hover:text-surface-2 transition-colors" aria-label={t('topBar.back')}>
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
-          <h1 className="text-lg font-bold text-surface-2">{t('partner.title')}</h1>
-        </div>
+      <div className="min-h-screen flex flex-col bg-background-dark">
+        <PageHeader 
+          title={t('partner.title')}
+          showLogo={false}
+          showAvatars={false}
+          backAction={{ onClick: handleSignOut, ariaLabel: t('topBar.back') }}
+        />
 
-        {/* Hero */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <TwodoLogo width={224} className="mb-6" />
-          <h2 className="text-2xl font-extrabold text-surface-2 leading-tight mb-3">
-            {t('partner.heroTitle')}
-          </h2>
-          <p className="text-sm text-surface-2/60 leading-relaxed max-w-xs">
-            {t('partner.heroSubtitle')}
-          </p>
-        </div>
-
-        {householdId ? (
-          <div className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-5 mb-6">
-            <div className="flex items-center justify-center h-16">
-              {getOrCreateInviteMutation.isPending ? (
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-              ) : (
-                <button
-                  onClick={handleRetryLoadInvite}
-                  className="h-11 px-5 rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
-                >
-                  {t('partner.retryLoadInvite')}
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-surface-2/60 text-center">{t('partner.prepareInvite')}</p>
+        <div className="flex-1 flex flex-col px-5 pt-10 pb-10 max-w-lg mx-auto w-full">
+          {/* Hero */}
+          <div className="flex flex-col items-center text-center mb-10">
+            <TwodoLogo width={224} className="mb-8" />
+            <h2 className="text-3xl font-black text-surface-2 leading-tight mb-4">
+              {t('partner.heroTitle')}
+            </h2>
+            <p className="text-base text-surface-2/60 leading-relaxed max-w-sm">
+              {t('partner.heroSubtitle')}
+            </p>
           </div>
-        ) : (
-          <button
-            onClick={handleCreateHousehold}
-            disabled={createMutation.isPending}
-            className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 mb-6"
-          >
-            {createMutation.isPending ? t('auth.loading') : t('partner.createCta')}
-          </button>
-        )}
 
-        {!householdId && (
-          <>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-border-subtle" />
-              <span className="text-xs text-surface-2/40 uppercase">{t('partner.or')}</span>
-              <div className="flex-1 h-px bg-border-subtle" />
-            </div>
+          <div className="space-y-6">
+            {householdId ? (
+              <Card variant="elevated" className="p-6">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center justify-center h-12">
+                    {getOrCreateInviteMutation.isPending ? (
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                    ) : (
+                      <Button
+                        variant="subtle"
+                        onClick={handleRetryLoadInvite}
+                        fullWidth
+                      >
+                        {t('partner.retryLoadInvite')}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-surface-2/40 text-center">{t('partner.prepareInvite')}</p>
+                </div>
+              </Card>
+            ) : (
+              <Button
+                onClick={handleCreateHousehold}
+                loading={createMutation.isPending}
+                size="lg"
+                fullWidth
+              >
+                {t('partner.createCta')}
+              </Button>
+            )}
 
-            <p className="text-sm text-surface-2/60 text-center mb-2">{t('partner.haveLink')}</p>
-            <button
-              onClick={() => setView('enter-code')}
-              className="text-sm font-semibold text-primary text-center hover:underline"
-            >
-              {t('partner.enterCode')}
-            </button>
-          </>
-        )}
+            {!householdId && (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-px bg-border-subtle" />
+                  <span className="text-[10px] font-black text-surface-2/30 uppercase tracking-widest">{t('partner.or')}</span>
+                  <div className="flex-1 h-px bg-border-subtle" />
+                </div>
 
-        {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-sm text-surface-2/60">{t('partner.haveLink')}</p>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setView('enter-code')}
+                    className="text-primary font-bold"
+                  >
+                    {t('partner.enterCode')}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {error && (
+              <Card variant="error" padding="sm" radius="xl" className="mt-4">
+                <p className="text-xs font-semibold text-center">{error}</p>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -323,38 +342,55 @@ export default function ConnectPartner() {
   // ─── Enter code manually ───
   if (view === 'enter-code') {
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => { setView(inviteData ? 'invite-created' : 'initial'); setError(null); }} className="text-surface-2/40 hover:text-surface-2 transition-colors">
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
-          <h1 className="text-lg font-bold text-surface-2">{t('partner.enterCodeTitle')}</h1>
-        </div>
-
-        <p className="text-sm text-surface-2/60 mb-6">{t('partner.enterCodeDescription')}</p>
-
-        <input
-          type="text"
-          {...registerManualCode('code')}
-          value={manualCode}
-          onChange={(event) => {
-            setManualCodeValue('code', event.target.value.toUpperCase(), { shouldDirty: true, shouldValidate: true });
+      <div className="min-h-screen flex flex-col bg-background-dark">
+        <PageHeader 
+          title={t('partner.enterCodeTitle')}
+          showLogo={false}
+          showAvatars={false}
+          backAction={{ 
+            onClick: () => { setView(inviteData ? 'invite-created' : 'initial'); setError(null); },
+            ariaLabel: t('topBar.back')
           }}
-          placeholder="ABCD1234"
-          maxLength={8}
-          className="w-full h-14 rounded-2xl border border-primary/30 bg-primary/5 px-4 text-center text-lg font-mono tracking-widest text-surface-2 placeholder:text-surface-2/40 focus:outline-none focus:border-primary/60 mb-4"
         />
-        {manualCodeErrors.code && <p className="-mt-2 mb-3 text-xs text-red-400">{t(manualCodeErrors.code.message!)}</p>}
 
-        <button
-          onClick={handleEnterCode}
-          disabled={manualCode.trim().length < 4}
-          className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-40"
-        >
-          {t('partner.joinCta')}
-        </button>
+        <div className="flex-1 flex flex-col px-5 pt-8 pb-10 max-w-lg mx-auto w-full">
+          <p className="text-base text-surface-2/60 mb-8">{t('partner.enterCodeDescription')}</p>
 
-        {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
+          <div className="space-y-6">
+            <TextInput
+              variant="elevated"
+              size="lg"
+              {...registerManualCode('code')}
+              value={manualCode}
+              onChange={(event) => {
+                setManualCodeValue('code', event.target.value.toUpperCase(), { shouldDirty: true, shouldValidate: true });
+              }}
+              placeholder="ABCD1234"
+              maxLength={8}
+              inputClassName="text-center font-mono tracking-[0.3em] text-xl"
+            />
+            {manualCodeErrors.code && (
+              <p className="text-xs font-semibold text-danger -mt-4 pl-1">
+                {t(manualCodeErrors.code.message!)}
+              </p>
+            )}
+
+            <Button
+              onClick={handleEnterCode}
+              disabled={manualCode.trim().length < 4}
+              size="lg"
+              fullWidth
+            >
+              {t('partner.joinCta')}
+            </Button>
+
+            {error && (
+              <Card variant="error" padding="sm" radius="xl">
+                <p className="text-xs font-semibold text-center">{error}</p>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -362,164 +398,182 @@ export default function ConnectPartner() {
   // ─── Invite created – share options ───
   if (view === 'invite-created' && inviteData) {
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => setView('initial')} className="text-surface-2/40 hover:text-surface-2 transition-colors">
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
-          <h1 className="text-lg font-bold text-surface-2">{t('partner.title')}</h1>
-          {/* sign out icon on right side */}
-          <button
-            onClick={handleSignOut}
-            className="ml-auto text-surface-2/40 hover:text-surface-2 transition-colors"
-            aria-label={t('auth.signOut')}
-          >
-            <span className="material-symbols-outlined text-xl">logout</span>
-          </button>
-        </div>
+      <div className="min-h-screen flex flex-col bg-background-dark">
+        <PageHeader 
+          title={t('partner.title')}
+          showLogo={false}
+          showAvatars={false}
+          backAction={{ onClick: handleSignOut, ariaLabel: t('auth.signOut') }}
+        />
 
-        {/* Hero */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <TwodoLogo width={224} className="mb-6" />
-          <h2 className="text-2xl font-extrabold text-slate-100 leading-tight mb-3">
-            {t('partner.heroTitle')}
-          </h2>
-          <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-            {t('partner.heroSubtitle')}
-          </p>
-        </div>
-
-        {/* Email invite card */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 mb-4">
-          <h3 className="font-bold text-surface-2 mb-1">{t('partner.inviteByEmail')}</h3>
-          <p className="text-xs text-surface-2/60 mb-4">{t('partner.inviteByEmailDesc')}</p>
-
-          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-surface-2/10 px-3 h-12 mb-3">
-            <span className="material-symbols-outlined text-surface-2/40 text-lg">mail</span>
-            <input
-              type="email"
-              {...registerEmail('email')}
-              value={emailInput}
-              onChange={(event) => {
-                setEmailValue('email', event.target.value, { shouldDirty: true, shouldValidate: true });
-                setEmailSent(false);
-              }}
-              placeholder={t('partner.emailPlaceholder')}
-              className="flex-1 bg-transparent text-sm text-surface-2 placeholder:text-surface-2/40 focus:outline-none"
-            />
-          </div>
-          {emailErrors.email && <p className="mb-3 text-xs text-red-400">{t(emailErrors.email.message!)}</p>}
-
-          <button
-            onClick={handleSendEmail}
-            disabled={sendEmailMutation.isPending || !emailInput || emailSent}
-            className="w-full h-12 rounded-xl bg-primary font-bold text-surface-1 text-sm transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {emailSent ? t('partner.emailSentSuccess') : sendEmailMutation.isPending ? t('auth.loading') : t('partner.sendInvitation')}
-            {!emailSent && !sendEmailMutation.isPending && <span className="material-symbols-outlined text-lg">send</span>}
-          </button>
-
-          <p className="mt-4 mb-1 text-xs text-surface-2/60">{t('partner.inviteLinkLabel')}</p>
-          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-surface-2/10 p-2">
-            <input
-              type="text"
-              readOnly
-              value={inviteUrl}
-              className="flex-1 bg-transparent text-xs text-surface-2/80 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="h-9 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/10"
-            >
-              {t('partner.copyLink')}
-            </button>
-          </div>
-
-          <p className="mt-3 mb-1 text-xs text-surface-2/60">{t('partner.codeLabel')}</p>
-          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-surface-2/10 px-3 py-2">
-            <p className="text-sm font-mono tracking-widest text-primary">{inviteData.invite_code}</p>
-            <button
-              type="button"
-              onClick={handleCopyCode}
-              className="h-8 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/10"
-            >
-              {t('partner.copyCode')}
-            </button>
-          </div>
-
-          {copiedState !== 'none' && (
-            <p className="mt-2 text-xs text-primary">
-              {copiedState === 'link' ? t('partner.linkCopied') : t('partner.codeCopied')}
+        <div className="flex-1 flex flex-col px-5 pt-8 pb-10 max-w-lg mx-auto w-full">
+          {/* Hero */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <TwodoLogo width={160} className="mb-6 opacity-80" />
+            <h2 className="text-2xl font-black text-surface-2 leading-tight mb-2">
+              {t('partner.heroTitle')}
+            </h2>
+            <p className="text-sm text-surface-2/60 leading-relaxed max-w-xs">
+              {t('partner.heroSubtitle')}
             </p>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-border-subtle" />
-          <span className="text-xs text-surface-2/40 uppercase">{t('partner.or')}</span>
-          <div className="flex-1 h-px bg-border-subtle" />
-        </div>
-
-        {/* Share link button */}
-        <button
-          onClick={handleShareLink}
-          className="w-full h-12 rounded-xl border border-primary/30 text-primary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors mb-3"
-        >
-          <span className="material-symbols-outlined text-lg">share</span>
-          {t('partner.shareLink')}
-        </button>
-
-        {/* QR Code button */}
-        <button
-          onClick={() => setShowQR(!showQR)}
-          className="w-full h-12 rounded-xl border border-border-subtle text-surface-2/60 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface-2/5 transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">qr_code_2</span>
-          {t('partner.showQR')}
-        </button>
-
-        {/* QR Modal */}
-        {showQR && (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-6" onClick={() => setShowQR(false)}>
-            <div className="bg-background-dark rounded-2xl border border-primary/20 p-8 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-surface-2">{t('partner.qrTitle')}</h3>
-                <button onClick={() => setShowQR(false)} className="text-surface-2/40 hover:text-surface-2">
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              <div className="flex justify-center mb-4 bg-white rounded-xl p-4">
-                <QRCodeSVG value={inviteUrl} size={200} />
-              </div>
-              <p className="text-center text-xs text-surface-2/60">{t('partner.qrDescription')}</p>
-              <p className="text-center text-lg font-mono tracking-widest text-primary mt-3">{inviteData.invite_code}</p>
-            </div>
           </div>
-        )}
 
-        {/* Enter code link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-surface-2/60">{t('partner.haveLink')}</p>
-          <button
-            onClick={() => setView('enter-code')}
-            className="text-sm font-semibold text-primary hover:underline"
+          {/* Email invite card */}
+          <Card variant="elevated" className="mb-6">
+            <h3 className="font-bold text-surface-2 mb-1">{t('partner.inviteByEmail')}</h3>
+            <p className="text-xs text-surface-2/60 mb-4">{t('partner.inviteByEmailDesc')}</p>
+
+            <div className="space-y-3">
+              <TextInput
+                variant="soft"
+                type="email"
+                {...registerEmail('email')}
+                value={emailInput}
+                onChange={(event) => {
+                  setEmailValue('email', event.target.value, { shouldDirty: true, shouldValidate: true });
+                  setEmailSent(false);
+                }}
+                placeholder={t('partner.emailPlaceholder')}
+                leading={<span className="material-symbols-outlined text-lg">mail</span>}
+              />
+              {emailErrors.email && (
+                <p className="text-xs font-semibold text-danger -mt-2 pl-1">
+                  {t(emailErrors.email.message!)}
+                </p>
+              )}
+
+              <Button
+                onClick={handleSendEmail}
+                loading={sendEmailMutation.isPending}
+                disabled={!emailInput || emailSent}
+                fullWidth
+                endIcon={!emailSent && !sendEmailMutation.isPending && <span className="material-symbols-outlined text-lg">send</span>}
+              >
+                {emailSent ? t('partner.emailSentSuccess') : t('partner.sendInvitation')}
+              </Button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <p className="mb-1.5 text-[10px] font-black text-surface-2/40 uppercase tracking-widest">{t('partner.inviteLinkLabel')}</p>
+                <TextInput
+                  readOnly
+                  value={inviteUrl}
+                  variant="soft"
+                  size="md"
+                  inputClassName="text-[10px]"
+                  trailing={
+                    <Button
+                      variant="subtle"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      className="h-8 rounded-md"
+                    >
+                      {t('partner.copyLink')}
+                    </Button>
+                  }
+                />
+              </div>
+
+              <div>
+                <p className="mb-1.5 text-[10px] font-black text-surface-2/40 uppercase tracking-widest">{t('partner.codeLabel')}</p>
+                <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-sm font-mono font-bold tracking-widest text-primary">{inviteData.invite_code}</p>
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    onClick={handleCopyCode}
+                    className="h-8 rounded-md"
+                  >
+                    {t('partner.copyCode')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {copiedState !== 'none' && (
+              <p className="mt-3 text-center text-xs font-bold text-primary animate-in fade-in slide-in-from-top-1">
+                {copiedState === 'link' ? t('partner.linkCopied') : t('partner.codeCopied')}
+              </p>
+            )}
+          </Card>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-2">
+            <div className="flex-1 h-px bg-border-subtle" />
+            <span className="text-[10px] font-black text-surface-2/30 uppercase tracking-widest">{t('partner.or')}</span>
+            <div className="flex-1 h-px bg-border-subtle" />
+          </div>
+
+          {/* Share & QR actions */}
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              variant="subtle"
+              onClick={handleShareLink}
+              size="lg"
+              fullWidth
+              startIcon={<span className="material-symbols-outlined">share</span>}
+            >
+              {t('partner.shareLink')}
+            </Button>
+
+            <Button
+              variant="subtle"
+              onClick={() => setShowQR(!showQR)}
+              size="lg"
+              fullWidth
+              startIcon={<span className="material-symbols-outlined">qr_code_2</span>}
+              className="border-border-subtle text-surface-2/60"
+            >
+              {t('partner.showQR')}
+            </Button>
+          </div>
+
+          {/* QR Modal */}
+          {showQR && (
+            <div className="fixed inset-0 bg-surface-2/80 backdrop-blur-sm z-50 flex items-center justify-center px-6" onClick={() => setShowQR(false)}>
+              <Card variant="modal" padding="xl" className="max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-xl font-black text-surface-2">{t('partner.qrTitle')}</h3>
+                  <Button variant="icon" size="icon" onClick={() => setShowQR(false)}>
+                    <span className="material-symbols-outlined">close</span>
+                  </Button>
+                </div>
+                <div className="flex justify-center mb-6 bg-white rounded-2xl p-6 shadow-card-md">
+                  <QRCodeSVG value={inviteUrl} size={180} />
+                </div>
+                <p className="text-center text-sm text-surface-2/60 mb-4">{t('partner.qrDescription')}</p>
+                <p className="text-center text-2xl font-mono font-black tracking-[0.2em] text-primary">{inviteData.invite_code}</p>
+              </Card>
+            </div>
+          )}
+
+          {/* Enter code link */}
+          <div className="mt-10 flex flex-col items-center gap-2">
+            <p className="text-sm text-surface-2/60">{t('partner.haveLink')}</p>
+            <Button
+              variant="ghost"
+              onClick={() => setView('enter-code')}
+              className="text-primary font-bold"
+            >
+              {t('partner.enterCode')}
+            </Button>
+          </div>
+
+          {error && (
+            <Card variant="error" padding="sm" radius="xl" className="mt-6">
+              <p className="text-xs font-semibold text-center">{error}</p>
+            </Card>
+          )}
+
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className="mt-8 text-surface-2/40 text-xs font-bold uppercase tracking-widest"
           >
-            {t('partner.enterCode')}
-          </button>
+            {t('auth.signOut')}
+          </Button>
         </div>
-
-        {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
-
-        {/* sign out button for convenience */}
-        <button
-          onClick={handleSignOut}
-          className="mt-6 h-11 w-full rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {t('auth.signOut')}
-        </button>
       </div>
     );
   }
@@ -532,88 +586,102 @@ export default function ConnectPartner() {
     const canJoin = inviteFound && !info?.is_expired && !info?.is_accepted && (info?.member_count ?? 0) < 2;
 
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => { setView('initial'); setPendingCode(null); sessionStorage.removeItem('pendingInviteCode'); setError(null); }} className="text-surface-2/40 hover:text-surface-2 transition-colors">
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
-          <h1 className="text-lg font-bold text-surface-2">{t('partner.joinTitle')}</h1>
-          <button
-            onClick={handleSignOut}
-            className="ml-auto text-surface-2/40 hover:text-surface-2 transition-colors"
-            aria-label={t('auth.signOut')}
-          >
-            <span className="material-symbols-outlined text-xl">logout</span>
-          </button>
-        </div>
+      <div className="min-h-screen flex flex-col bg-background-dark">
+        <PageHeader 
+          title={t('partner.joinTitle')}
+          showLogo={false}
+          showAvatars={false}
+          backAction={{ 
+            onClick: () => { setView('initial'); setPendingCode(null); sessionStorage.removeItem('pendingInviteCode'); setError(null); },
+            ariaLabel: t('topBar.back')
+          }}
+        />
 
-        {isLoading && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-          </div>
-        )}
+        <div className="flex-1 flex flex-col px-5 pt-10 pb-10 max-w-lg mx-auto w-full">
+          {isLoading && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+            </div>
+          )}
 
-        {!isLoading && info && !inviteFound && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
-            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteNotFound')}</p>
-            <p className="text-sm text-surface-2/60">{t('partner.inviteNotFoundDesc')}</p>
-          </div>
-        )}
+          {!isLoading && info && !inviteFound && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <IconBox tone="danger" size="lg" className="mb-6">
+                <span className="material-symbols-outlined text-3xl">error</span>
+              </IconBox>
+              <h2 className="text-2xl font-black text-surface-2 mb-3">{t('partner.inviteNotFound')}</h2>
+              <p className="text-base text-surface-2/60">{t('partner.inviteNotFoundDesc')}</p>
+            </div>
+          )}
 
-        {!isLoading && inviteFound && info?.is_expired && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">schedule</span>
-            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteExpired')}</p>
-            <p className="text-sm text-surface-2/60">{t('partner.inviteExpiredDesc')}</p>
-          </div>
-        )}
+          {!isLoading && inviteFound && info?.is_expired && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <IconBox tone="warning" size="lg" className="mb-6">
+                <span className="material-symbols-outlined text-3xl">schedule</span>
+              </IconBox>
+              <h2 className="text-2xl font-black text-surface-2 mb-3">{t('partner.inviteExpired')}</h2>
+              <p className="text-base text-surface-2/60">{t('partner.inviteExpiredDesc')}</p>
+            </div>
+          )}
 
-        {!isLoading && inviteFound && !info?.is_expired && info?.is_accepted && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">check_circle</span>
-            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.inviteAlreadyUsed')}</p>
-          </div>
-        )}
+          {!isLoading && inviteFound && !info?.is_expired && info?.is_accepted && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <IconBox tone="success" size="lg" className="mb-6">
+                <span className="material-symbols-outlined filled-icon text-3xl">check_circle</span>
+              </IconBox>
+              <h2 className="text-2xl font-black text-surface-2 mb-3">{t('partner.inviteAlreadyUsed')}</h2>
+            </div>
+          )}
 
-        {!isLoading && inviteFound && (info?.member_count ?? 0) >= 2 && !info?.is_accepted && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-amber-400 text-5xl mb-4">group</span>
-            <p className="text-surface-2 text-lg font-semibold mb-2">{t('partner.householdFull')}</p>
-          </div>
-        )}
+          {!isLoading && inviteFound && (info?.member_count ?? 0) >= 2 && !info?.is_accepted && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <IconBox tone="warning" size="lg" className="mb-6">
+                <span className="material-symbols-outlined text-3xl">group</span>
+              </IconBox>
+              <h2 className="text-2xl font-black text-surface-2 mb-3">{t('partner.householdFull')}</h2>
+            </div>
+          )}
 
-        {!isLoading && canJoin && (
-          <div className="flex-1 flex flex-col items-center pt-10">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
-              {info?.creator_avatar ? (
-                <img src={info.creator_avatar} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-primary text-4xl">person</span>
+          {!isLoading && canJoin && (
+            <div className="flex-1 flex flex-col items-center pt-8">
+              <div className="w-24 h-24 rounded-full border-4 border-surface-1 bg-primary/20 flex items-center justify-center mb-6 overflow-hidden shadow-card-md">
+                {info?.creator_avatar ? (
+                  <img src={info.creator_avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="material-symbols-outlined text-primary text-5xl">person</span>
+                )}
+              </div>
+              <h2 className="text-2xl font-black text-surface-2 mb-3">{info?.creator_name}</h2>
+              <p className="text-base text-surface-2/60 text-center mb-10 max-w-xs">{t('partner.joinDescription')}</p>
+
+              <Button
+                onClick={() => handleAcceptInvite(pendingCode!)}
+                loading={acceptMutation.isPending}
+                size="lg"
+                fullWidth
+              >
+                {t('partner.acceptInvite')}
+              </Button>
+
+              {error && (
+                <Card variant="error" padding="sm" radius="xl" className="mt-6">
+                  <p className="text-xs font-semibold text-center">{error}</p>
+                </Card>
               )}
             </div>
-            <p className="text-xl font-bold text-surface-2 mb-2">{info?.creator_name}</p>
-            <p className="text-sm text-surface-2/60 text-center mb-8">{t('partner.joinDescription')}</p>
+          )}
 
-            <button
-              onClick={() => handleAcceptInvite(pendingCode!)}
-              disabled={acceptMutation.isPending}
-              className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] disabled:opacity-60"
-            >
-              {acceptMutation.isPending ? t('auth.loading') : t('partner.acceptInvite')}
-            </button>
-
-            {error && <p className="mt-4 text-sm text-red-400 text-center">{error}</p>}
-
-            {/* sign out while waiting to join */}
-            <button
+          <div className="mt-auto">
+            <Button
+              variant="ghost"
               onClick={handleSignOut}
-              className="mt-6 h-11 w-full rounded-xl border border-primary/40 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+              fullWidth
+              className="text-surface-2/40 text-xs font-bold uppercase tracking-widest"
             >
               {t('auth.signOut')}
-            </button>
+            </Button>
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -621,63 +689,77 @@ export default function ConnectPartner() {
   // ─── Join success ───
   if (view === 'join-success') {
     return (
-      <div className="min-h-screen flex flex-col px-5 pt-6 pb-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => navigate({ to: '/' })} className="text-surface-2/40 hover:text-surface-2 transition-colors">
-            <span className="material-symbols-outlined text-xl">close</span>
-          </button>
-          <h1 className="text-lg font-bold text-surface-2">{t('partner.successTitle')}</h1>
-        </div>
+      <div className="min-h-screen flex flex-col bg-background-dark">
+        <PageHeader 
+          title={t('partner.successTitle')}
+          showLogo={false}
+          showAvatars={false}
+          backAction={{ onClick: handleGoDashboard, ariaLabel: t('topBar.back') }}
+        />
 
-        <div className="flex-1 flex flex-col items-center pt-4">
-          {/* Celebration image placeholder */}
-          <div className="w-full max-w-xs aspect-[4/3] rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8 relative overflow-hidden">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined filled-icon text-surface-1 text-4xl">favorite</span>
-            </div>
-            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface-2/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-xl">celebration</span>
-            </div>
-            <div className="absolute bottom-4 left-4 w-10 h-10 rounded-full bg-surface-2/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-xl">group</span>
-            </div>
-          </div>
-
-          <h2 className="text-2xl font-extrabold text-surface-2 text-center mb-3">
-            {t('partner.successHeading')}
-          </h2>
-          <p className="text-sm text-surface-2/60 text-center max-w-xs mb-8">
-            {t('partner.successDescription')}
-          </p>
-
-          {/* Active link card */}
-          <div className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-4 mb-8">
-            <div className="flex -space-x-2">
-              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-surface-1 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-sm">person</span>
+        <div className="flex-1 flex flex-col px-5 pt-10 pb-10 max-w-lg mx-auto w-full">
+          <div className="flex-1 flex flex-col items-center pt-4">
+            {/* Celebration Illustration Placeholder */}
+            <div className="w-full aspect-[4/3] rounded-3xl bg-surface-1 border border-border-subtle flex items-center justify-center mb-10 relative overflow-hidden shadow-card-md">
+              <div className="absolute inset-0 opacity-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,var(--color-primary)_0%,transparent_70%)]" />
               </div>
-              <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-surface-1 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-sm">person</span>
+              
+              <IconBox tone="primary" size="lg" className="w-20 h-20 rounded-full shadow-glow-primary z-10">
+                <span className="material-symbols-outlined filled-icon text-4xl">favorite</span>
+              </IconBox>
+              
+              <div className="absolute top-6 right-6">
+                <IconBox tone="warning" size="md" className="rounded-full shadow-card-sm">
+                  <span className="material-symbols-outlined text-xl">celebration</span>
+                </IconBox>
+              </div>
+              <div className="absolute bottom-6 left-6">
+                <IconBox tone="primary" size="md" className="rounded-full shadow-card-sm">
+                  <span className="material-symbols-outlined text-xl">group</span>
+                </IconBox>
               </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-primary">{t('partner.activeBond')}</p>
-              <p className="text-xs text-surface-2/60">{t('partner.activeBondDesc')}</p>
-            </div>
-            <span className="material-symbols-outlined filled-icon text-primary">verified</span>
+
+            <h2 className="text-3xl font-black text-surface-2 text-center mb-4">
+              {t('partner.successHeading')}
+            </h2>
+            <p className="text-base text-surface-2/60 text-center max-w-sm mb-10">
+              {t('partner.successDescription')}
+            </p>
+
+            {/* Active bond card */}
+            <Card variant="elevated" className="w-full flex items-center gap-4 mb-10 border-primary/20">
+              <div className="flex -space-x-3">
+                <div className="w-12 h-12 rounded-full border-2 border-surface-1 bg-primary/20 flex items-center justify-center overflow-hidden z-10 shadow-card-sm">
+                  <span className="material-symbols-outlined text-primary">person</span>
+                </div>
+                <div className="w-12 h-12 rounded-full border-2 border-surface-1 bg-primary/20 flex items-center justify-center overflow-hidden z-0 shadow-card-sm">
+                  <span className="material-symbols-outlined text-primary">person</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-primary uppercase tracking-wider">{t('partner.activeBond')}</p>
+                <p className="text-xs text-surface-2/60 font-semibold">{t('partner.activeBondDesc')}</p>
+              </div>
+              <IconBox tone="success" size="sm" className="rounded-full">
+                <span className="material-symbols-outlined filled-icon text-base">verified</span>
+              </IconBox>
+            </Card>
+          </div>
+
+          <div className="mt-auto space-y-4">
+            <Button
+              onClick={handleGoDashboard}
+              size="lg"
+              fullWidth
+              endIcon={<span className="material-symbols-outlined">arrow_forward</span>}
+            >
+              {t('partner.goToDashboard')}
+            </Button>
+            <p className="text-[10px] font-black text-surface-2/30 text-center uppercase tracking-[0.2em]">{t('partner.startSharing')}</p>
           </div>
         </div>
-
-        {/* Go to dashboard */}
-        <button
-          onClick={handleGoDashboard}
-          className="w-full h-14 rounded-2xl bg-primary font-bold text-surface-1 text-base transition-all hover:brightness-110 active:scale-[.98] flex items-center justify-center gap-2"
-        >
-          {t('partner.goToDashboard')}
-          <span className="material-symbols-outlined text-lg">arrow_forward</span>
-        </button>
-        <p className="text-xs text-surface-2/40 text-center mt-3">{t('partner.startSharing')}</p>
       </div>
     );
   }
