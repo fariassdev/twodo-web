@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import Button from '../../ui/Button';
+import TwodoLogo from '../../ui/TwodoLogo';
 import { useProfilesQuery } from '../../../lib/queryHooks';
 
 export default function CompactHeader() {
@@ -20,10 +21,17 @@ export default function CompactHeader() {
   const formattedDate = dateStr.toUpperCase();
 
   return (
-    <div className="flex items-center justify-between pb-4 pt-2 border-b border-border-subtle">
-      <div className="flex flex-col">
-        <h1 className="text-xs font-bold text-primary tracking-wider mb-0.5">{formattedDate}</h1>
-        <h2 className="text-2xl font-bold text-surface-2">Bubis</h2>
+    <div className="flex items-center justify-between px-4 p-6 border-b border-border-subtle">
+      <div className="flex items-center gap-4">
+        <TwodoLogo />
+        <div className="flex flex-col border-l border-border-subtle pl-4 py-0.5">
+          <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase leading-none mb-1.5">
+            {t('dashboard.today')}
+          </span>
+          <h1 className="text-sm font-bold text-surface-2/80 leading-none tracking-tight">
+            {formattedDate}
+          </h1>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

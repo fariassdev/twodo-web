@@ -10,6 +10,7 @@ import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
 import TextInput from '../../ui/TextInput';
+import TwodoLogo from '../../ui/TwodoLogo';
 
 export default function Register() {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md shadow-xl" padding="xl" variant="surface">
         <div className="mb-6 text-center">
+          <TwodoLogo width={180} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-surface-2">{t('auth.register.title')}</h1>
           <p className="mt-2 text-sm text-surface-2/60">{t('auth.register.subtitle')}</p>
         </div>

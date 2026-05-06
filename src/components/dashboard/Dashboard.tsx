@@ -16,9 +16,9 @@ export default function Dashboard() {
     <div className="flex flex-col h-full bg-background-dark relative min-h-screen">
       {!isOnline && <DataStatusBanner isOffline={!isOnline} isStale={false} /> }
 
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
-        <CompactHeader />
-        
+      <CompactHeader />
+
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20">
         <BalanceScoreWidget />
         
         <TodayTasksWidget />

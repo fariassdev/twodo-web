@@ -22,6 +22,7 @@ import {
   type PartnerInviteCodeFormValues,
   type PartnerInviteEmailFormValues,
 } from '../../helpers/schemas';
+import TwodoLogo from '../ui/TwodoLogo';
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
 
@@ -261,14 +262,7 @@ export default function ConnectPartner() {
 
         {/* Hero */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="relative mb-6">
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="material-symbols-outlined filled-icon text-primary text-5xl">favorite</span>
-            </div>
-            <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-surface-1 text-lg">add</span>
-            </div>
-          </div>
+          <TwodoLogo width={224} className="mb-6" />
           <h2 className="text-2xl font-extrabold text-surface-2 leading-tight mb-3">
             {t('partner.heroTitle')}
           </h2>
@@ -387,14 +381,7 @@ export default function ConnectPartner() {
 
         {/* Hero */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="relative mb-6">
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="material-symbols-outlined filled-icon text-primary text-5xl">favorite</span>
-            </div>
-            <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-background-dark text-lg">add</span>
-            </div>
-          </div>
+          <TwodoLogo width={224} className="mb-6" />
           <h2 className="text-2xl font-extrabold text-slate-100 leading-tight mb-3">
             {t('partner.heroTitle')}
           </h2>
