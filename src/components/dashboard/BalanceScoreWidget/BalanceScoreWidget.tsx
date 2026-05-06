@@ -54,7 +54,7 @@ export default function BalanceScoreWidget() {
 
   return (
     <Card
-      className="mb-8 mt-6 flex items-center gap-5 shadow-glow-primary bg-linear-to-br from-primary/15 to-primary/5 border-2 border-primary/40"
+      className="mb-8 mt-6 flex items-center gap-5 shadow-glow-primary bg-linear-to-br from-surface-1 to-surface-1/20 border-2 border-primary"
       interactive
       onClick={() => navigate({ to: '/metrics' })}
       padding="lg"

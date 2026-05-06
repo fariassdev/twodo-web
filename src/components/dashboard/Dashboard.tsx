@@ -1,16 +1,19 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import PageHeader from '../ui/PageHeader';
 import BalanceScoreWidget from './BalanceScoreWidget';
 import TodayTasksWidget from './TodayTasksWidget';
 import UpcomingTasksWidget from './UpcomingTasksWidget';
-import FAB from '../ui/FAB';
+import Button from '../ui/Button';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 
 export default function Dashboard() {
   const { i18n, t } = useTranslation();
   const isOnline = useOnlineStatus();
+  const navigate = useNavigate();
 
   const today = new Date();
   const dateStr = today.toLocaleDateString(i18n.language, {
@@ -36,7 +39,15 @@ export default function Dashboard() {
         <UpcomingTasksWidget />
       </div>
 
-      <FAB />
+      <Button
+        variant="action"
+        size="icon"
+        className="fixed bottom-24 right-6 z-fab"
+        onClick={() => navigate({ to: '/create' })}
+        aria-label={t('common.createEntry') || 'Create Entry'}
+      >
+        <Plus className="w-8 h-8 stroke-[2.5]" />
+      </Button>
     </div>
   );
 }

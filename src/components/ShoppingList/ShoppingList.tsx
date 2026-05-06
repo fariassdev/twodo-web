@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import {
   useAuthScope,
   useAddShoppingItemMutation,
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
+import Button from '../ui/Button';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
 
@@ -140,9 +142,14 @@ export default function ShoppingList() {
               {...registerRest}
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <button type="submit" className="bg-primary text-background-dark p-3 rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined font-bold">add</span>
-              </button>
+              <Button 
+                type="submit" 
+                variant="action"
+                size="icon"
+                className="h-12 w-12 rounded-lg hover:scale-none shadow-none"
+              >
+                <Plus />
+              </Button>
             </div>
           </div>
         </form>

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
@@ -244,11 +245,12 @@ export default function ExpensesDashboard() {
 
       <Button
         aria-label={t('expenses.newExpense')}
-        className="fixed bottom-28 right-6 z-30 h-16 w-16 rounded-full p-0 text-background-dark shadow-2xl shadow-primary/30"
+        className="fixed bottom-24 right-6 z-fab"
         onClick={() => navigate({ to: '/expenses/new' })}
-        variant="primary"
+        variant="action"
+        size="icon"
       >
-        <span className="material-symbols-outlined text-4xl">add</span>
+        <Plus className="w-8 h-8 stroke-[2.5]" />
       </Button>
     </div>
   );

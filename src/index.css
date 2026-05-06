@@ -57,7 +57,10 @@
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
-  --shadow-card-sm: 0 2px 8px rgb(73 52 33 / 0.08);
+  --shadow-card-sm: 2px 2px 8px rgb(73 52 33 / 0.15);
+  --shadow-card-md: 2px 4px 10px rgb(73 52 33 / 0.2);
+  --shadow-card-lg: 2px 4px 14px rgb(73 52 33 / 0.25);
+  --shadow-button: 4px 8px 14px rgb(73 52 33 / 0.4);
   --shadow-glow-primary: 0 4px 14px rgb(207 116 85 / 0.3);
   --color-hover: rgb(73 52 33 / 0.05);
   --motion-fast: 75ms;
