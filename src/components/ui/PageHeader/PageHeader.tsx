@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Link } from '@tanstack/react-router';
 import Button from '../Button';
 import TwodoLogo from '../TwodoLogo';
 import { useProfilesQuery } from '../../../lib/queryHooks';
@@ -88,7 +88,11 @@ export default function PageHeader({
             <span className="material-symbols-outlined">arrow_back</span>
           </Button>
         )}
-        {showLogo && <TwodoLogo />}
+        {showLogo && (
+          <Link to="/" className="cursor-pointer active:scale-95 transition-all duration-200 hover:opacity-80">
+            <TwodoLogo />
+          </Link>
+        )}
         <div className={cn("flex flex-col py-0.5", showLogo && "border-l border-border-subtle pl-4")}>
           {subtitle && (
             <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase leading-none mb-1.5">
