@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Profile } from '../../../lib/types';
 import type { TaskAssignmentOverrideType } from '../../../lib/queries';
 import Button from '../../ui/Button';
-import Card from '../../ui/Card';
-import SelectInput from '../../ui/SelectInput';
+import PageHeader from '../../ui/PageHeader';
 
 export interface AssignmentSelection {
   type: TaskAssignmentOverrideType;
@@ -13,8 +12,6 @@ export interface AssignmentSelection {
 
 interface AssignmentSelectorProps {
   open: boolean;
-  defaultAssignmentType: 'strict_rotation' | TaskAssignmentOverrideType;
-  defaultAssignedTo: string | null;
   profiles: Profile[];
   value: AssignmentSelection;
   onChange: (nextValue: AssignmentSelection) => void;
@@ -22,13 +19,13 @@ interface AssignmentSelectorProps {
   onCancel: () => void;
   loading?: boolean;
   title?: string;
+  subtitle?: string;
   confirmLabel?: string;
+  children?: React.ReactNode;
 }
 
 export default function AssignmentSelector({
   open,
-  defaultAssignmentType,
-  defaultAssignedTo,
   profiles,
   value,
   onChange,
@@ -36,102 +33,167 @@ export default function AssignmentSelector({
   onCancel,
   loading = false,
   title,
+  subtitle,
   confirmLabel,
+  children,
 }: Readonly<AssignmentSelectorProps>) {
   const { t } = useTranslation();
 
-  const defaultSelection = useMemo<AssignmentSelection>(() => {
-    if (defaultAssignmentType === 'team_work') {
-      return { type: 'team_work', assignedTo: [] };
+  const selectedDist = useMemo(() => {
+    if (value.type === 'team_work') {
+      return profiles.map((p) => ({ id: p.id, name: p.name, percentage: 50 }));
     }
-    if (defaultAssignmentType === 'anyone') {
-      return { type: 'anyone', assignedTo: [] };
-    }
-    return {
-      type: 'individual',
-      assignedTo: [defaultAssignedTo ?? profiles[0]?.id ?? ''].filter(Boolean),
-    };
-  }, [defaultAssignedTo, defaultAssignmentType, profiles]);
+    return profiles.map((p) => ({
+      id: p.id,
+      name: p.name,
+      percentage: value.assignedTo.includes(p.id) ? 100 : 0,
+    }));
+  }, [value, profiles]);
 
   if (!open) return null;
 
-  const selectedIndividualId = value.assignedTo[0] ?? profiles[0]?.id ?? '';
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-surface-2/60 backdrop-blur-sm" onClick={onCancel} />
-      <Card className="relative z-10 w-full max-w-sm overflow-hidden pointer-events-auto flex flex-col" padding="none" variant="modal">
-        <div className="p-6 pb-4">
-          <h3 className="text-lg font-bold text-surface-2 mb-2">
-            {title ?? t('taskCompletion.selectAssignment')}
-          </h3>
-        </div>
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background-dark animate-in fade-in slide-in-from-right duration-300">
+      <PageHeader
+        title={subtitle ?? ''}
+        subtitle={title ?? t('taskCompletion.selectAssignment')}
+        backAction={{
+          onClick: onCancel,
+          ariaLabel: t('cta.cancel'),
+        }}
+        showAvatars={false}
+      />
 
-        <div className="px-4 pb-4 space-y-3">
-          <Button className="h-auto rounded-xl p-3" fullWidth onClick={() => onChange(defaultSelection)} variant="selector">
-            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.defaultAssignment')}</p>
-            <p className="text-xs text-surface-2/60">{t(`taskDetails.assignment.${defaultAssignmentType === 'strict_rotation' ? 'strictRotation' : defaultAssignmentType === 'team_work' ? 'teamWork' : defaultAssignmentType}`)}</p>
-          </Button>
-
-          <Button
-            active={value.type === 'team_work'}
-            className="h-auto rounded-xl p-3"
-            fullWidth
-            onClick={() => onChange({ type: 'team_work', assignedTo: [] })}
-            variant="selector"
-          >
-            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.teamWork')}</p>
-          </Button>
-
-          <div
-            className={`w-full rounded-xl border p-3 text-left ${
-              value.type === 'individual' ? 'border-primary bg-primary/10' : 'border-border-subtle'
-            }`}
-          >
-            <Button
-              className="h-auto px-0 py-0"
-              fullWidth
-              onClick={() => onChange({ type: 'individual', assignedTo: [selectedIndividualId || profiles[0]?.id || ''] })}
-              size="sm"
-              variant="ghost"
-            >
-              <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.individual')}</p>
-            </Button>
-            <SelectInput
-              className="mt-2"
-              selectClassName="text-sm"
-              value={selectedIndividualId}
-              variant="slate"
-              onChange={(event) => onChange({ type: 'individual', assignedTo: [event.target.value] })}
-            >
-              {profiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name}
-                </option>
-              ))}
-            </SelectInput>
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="max-w-md mx-auto w-full px-6 pt-6 pb-24">
+          {/* Integrated Selection Visualization */}
+          <div className="mb-10 bg-primary/5 border border-primary/10 rounded-2xl p-4">
+             <div className="flex justify-between items-center mb-3">
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
+                 {t('taskCompletion.pointDistribution', 'Distribution')}
+               </span>
+               <div className="flex gap-4">
+                 {selectedDist.map((d, i) => (
+                   <div key={d.id} className="flex items-center gap-1.5">
+                     <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary' : 'bg-primary/30'}`} />
+                     <span className={`text-[9px] font-bold uppercase tracking-tight ${d.percentage > 0 ? 'text-surface-2/60' : 'text-surface-2/20'}`}>
+                       {d.name} {d.percentage}%
+                     </span>
+                   </div>
+                 ))}
+               </div>
+             </div>
+             <div className="h-1.5 w-full bg-primary/5 rounded-full overflow-hidden flex ring-1 ring-primary/5">
+                {selectedDist.map((d, i) => (
+                  <div
+                    key={d.id}
+                    className={`h-full transition-all duration-500 ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]' : 'bg-primary/30'}`}
+                    style={{ width: `${d.percentage}%` }}
+                  />
+                ))}
+             </div>
           </div>
 
-          <Button
-            active={value.type === 'anyone'}
-            className="h-auto rounded-xl p-3"
-            fullWidth
-            onClick={() => onChange({ type: 'anyone', assignedTo: [] })}
-            variant="selector"
-          >
-            <p className="text-sm font-semibold text-surface-2">{t('taskCompletion.anyone')}</p>
-          </Button>
-        </div>
+          <p className="text-xs font-black text-surface-2/30 uppercase tracking-[0.2em] mb-8 text-center">
+            {t('taskCompletion.whoGetsPoints', 'Who should receive the points?')}
+          </p>
 
-        <div className="flex flex-col border-t border-border-subtle divide-y divide-border-subtle">
-          <Button fullWidth loading={loading} onClick={onConfirm} size="menu" variant="modalAction">
+          {children && <div className="mb-10">{children}</div>}
+
+          <div className="space-y-6">
+            {/* Team Work Option - Full Width */}
+            <button
+              type="button"
+              onClick={() => onChange({ type: 'team_work', assignedTo: [] })}
+              className={`relative flex items-center p-6 rounded-[32px] transition-all duration-300 group w-full ${
+                value.type === 'team_work'
+                  ? 'bg-primary/10 ring-2 ring-primary shadow-glow-primary/20'
+                  : 'bg-surface-1/40 border border-border-subtle hover:bg-surface-1 hover:border-primary/30'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 mr-4 ${
+                value.type === 'team_work' ? 'bg-primary text-surface-1 shadow-glow-primary scale-105' : 'bg-surface-2/5 text-surface-2/40 group-hover:bg-primary/10 group-hover:text-primary'
+              }`}>
+                <span className="material-symbols-outlined text-3xl filled-icon">groups</span>
+              </div>
+              <div className="flex flex-col text-left">
+                <span className={`text-base font-bold tracking-tight ${value.type === 'team_work' ? 'text-primary' : 'text-surface-2'}`}>
+                  {t('taskCompletion.teamWork')}
+                </span>
+                <span className="text-xs text-surface-2/40">{t('taskCompletion.splitPoints', 'Split points between both')}</span>
+              </div>
+              {value.type === 'team_work' && (
+                <div className="ml-auto w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
+                  <span className="material-symbols-outlined text-[14px] font-bold">check</span>
+                </div>
+              )}
+            </button>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Individual Profiles */}
+              {profiles.map((profile) => {
+                const isSelected = (value.type === 'individual' || value.type === 'anyone') && value.assignedTo[0] === profile.id;
+
+                return (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    onClick={() => onChange({ type: 'individual', assignedTo: [profile.id] })}
+                    className={`relative flex flex-col items-center justify-center p-6 rounded-[32px] transition-all duration-300 group ${
+                      isSelected
+                        ? 'bg-primary/10 ring-2 ring-primary shadow-glow-primary/20'
+                        : 'bg-surface-1/40 border border-border-subtle hover:bg-surface-1 hover:border-primary/30'
+                    }`}
+                  >
+                    <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-3 border-2 ${
+                      isSelected ? 'border-primary shadow-glow-primary scale-110' : 'border-surface-2/10 group-hover:border-primary/30'
+                    }`}>
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt={profile.name || ''} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center text-xl font-bold ${
+                          isSelected ? 'bg-primary text-surface-1' : 'bg-surface-2/5 text-surface-2/40'
+                        }`}>
+                          {profile.name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-sm font-bold tracking-tight ${isSelected ? 'text-primary' : 'text-surface-2/60'}`}>
+                      {profile.name}
+                    </span>
+                    
+
+                    {isSelected && (
+                      <div className="absolute top-3 right-3 w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
+                        <span className="material-symbols-outlined text-[14px] font-bold">check</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="shrink-0 p-4 pb-10 bg-background-dark/80 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
+        <div className="max-w-md mx-auto w-full">
+          <Button 
+            className="h-16 shadow-glow-primary text-lg rounded-2xl" 
+            fullWidth
+            loading={loading} 
+            onClick={onConfirm} 
+            variant="primary"
+          >
             {loading ? t('taskDetails.processing') : (confirmLabel ?? t('taskCompletion.confirmAssignment'))}
           </Button>
-          <Button className="bg-surface-1 text-surface-2/60" fullWidth onClick={onCancel} size="menu" variant="modalAction">
-            {t('cta.cancel')}
-          </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
+
+
+
+
+

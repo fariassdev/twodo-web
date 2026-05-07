@@ -498,10 +498,11 @@ async function resolveAssignmentRecipients(
   }
 
   if (assignmentOverride?.type === 'anyone') {
+    const selectedRecipientId = assignmentOverride.assignedTo?.[0] ?? scope.profileId;
     return {
       assignmentType: 'anyone',
       assignedTo: null,
-      recipientIds: [scope.profileId],
+      recipientIds: [selectedRecipientId],
     };
   }
 

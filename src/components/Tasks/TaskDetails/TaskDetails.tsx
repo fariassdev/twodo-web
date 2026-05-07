@@ -85,12 +85,28 @@ export default function TaskDetails() {
 
   const defaultSelection = useMemo<AssignmentSelection>(() => {
     if (!task) return { type: 'anyone', assignedTo: [] };
-    if (task.assignment_type === 'team_work') return { type: 'team_work', assignedTo: [] };
-    if (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') {
-      return { type: 'individual', assignedTo: [task.assigned_to ?? profiles[0]?.id ?? ''].filter(Boolean) };
+
+    // If task is completed, we prioritize existing completions for preloading
+    if (task.status === 'completed' && completions.length > 0) {
+      if (task.assignment_type === 'team_work') {
+        return { type: 'team_work', assignedTo: [] };
+      }
+      
+      // For any other type (individual, anyone, rotation), we map it to the person who did it
+      const firstCompletion = completions[0];
+      return { 
+        type: 'individual', 
+        assignedTo: [firstCompletion.profile?.id ?? firstCompletion.completed_by ?? profiles[0]?.id ?? ''].filter(Boolean) 
+      };
     }
-    return { type: 'anyone', assignedTo: [] };
-  }, [profiles, task]);
+
+    // Normal preloading for pending/overdue tasks
+    if (task.assignment_type === 'team_work') return { type: 'team_work', assignedTo: [] };
+    
+    // For individual, anyone or rotation, we pre-select the assigned person or the first profile
+    const assignedTo = task.assigned_to ?? profiles[0]?.id ?? '';
+    return { type: 'individual', assignedTo: [assignedTo].filter(Boolean) };
+  }, [profiles, task, completions]);
 
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection>({
     type: 'anyone',
@@ -101,12 +117,14 @@ export default function TaskDetails() {
     type: TaskAssignmentOverrideType;
     assignedTo: string[];
   } {
-    if (selection.type === 'individual') {
-      const fallbackId = task?.assigned_to ?? profiles[0]?.id ?? '';
-      const selectedId = selection.assignedTo[0] ?? fallbackId;
-      return { type: 'individual', assignedTo: selectedId ? [selectedId] : [] };
+    if (selection.type === 'team_work') {
+      return { type: 'team_work', assignedTo: [] };
     }
-    return { type: selection.type, assignedTo: [] };
+    
+    // Smart type preservation: if task was anyone, keep it anyone. Else it's individual.
+    const finalType = task?.assignment_type === 'anyone' ? 'anyone' : 'individual';
+    const profileId = selection.assignedTo[0] ?? profiles[0]?.id ?? '';
+    return { type: finalType, assignedTo: profileId ? [profileId] : [] };
   }
 
   const safeDefaultAssignmentType =
@@ -337,11 +355,10 @@ export default function TaskDetails() {
       {(task.status === 'pending' || task.status === 'overdue') && (
         <AssignmentSelector
           open={assignmentSelectorOpen}
-          defaultAssignmentType={safeDefaultAssignmentType}
-          defaultAssignedTo={task.assigned_to}
           profiles={profiles}
           value={selectedAssignment}
           onChange={setSelectedAssignment}
+          subtitle={task.title}
           onConfirm={async () => {
             setAssignmentSelectorOpen(false);
             await handleComplete();
@@ -356,10 +373,9 @@ export default function TaskDetails() {
           open={assignmentEditorOpen}
           profiles={profiles}
           completions={completions}
-          defaultAssignmentType={safeDefaultAssignmentType}
-          defaultAssignedTo={task.assigned_to}
           value={selectedAssignment}
           onChange={setSelectedAssignment}
+          subtitle={task.title}
           onSave={handleUpdateAssignment}
           onCancel={() => setAssignmentEditorOpen(false)}
           loading={updateTaskCompletionAssignmentMutation.isPending}
