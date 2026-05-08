@@ -66,11 +66,11 @@ export default function BalanceScoreWidget() {
 
   return (
     <Card
-      className="mb-8 mt-6 flex items-center gap-5 shadow-glow-primary bg-linear-to-br from-surface-1 to-surface-1/20 border-2 border-primary"
+      className="mb-4 mt-2 flex items-center gap-4 shadow-glow-primary bg-linear-to-br from-surface-1 to-surface-1/20 border-2 border-primary"
       interactive
       onClick={() => navigate({ to: '/metrics' })}
-      padding="lg"
-      radius="3xl"
+      padding="md"
+      radius="2xl"
       variant="surface"
     >
       <div className="relative w-[72px] h-[72px] flex-shrink-0">
@@ -96,17 +96,17 @@ export default function BalanceScoreWidget() {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-2xl font-black ${colorClass.split(' ')[0]}`}>{percentage}<span className="text-xs">%</span></span>
+          <span className={`text-xl font-black ${colorClass.split(' ')[0]}`}>{percentage}<span className="text-[10px]">%</span></span>
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${colorClass.includes('success') ? 'bg-success' : colorClass.includes('danger') ? 'bg-danger' : colorClass.includes('warning') ? 'bg-warning' : 'bg-primary'}`}></div>
+        <div className="flex items-center gap-2 mb-1">
+          <div className={`w-1 h-1 rounded-full ${colorClass.includes('success') ? 'bg-success' : colorClass.includes('danger') ? 'bg-danger' : colorClass.includes('warning') ? 'bg-warning' : 'bg-primary'}`}></div>
           <Badge className="bg-transparent p-0 font-bold uppercase tracking-wider text-surface-2/60" size="xs" tone="neutral">
             {t('dashboard.balanceBadge')}
           </Badge>
         </div>
-        <p className="text-lg font-bold text-surface-2 leading-tight pr-4">
+        <p className="text-md font-bold text-surface-2 leading-tight pr-2">
           {secondaryText || t('dashboard.balanceScoreText')}
         </p>
       </div>
