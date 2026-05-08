@@ -26,12 +26,7 @@ import Modal from '../../ui/Modal';
 import SectionHeader from '../../ui/SectionHeader';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import AssignmentSelector, { type AssignmentSelection } from '../AssignmentSelector';
-import AssignmentEditor from '../AssignmentEditor';
-import type { TaskAssignmentOverrideType } from '../../../lib/queries';
-
-
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 
 type MetaChipProps = {
   icon: string;
@@ -55,11 +50,8 @@ export default function TaskDetails() {
   const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  const searchParams = useSearch({ strict: false }) as { editAssignment?: boolean };
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [assignmentSelectorOpen, setAssignmentSelectorOpen] = useState(false);
-  const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const taskQuery = useTaskByIdQuery(taskId);
@@ -83,63 +75,6 @@ export default function TaskDetails() {
   const completions = taskCompletionsQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
-  const defaultSelection = useMemo<AssignmentSelection>(() => {
-    if (!task) return { type: 'anyone', assignedTo: [] };
-
-    // If task is completed, we prioritize existing completions for preloading
-    if (task.status === 'completed' && completions.length > 0) {
-      if (task.assignment_type === 'team_work') {
-        return { type: 'team_work', assignedTo: [] };
-      }
-      
-      // For any other type (individual, anyone, rotation), we map it to the person who did it
-      const firstCompletion = completions[0];
-      return { 
-        type: 'individual', 
-        assignedTo: [firstCompletion.profile?.id ?? firstCompletion.completed_by ?? profiles[0]?.id ?? ''].filter(Boolean) 
-      };
-    }
-
-    // Normal preloading for pending/overdue tasks
-    if (task.assignment_type === 'team_work') return { type: 'team_work', assignedTo: [] };
-    
-    // For individual, anyone or rotation, we pre-select the assigned person or the first profile
-    const assignedTo = task.assigned_to ?? profiles[0]?.id ?? '';
-    return { type: 'individual', assignedTo: [assignedTo].filter(Boolean) };
-  }, [profiles, task, completions]);
-
-  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection>({
-    type: 'anyone',
-    assignedTo: [],
-  });
-
-  function normalizeForMutation(selection: AssignmentSelection): {
-    type: TaskAssignmentOverrideType;
-    assignedTo: string[];
-  } {
-    if (selection.type === 'team_work') {
-      return { type: 'team_work', assignedTo: [] };
-    }
-    
-    // Smart type preservation: if task was anyone, keep it anyone. Else it's individual.
-    const finalType = task?.assignment_type === 'anyone' ? 'anyone' : 'individual';
-    const profileId = selection.assignedTo[0] ?? profiles[0]?.id ?? '';
-    return { type: finalType, assignedTo: profileId ? [profileId] : [] };
-  }
-
-  const safeDefaultAssignmentType =
-    task?.assignment_type === 'strict_rotation' ||
-    task?.assignment_type === 'team_work' ||
-    task?.assignment_type === 'individual' ||
-    task?.assignment_type === 'anyone'
-      ? task.assignment_type
-      : 'anyone';
-
-  useEffect(() => {
-    if (!searchParams.editAssignment || task?.status !== 'completed') return;
-    setSelectedAssignment(defaultSelection);
-    setAssignmentEditorOpen(true);
-  }, [defaultSelection, searchParams.editAssignment, task?.status]);
 
   const loading =
     taskQuery.isPending ||
@@ -167,37 +102,6 @@ export default function TaskDetails() {
     loveNoteQuery.isFetching ||
     assignedProfileQuery.isFetching ||
     lastDoneByProfileQuery.isFetching;
-
-  async function handleComplete() {
-    if (!task || acting) return;
-    setActionError(null);
-    try {
-      await completeTaskMutation.mutateAsync({
-        taskId: task.id,
-        assignmentOverride: normalizeForMutation(selectedAssignment),
-      });
-      navigate({ to: '/' });
-    } catch (err) {
-      console.error('Complete error:', err);
-      setActionError(t('queryState.mutationError'));
-    }
-  }
-
-  async function handleUpdateAssignment() {
-    if (!task) return;
-    setActionError(null);
-    try {
-      await updateTaskCompletionAssignmentMutation.mutateAsync({
-        taskId: task.id,
-        assignmentType: normalizeForMutation(selectedAssignment).type,
-        assignedTo: normalizeForMutation(selectedAssignment).assignedTo,
-      });
-      setAssignmentEditorOpen(false);
-    } catch (err) {
-      console.error('Update assignment error:', err);
-      setActionError(t('queryState.mutationError'));
-    }
-  }
 
   async function handlePostpone() {
     if (!task || acting) return;
@@ -352,35 +256,6 @@ export default function TaskDetails() {
         </Card>
       </Modal>
 
-      {(task.status === 'pending' || task.status === 'overdue') && (
-        <AssignmentSelector
-          open={assignmentSelectorOpen}
-          profiles={profiles}
-          value={selectedAssignment}
-          onChange={setSelectedAssignment}
-          subtitle={task.title}
-          onConfirm={async () => {
-            setAssignmentSelectorOpen(false);
-            await handleComplete();
-          }}
-          onCancel={() => setAssignmentSelectorOpen(false)}
-          loading={completeTaskMutation.isPending}
-        />
-      )}
-
-      {task.status === 'completed' && (
-        <AssignmentEditor
-          open={assignmentEditorOpen}
-          profiles={profiles}
-          completions={completions}
-          value={selectedAssignment}
-          onChange={setSelectedAssignment}
-          subtitle={task.title}
-          onSave={handleUpdateAssignment}
-          onCancel={() => setAssignmentEditorOpen(false)}
-          loading={updateTaskCompletionAssignmentMutation.isPending}
-        />
-      )}
 
       <PageHeader
         title={task.title}
@@ -516,10 +391,7 @@ export default function TaskDetails() {
               <Button
                 className="justify-center shadow-lg shadow-primary/20"
                 fullWidth
-                onClick={() => {
-                  setSelectedAssignment(defaultSelection);
-                  setAssignmentSelectorOpen(true);
-                }}
+                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
                 disabled={acting}
               >
                 <span className="material-symbols-outlined font-bold">check_circle</span>
@@ -574,10 +446,7 @@ export default function TaskDetails() {
             <Button
               className="text-sm font-semibold"
               fullWidth
-              onClick={() => {
-                setSelectedAssignment(defaultSelection);
-                setAssignmentEditorOpen(true);
-              }}
+                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
               variant="subtle"
             >
               {t('taskCompletion.editAssignment')}

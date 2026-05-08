@@ -34,7 +34,7 @@ const ForgotPassword = React.lazy(() => import('./components/Auth/ForgotPassword
 const ResetPassword = React.lazy(() => import('./components/Auth/ResetPassword'));
 const VerifyEmail = React.lazy(() => import('./components/Auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/Auth/PendingAccess'));
-const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
+const TaskAssignment = React.lazy(() => import('./components/Tasks/TaskAssignment/TaskAssignment'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
 
@@ -401,6 +401,16 @@ interface TaskDetailsSearch {
   editAssignment?: boolean;
 }
 
+export const taskAssignmentRoute = createRoute({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/task/$taskId/assignment',
+  component: () => (
+    <RouteShell sectionName="task-assignment">
+      <TaskAssignment />
+    </RouteShell>
+  ),
+});
+
 export const taskDetailsRoute = createRoute({
   getParentRoute: () => mainLayoutRoute,
   path: '/task/$taskId',
@@ -500,6 +510,7 @@ const routeTree = rootRoute.addChildren([
       expensesListRoute,
       taskDetailsRoute,
       editEntryRoute,
+      taskAssignmentRoute,
       createEntryRoute,
       createExpenseRoute,
       expenseDetailsRoute,
