@@ -178,9 +178,11 @@
     "overdueSection": "Pendientes de otros días",
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Próximos 7 días",
-    "balanceScoreText": "Lleváis una carga equilibrada entre ambos",
+    "balanceScoreSuccess": "¡Sincronía total! Estáis gestionando el hogar como un gran equipo.",
+    "balanceScoreWarning": "La balanza se ha movido un poco. ¡Buen momento para echar una mano!",
+    "balanceScoreDanger": "Parece que uno lleva más peso últimamente. ¡Es el momento de unir fuerzas!",
+    "balanceScoreEmpty": "Vuestro balance empieza aquí. Completad la primera tarea del mes.",
     "balanceBadge": "REPARTO DE CARGA",
-    "balanceScoreImbalance": "La carga recae más sobre uno de los dos",
     "viewMore": "Ver más",
     "timeBlocks": {
       "morning": "🌅 Mañana",
