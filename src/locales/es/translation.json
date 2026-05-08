@@ -21,6 +21,7 @@
     "title": "Un pequeño bache en el camino",
     "description": "No hemos podido cargar {{section}}, pero podemos intentarlo de nuevo juntos.",
     "retry": "Intentar de nuevo",
+    "backHome": "Ir al inicio",
     "defaultSection": "esta parte"
   },
   "errorPage": {

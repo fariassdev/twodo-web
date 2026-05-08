@@ -23,7 +23,7 @@ export default function ErrorPage({
   const displayDescription = description ?? t('runtimeBoundary.description', { section: t('runtimeBoundary.defaultSection') });
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background-light px-6 py-12 text-center">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background-light py-12 text-center">
       {/* Background Decorative Elements */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -38,14 +38,8 @@ export default function ErrorPage({
         className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-surface-2/5 blur-3xl"
       />
 
-      {/* Large Watermark Text */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-[0.03]">
-        <span className="select-none font-black text-[25vw] leading-none text-surface-2 uppercase">
-          Oops
-        </span>
-      </div>
 
-      <div className="relative z-10 flex max-w-lg flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-lg flex-col items-center px-6">
         {/* Logo Section */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -108,7 +102,7 @@ export default function ErrorPage({
             onClick={() => window.location.href = '/'}
             className="min-w-[180px]"
           >
-            {t('auth.forgotPassword.backToLogin')}
+            {t('runtimeBoundary.backHome')}
           </Button>
         </motion.div>
 

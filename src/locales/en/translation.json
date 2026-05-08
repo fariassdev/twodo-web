@@ -21,6 +21,7 @@
     "title": "A little bump in the road",
     "description": "We couldn't load {{section}}, but we can try again together.",
     "retry": "Try again",
+    "backHome": "Back to home",
     "defaultSection": "this part"
   },
   "errorPage": {

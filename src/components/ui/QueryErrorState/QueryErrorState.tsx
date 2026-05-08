@@ -32,7 +32,7 @@ export default function QueryErrorState({
   };
 
   return (
-    <div className="relative flex min-h-[300px] w-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12 text-center">
+    <div className="relative flex min-h-[300px] w-full flex-1 flex-col items-center justify-center overflow-hidden py-12 text-center">
       {/* Background blobs for premium feel */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -47,7 +47,7 @@ export default function QueryErrorState({
         className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-surface-2/5 blur-3xl"
       />
 
-      <div className="relative z-10 flex max-w-sm flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center px-6">
         {/* Stylized Icon Area */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -100,10 +100,9 @@ export default function QueryErrorState({
             variant="subtle"
             size="lg"
             onClick={handleBack}
-            startIcon={<span className="material-symbols-outlined !text-lg">arrow_back</span>}
             fullWidth
           >
-            {t('cta.back')}
+            {t('runtimeBoundary.backHome')}
           </Button>
         </motion.div>
       </div>
