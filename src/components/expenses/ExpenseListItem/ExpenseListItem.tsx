@@ -97,7 +97,7 @@ export default function ExpenseListItem({
         <p className="text-xl font-extrabold tracking-tight text-surface-2">
           {amountLabel}
         </p>
-        <p className={`text-[10px] font-black uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-primary'}`}>
+        <p className={`text-[8px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-primary'}`}>
           {impactLabel}
         </p>
       </div>

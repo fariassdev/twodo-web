@@ -2,14 +2,14 @@ import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../../utils';
 
-const wrapperVariants = cva('flex items-center gap-3 transition-all', {
+const wrapperVariants = cva('relative flex items-center transition-all', {
   variants: {
     variant: {
-      surface: 'rounded-lg border border-border-strong bg-background-dark px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      elevated: 'rounded-xl border border-border-subtle bg-surface-2/60 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      chip: 'rounded-full border border-primary/25 bg-surface-1/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
-      slate: 'rounded-lg border border-border-subtle bg-surface-1 px-2 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      surface: 'rounded-lg border border-border-strong bg-background-dark has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      elevated: 'rounded-xl border border-border-subtle bg-surface-2/60 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      soft: 'rounded-lg border border-primary/20 bg-primary/5 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      chip: 'rounded-full border border-primary/25 bg-surface-1/75 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      slate: 'rounded-lg border border-border-subtle bg-surface-1 has-[:focus]:ring-1 has-[:focus]:ring-primary',
     },
     size: {
       sm: 'h-9',
@@ -66,11 +66,32 @@ const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>(functi
 
   return (
     <div className={cn(wrapperVariants({ variant, size }), className)}>
-      {leading ? <span className="shrink-0 text-surface-2/60">{leading}</span> : null}
-      <select className={cn(selectVariants({ typography }), selectClassName)} id={id} ref={ref} {...props}>
+      {leading ? (
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 shrink-0 text-surface-2/60">
+          {leading}
+        </span>
+      ) : null}
+      
+      <select 
+        className={cn(
+          selectVariants({ typography }), 
+          'h-full w-full cursor-pointer bg-transparent',
+          leading ? 'pl-10' : 'pl-4',
+          indicator ? 'pr-10' : 'pr-4',
+          selectClassName
+        )} 
+        id={id} 
+        ref={ref} 
+        {...props}
+      >
         {children}
       </select>
-      {indicator ? <span className="pointer-events-none shrink-0 text-surface-2/60">{indicator}</span> : null}
+
+      {indicator ? (
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 shrink-0 text-surface-2/60">
+          {indicator}
+        </span>
+      ) : null}
     </div>
   );
 });

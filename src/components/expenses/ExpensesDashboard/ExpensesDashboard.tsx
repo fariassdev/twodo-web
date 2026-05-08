@@ -99,7 +99,7 @@ export default function ExpensesDashboard() {
   }
 
   return (
-    <div className="bg-background-dark min-h-screen">
+    <div>
       <Modal
         className="items-end justify-center pb-6"
         onClose={() => setSettlementSheetOpen(false)}
@@ -163,7 +163,7 @@ export default function ExpensesDashboard() {
         )}
       />
 
-      <main className="mx-auto max-w-md w-full px-4 pt-5 pb-20">
+      <main className="mx-auto max-w-md w-full px-4 pt-5 pb-8">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}

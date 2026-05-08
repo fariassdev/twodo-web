@@ -7,6 +7,7 @@ import Card from '../../ui/Card';
 import QueryErrorState from '../../ui/QueryErrorState';
 import SelectInput from '../../ui/SelectInput';
 import TextInput from '../../ui/TextInput';
+import ScrollContainer from '../../ui/ScrollContainer';
 import ExpensesList from '../ExpensesList';
 import {
   includesNormalizedText,
@@ -20,6 +21,7 @@ import {
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import type { ExpensesListSearch } from '../../../router';
+import { cn } from '../../../utils';
 
 function formatDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -101,7 +103,6 @@ export default function ExpensesListPage() {
   const [serverSearchText, setServerSearchText] = useState<string>(initialSearchText);
   const [fromDate, setFromDate] = useState<string>(initialFromDate);
   const [toDate, setToDate] = useState<string>(initialToDate);
-  const [isDateRangeOpen, setIsDateRangeOpen] = useState<boolean>(false);
   const [isSearchDebouncing, setIsSearchDebouncing] = useState<boolean>(false);
 
   const normalizedInputSearch = useMemo(() => normalizeSearchText(inputSearchText), [inputSearchText]);
@@ -241,7 +242,6 @@ export default function ExpensesListPage() {
     setServerSearchText('');
     setFromDate(defaultDateRange.fromDate);
     setToDate(defaultDateRange.toDate);
-    setIsDateRangeOpen(false);
     setIsSearchDebouncing(false);
     navigate({ to: '/expenses/list', search: {}, replace: true });
   };
@@ -282,7 +282,7 @@ export default function ExpensesListPage() {
   }
 
   return (
-    <div className="bg-background-dark min-h-screen">
+    <div>
       <PageHeader
         title={t('expenses.allExpenses')}
         subtitle={t('nav.expenses')}
@@ -291,13 +291,13 @@ export default function ExpensesListPage() {
         }}
       />
 
-      <main className="mx-auto max-w-md w-full px-4 pt-4 pb-20">
+      <main className="mx-auto max-w-md w-full px-4 pt-4 pb-8">
         <TextInput
-          className="rounded-2xl border-border-subtle bg-surface-2"
+          className="mb-4 border-border-subtle shadow-sm"
           inputMode="search"
-          leading={<span className="material-symbols-outlined text-surface-2/60">search</span>}
+          leading={<span className="material-symbols-outlined text-primary/60">search</span>}
           placeholder={t('expenses.searchExpensesPlaceholder')}
-          size="md"
+          size="lg"
           trailing={
             isSearchLoading ? (
               <span
@@ -308,7 +308,7 @@ export default function ExpensesListPage() {
             ) : hasSearchText ? (
               <Button
                 aria-label={t('expenses.clearSearch')}
-                className="h-8 w-8 text-surface-2/60 hover:bg-hover hover:text-surface-2"
+                className="h-8 w-8 text-surface-2/40 hover:bg-hover hover:text-surface-2"
                 onClick={clearSearchText}
                 size="icon"
                 variant="icon"
@@ -323,11 +323,11 @@ export default function ExpensesListPage() {
           onChange={(event) => handleSearchChange(event.target.value)}
         />
 
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <ScrollContainer className="mt-4" scrollClassName="p-1">
           <SelectInput
-            className="min-w-[10.5rem] flex-1"
-            leading={<span className="material-symbols-outlined text-surface-2/60">category</span>}
-            selectClassName="text-sm font-semibold"
+            className="min-w-[10rem] flex-1 shrink-0"
+            leading={<span className="material-symbols-outlined text-primary/60">category</span>}
+            selectClassName="text-xs font-bold tracking-wider"
             size="md"
             value={categoryId}
             variant="chip"
@@ -342,9 +342,9 @@ export default function ExpensesListPage() {
           </SelectInput>
 
           <SelectInput
-            className="min-w-[10.5rem] flex-1"
-            leading={<span className="material-symbols-outlined text-surface-2/60">person</span>}
-            selectClassName="text-sm font-semibold"
+            className="min-w-[10rem] flex-1 shrink-0"
+            leading={<span className="material-symbols-outlined text-primary/60">person</span>}
+            selectClassName="text-xs font-bold tracking-wider"
             size="md"
             value={paidByProfileId}
             variant="chip"
@@ -358,50 +358,34 @@ export default function ExpensesListPage() {
             ))}
           </SelectInput>
 
-          <Button
-            className="h-11 min-w-[10.5rem] flex-1 justify-start gap-2 rounded-full border-border-subtle bg-surface-1 px-3 text-sm font-semibold text-surface-2"
-            onClick={() => setIsDateRangeOpen((current) => !current)}
-            variant="subtle"
-          >
-            <span className="material-symbols-outlined text-surface-2/60">calendar_month</span>
-            <span className="truncate">{t('expenses.dateRange')}</span>
-            <span className="material-symbols-outlined ml-auto text-surface-2/60">expand_more</span>
-          </Button>
-        </div>
+          <TextInput
+            className="min-w-[10rem] flex-1 shrink-0"
+            inputClassName="text-xs uppercase tracking-wider h-full"
+            leading={<span className="material-symbols-outlined text-primary/60">calendar_today</span>}
+            size="sm"
+            type="date"
+            typography="strong"
+            value={fromDate}
+            variant="chip"
+            onChange={(event) => {
+              handleFromDateChange(event.target.value);
+            }}
+          />
 
-        {isDateRangeOpen && (
-          <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-border-subtle bg-surface-2 p-3">
-            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-background-light/60">
-              <span>{t('expenses.dateFrom')}</span>
-              <TextInput
-                className="h-10 border-primary/25 bg-background-dark"
-                max={toDate || undefined}
-                size="md"
-                type="date"
-                value={fromDate}
-                variant="surface"
-                onChange={(event) => {
-                  handleFromDateChange(event.target.value);
-                }}
-              />
-            </label>
-
-            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-background-light/60">
-              <span>{t('expenses.dateTo')}</span>
-              <TextInput
-                className="h-10 border-primary/25 bg-background-dark"
-                min={fromDate || undefined}
-                size="md"
-                type="date"
-                value={toDate}
-                variant="surface"
-                onChange={(event) => {
-                  handleToDateChange(event.target.value);
-                }}
-              />
-            </label>
-          </div>
-        )}
+          <TextInput
+            className="min-w-[10rem] flex-1 shrink-0"
+            inputClassName="text-xs uppercase tracking-wider h-full"
+            leading={<span className="material-symbols-outlined text-primary/60">event</span>}
+            size="sm"
+            type="date"
+            typography="strong"
+            value={toDate}
+            variant="chip"
+            onChange={(event) => {
+              handleToDateChange(event.target.value);
+            }}
+          />
+        </ScrollContainer>
 
         {(() => {
           if (hasActiveFilters && expensesQuery.isPending && !expensesQuery.data) {
@@ -417,23 +401,23 @@ export default function ExpensesListPage() {
 
           if (isEmpty) {
             return (
-              <div className="mt-10 flex flex-col items-center px-2 text-center">
-                <Card className="relative flex h-52 w-52 items-center justify-center rounded-full border-border-subtle bg-surface-1 shadow-[0_0_120px_rgba(23,207,145,0.12)]" padding="none" radius="3xl" variant="surface">
-                  <span className="material-symbols-outlined filled-icon !text-7xl text-primary/55">
+              <div className="mt-6 flex flex-col items-center px-2 text-center">
+                <Card className="relative flex h-40 w-40 items-center justify-center rounded-full border-border-subtle bg-surface-1 shadow-[0_0_80px_rgba(23,207,145,0.1)]" padding="none" radius="3xl" variant="surface">
+                  <span className="material-symbols-outlined filled-icon !text-6xl text-primary/55">
                     receipt_long
                   </span>
-                  <div className="absolute right-6 top-5 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface-2">
-                    <span className="material-symbols-outlined text-xl text-primary">search_off</span>
+                  <div className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-surface-2">
+                    <span className="material-symbols-outlined text-lg text-primary">search_off</span>
                   </div>
                 </Card>
 
-                <h2 className="mt-8 text-[2.1rem] font-black tracking-tight text-surface-2">
+                <h2 className="mt-6 text-3xl font-black tracking-tight text-surface-2">
                   {t('expenses.emptyNoResultsTitle')}
                 </h2>
-                <p className="mt-3 max-w-sm text-lg leading-relaxed text-surface-2/60">{emptySubtitle}</p>
+                <p className="mt-2 max-w-sm text-base leading-relaxed text-surface-2/60">{emptySubtitle}</p>
 
                 <Button
-                  className="mt-8 h-16 w-full max-w-[22rem] gap-2 rounded-3xl px-6 text-lg font-black shadow-[0_20px_40px_-16px_rgba(23,207,145,0.65)]"
+                  className="mt-6 h-16 w-full max-w-[22rem] gap-2 rounded-3xl px-6 text-lg font-black"
                   onClick={() => navigate({ to: '/expenses/new' })}
                   size="lg"
                 >

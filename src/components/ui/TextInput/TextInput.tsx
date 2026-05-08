@@ -9,8 +9,10 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
       surface: 'rounded-lg border border-primary/20 bg-background-dark px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       elevated: 'rounded-xl border border-primary/10 bg-surface-1 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      chip: 'rounded-full border border-primary/25 bg-surface-1/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
     },
     size: {
+      sm: 'h-11',
       md: 'h-12',
       lg: 'h-14',
       xl: 'h-16',
@@ -45,17 +47,44 @@ export type TextInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   ({ className, inputClassName, leading, trailing, variant, size, typography, id, ...props }, ref) => {
+    const internalRef = React.useRef<HTMLInputElement>(null);
+    
+    React.useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
+
+    const handleInputClick = () => {
+      if (props.type === 'date' && internalRef.current) {
+        try {
+          // Modern way to trigger date picker
+          internalRef.current.showPicker();
+        } catch (e) {
+          // Fallback for older browsers
+          internalRef.current.focus();
+        }
+      }
+    };
+
     return (
-      <div className={cn(wrapperVariants({ variant, size }), className)}>
+      <label 
+        className={cn(
+          wrapperVariants({ variant, size }), 
+          props.type === 'date' && "cursor-pointer",
+          className
+        )}
+        htmlFor={id}
+      >
         {leading ? <span className="shrink-0 text-surface-2/60">{leading}</span> : null}
         <input
-          ref={ref}
+          ref={internalRef}
           className={cn(inputVariants({ typography }), inputClassName)}
           id={id}
           {...props}
+          onClick={(e) => {
+            handleInputClick();
+            props.onClick?.(e);
+          }}
         />
         {trailing ? <span className="shrink-0 text-surface-2/60">{trailing}</span> : null}
-      </div>
+      </label>
     );
   }
 );
