@@ -72,7 +72,7 @@ export default function TaskAssignment() {
           assignmentType: finalType,
           assignedTo: assignedTo,
         });
-        toast.success(t('taskCompletion.alertAssignmentUpdated'));
+        toast.success(t('taskCompletion.assignmentUpdated'));
       } else {
         await completeTaskMutation.mutateAsync({
           taskId: task.id,
@@ -81,7 +81,7 @@ export default function TaskAssignment() {
             assignedTo: assignedTo,
           },
         });
-        toast.success(t('taskCompletion.alertCompleted'));
+        toast.success(t('taskCompletion.completed'));
       }
       
       // Go back to task details
