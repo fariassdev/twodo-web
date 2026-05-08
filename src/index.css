@@ -80,6 +80,8 @@ body {
   font-family: "Plus Jakarta Sans", sans-serif;
   background-color: var(--color-background-dark);
   color: #493421;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

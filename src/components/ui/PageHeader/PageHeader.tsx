@@ -74,48 +74,50 @@ export default function PageHeader({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
+  const avatarsVisible = showAvatars && !rightSlot && !rightMenu;
+
   return (
-    <div className={cn("sticky top-0 z-50 flex items-center justify-between px-4 py-6 border-b border-border-subtle bg-background-dark/90 backdrop-blur-xl", className)}>
-      <div className="flex items-center gap-4">
+    <div className={cn("sticky top-0 z-50 w-full flex items-center justify-between px-4 py-6 border-b border-border-subtle bg-background-dark/90 backdrop-blur-xl", className)}>
+      <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
         {backAction && (
           <Button
             variant="icon"
             size="icon"
             onClick={backAction.onClick}
             aria-label={backAction.ariaLabel || t('topBar.back')}
-            className="text-surface-2/60 hover:text-surface-2 -ml-2"
+            className="text-surface-2/60 hover:text-surface-2 -ml-2 flex-shrink-0"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </Button>
         )}
         {showLogo && (
-          <Link to="/" className="cursor-pointer active:scale-95 transition-all duration-200 hover:opacity-80">
-            <TwodoLogo />
+          <Link to="/" className="cursor-pointer active:scale-95 transition-all duration-200 hover:opacity-80 flex-shrink-0">
+            <TwodoLogo width={88} />
           </Link>
         )}
-        <div className={cn("flex flex-col py-0.5", showLogo && "border-l border-border-subtle pl-4")}>
+        <div className={cn("flex flex-col py-0.5 min-w-0", showLogo && "border-l border-border-subtle pl-4")}>
           {subtitle && (
-            <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase leading-none mb-1.5">
+            <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase leading-none mb-1.5 truncate">
               {subtitle}
             </span>
           )}
-          <h1 className="text-sm font-bold text-surface-2/80 leading-none tracking-tight first-letter:uppercase">
+          <h1 className="text-sm font-bold text-surface-2/80 leading-none tracking-tight first-letter:uppercase truncate">
             {title}
           </h1>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        {showAvatars && (
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {avatarsVisible && (
            <div
-            className="flex -space-x-2 cursor-pointer active:scale-95 transition-transform"
+            className="flex -space-x-2 cursor-pointer active:scale-95 transition-transform flex-shrink-0"
             onClick={() => navigate({ to: '/profile' })}
           >
             {profiles.slice(0, 2).map((p, i) => (
               <div
                 key={p.id}
                 className={cn(
-                  "w-9 h-9 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden",
+                  "w-8 h-8 rounded-full border-2 border-background-dark flex items-center justify-center overflow-hidden",
                   i === 0 ? "bg-surface-1" : "bg-primary/20",
                   i === 0 ? "z-10" : "z-0"
                 )}
@@ -123,7 +125,7 @@ export default function PageHeader({
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt={p.name || ''} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs font-semibold text-primary">
+                  <span className="text-[10px] font-semibold text-primary">
                     {p.name?.[0]?.toUpperCase() || '?'}
                   </span>
                 )}
@@ -135,7 +137,7 @@ export default function PageHeader({
         {rightSlot}
 
         {rightMenu && (
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <Button
               variant="icon"
               size="icon"
@@ -193,3 +195,4 @@ export default function PageHeader({
     </div>
   );
 }
+
