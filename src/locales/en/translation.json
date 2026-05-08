@@ -158,6 +158,15 @@
     "pendingCount_one": "{{count}} Pending",
     "pendingCount_other": "{{count}} Pending",
     "noTasksFound": "No tasks found",
+    "emptyToday": {
+      "title": "All clear for today!",
+      "subtitle": "Enjoy your shared time together, or plan ahead for a balanced tomorrow.",
+      "onboardingTitle": "Welcome to Twodo!",
+      "onboardingSubtitle": "Your journey to a balanced mental load starts here. Add your first recurring task to get started.",
+      "cta": "Add first task",
+      "ctaExisting": "Add task",
+      "planAhead": "Plan tomorrow"
+    },
     "completedBy": "Completed by {{name}}",
     "completedByBoth": "Done together",
     "allDoneToday": "All done for today! 🎉",

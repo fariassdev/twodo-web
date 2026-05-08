@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, useProfilesQuery } from '../../../lib/queryHooks';
+import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery } from '../../../lib/queryHooks';
 import type { Task } from '../../../lib/types';
 import TaskAvatars from '../TaskAvatars';
+import EmptyTodayState from './EmptyTodayState';
 import { toast } from '../../ui/Snackbar';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -18,6 +19,7 @@ export default function TodayTasksWidget() {
   const navigate = useNavigate();
   const todaysTasksQuery = useTodaysTasksQuery();
   const overdueTasksQuery = useOverdueTasksQuery();
+  const taskCountQuery = useTaskCountQuery();
   const completeTaskMutation = useCompleteTaskMutation();
   const { data: profiles = [] } = useProfilesQuery();
 
@@ -170,11 +172,8 @@ export default function TodayTasksWidget() {
   };
 
   return (
-    <div className="mt-6 mb-8 relative">
+    <div className="mt-2 relative">
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-surface-2">{t('dashboard.today')}</h2>
-      </div>
 
       {TIME_BLOCKS.map(block => {
         const blockTasks = tasksByBlock[block];
@@ -194,9 +193,11 @@ export default function TodayTasksWidget() {
       })}
 
       {tasks.length === 0 && overdueTasks.length === 0 && (
-        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-surface-2/40" variant="default">
-          {t('dashboard.noTasksFound')}
-        </ListRow>
+        <EmptyTodayState 
+          isOnboarding={taskCountQuery.data === 0}
+          onAddClick={() => navigate({ to: '/create' })}
+          onPlanClick={() => navigate({ to: '/calendar' })}
+        />
       )}
 
       {overdueTasks.length > 0 && (

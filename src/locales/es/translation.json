@@ -156,6 +156,15 @@
     "pendingCount_one": "{{count}} Pendiente",
     "pendingCount_other": "{{count}} Pendientes",
     "noTasksFound": "No se encontraron tareas",
+    "emptyToday": {
+      "title": "¡Todo despejado por hoy!",
+      "subtitle": "Disfrutad de vuestro tiempo juntos, o planificad con antelación para un mañana equilibrado.",
+      "onboardingTitle": "¡Bienvenidos a Twodo!",
+      "onboardingSubtitle": "Vuestro viaje hacia una carga mental equilibrada comienza aquí. Añadid vuestra primera tarea recurrente para empezar.",
+      "cta": "Añadir primera tarea",
+      "ctaExisting": "Añadir tarea",
+      "planAhead": "Planificar mañana"
+    },
     "completedBy": "Completado por {{name}}",
     "completedByBoth": "Completada en equipo",
     "allDoneToday": "Todo completado por hoy! 🎉",
