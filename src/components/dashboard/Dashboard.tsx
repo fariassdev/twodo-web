@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import PageHeader from '../ui/PageHeader';
-import BalanceScoreWidget from './BalanceScoreWidget';
+import BalanceScoreWidget from '../ui/BalanceScoreWidget';
 import TodayTasksWidget from './TodayTasksWidget';
 import UpcomingTasksWidget from './UpcomingTasksWidget';
 import Button from '../ui/Button';
@@ -39,13 +39,13 @@ export default function Dashboard() {
         subtitle={t('dashboard.today')}
       />
 
-      <div className="px-4 pt-4 pb-8">
-        <BalanceScoreWidget />
+      <main className="max-w-md mx-auto w-full px-4 pt-4 pb-20">
+        <BalanceScoreWidget compact />
         
         <TodayTasksWidget />
         
         <UpcomingTasksWidget />
-      </div>
+      </main>
 
       {hasTasksToday && (
         <Button

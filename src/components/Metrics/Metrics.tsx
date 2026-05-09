@@ -14,6 +14,7 @@ import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import BalanceScoreWidget from '../ui/BalanceScoreWidget';
 
 export default function Metrics() {
   const { t } = useTranslation();
@@ -86,64 +87,8 @@ export default function Metrics() {
         </div>
 
         {/* House Harmony */}
-        <section className="p-4 mt-2">
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-surface-2">{t('metrics.houseHarmony')}</h3>
-                <p className="text-sm text-surface-2/60">{t('metrics.houseHarmonySubtitle')}</p>
-              </div>
-              <div className="bg-primary/20 p-3 rounded-full">
-                <span className="material-symbols-outlined text-primary text-3xl">favorite</span>
-              </div>
-            </div>
-
-            {balance && (
-              <>
-                <div className="space-y-5">
-                  {balance.members.map((member, index) => {
-                    const highlighted = index === 0;
-                    return (
-                      <div key={member.id}>
-                        <div className="flex justify-between items-end mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold ${highlighted ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-surface-2/40'}`}>
-                              {member.avatarUrl ? (
-                                <img src={member.avatarUrl} alt={member.name} className="size-full object-cover" />
-                              ) : (
-                                member.name.charAt(0).toUpperCase()
-                              )}
-                            </div>
-                            <span className="text-sm font-medium text-surface-2">{t('metrics.tasksOf', { name: member.name })}</span>
-                          </div>
-                          <span className={`text-lg font-bold ${highlighted ? 'text-primary' : 'text-surface-2/60'}`}>
-                            {member.percentage}%
-                          </span>
-                        </div>
-                        <div className="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${highlighted ? 'bg-primary' : 'bg-border-subtle'}`}
-                            style={{ width: `${member.percentage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-6 flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
-                  <span className="material-symbols-outlined text-primary text-sm">info</span>
-                  <p className="text-xs text-primary/80 font-medium tracking-wide">
-                    {balance.members.length <= 1
-                      ? t('metrics.balanceKeepGoing')
-                      : Math.abs((balance.members[0]?.percentage ?? 0) - (balance.members[1]?.percentage ?? 0)) <= 10
-                      ? t('metrics.balanceGood')
-                      : t('metrics.balanceKeepGoing')}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+        <section className="px-4 mt-2">
+          <BalanceScoreWidget compact={false} />
         </section>
 
         {/* Weekly Pulse */}
