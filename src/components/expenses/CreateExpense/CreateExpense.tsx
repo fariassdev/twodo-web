@@ -3,12 +3,15 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
 import { NumericInput } from '../../ui/NumericInput';
 import TextInput from '../../ui/TextInput';
+import ScrollContainer from '../../ui/ScrollContainer/ScrollContainer';
 import {
   useAuthScope,
   useCreateExpenseMutation,
@@ -16,6 +19,7 @@ import {
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
+import { cn } from '../../../utils';
 
 function parseAmountToCents(raw: string): number {
   const normalized = raw.replace(',', '.').trim();
@@ -110,7 +114,7 @@ export default function CreateExpense() {
   });
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <PageHeader
         title={t('expenses.newExpense')}
         subtitle={t('nav.expenses')}
@@ -131,88 +135,159 @@ export default function CreateExpense() {
         )}
       />
 
-      <main className="mx-auto max-w-md px-4 pb-12 pt-6">
-        {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
+      <main className="mx-auto max-w-md px-6 pb-12 pt-6">
+        {actionError ? <ErrorBanner className="mb-6" message={actionError} /> : null}
 
-        <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5">
-          <label className="text-sm uppercase tracking-wider text-primary/80">{t('expenses.amount')}</label>
-          <div className="mt-2 flex items-end gap-2">
-            <span className="pb-2 text-5xl font-bold text-surface-2">€</span>
-            <Controller
-              name="amountInput"
-              control={control}
-              render={({ field }) => (
-                <NumericInput
-                  {...field}
-                  autoFocus
-                  className="h-16 w-full border-b border-primary/30 bg-transparent text-6xl font-black tracking-tight text-surface-2 focus:outline-none"
-                  placeholder="0.00"
-                />
-              )}
-            />
+        <div className="relative mb-10 pt-4 text-center">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/5 blur-3xl z-0" />
+          
+          <label className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block">
+            {t('expenses.amount')}
+          </label>
+          
+          <div className="relative z-10 flex flex-col items-center justify-center">
+            <div className="flex items-start leading-none gap-[0.5rem]">
+              <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                €
+              </span>
+              <Controller
+                name="amountInput"
+                control={control}
+                render={({ field }) => (
+                  <NumericInput
+                    {...field}
+                    autoFocus
+                    className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
+                    placeholder="0.00"
+                  />
+                )}
+              />
+            </div>
+            {errors.amountInput && <p className="mt-6 text-xs font-bold text-danger uppercase tracking-wider">{t(errors.amountInput.message!)}</p>}
           </div>
-          {errors.amountInput && <p className="mt-2 text-xs text-red-400">{t(errors.amountInput.message!)}</p>}
         </div>
 
-        <FormField className="mt-6" label={t('expenses.description')}>
+        <FormField 
+          className="mt-10" 
+          label={t('expenses.description')}
+          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
+        >
           <TextInput
             placeholder={t('expenses.descriptionPlaceholder')}
             size="lg"
             type="text"
             variant="soft"
+            className="rounded-2xl border-border-subtle bg-surface-1/50"
             {...register('description')}
           />
         </FormField>
 
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-surface-2/60">{t('expenses.category')}</p>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {categories.map((category) => {
-            const active = selectedCategoryId === category.id;
-            const label = i18n.language.startsWith('es') ? category.name_es : category.name_en;
+        <div className="mt-10">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2">
+            {t('expenses.category')}
+          </p>
+          <ScrollContainer className="-mx-2 px-2">
+            <div className="flex gap-3 pb-2">
+              {categories.map((category) => {
+                const active = selectedCategoryId === category.id;
+                const label = i18n.language.startsWith('es') ? category.name_es : category.name_en;
 
-            return (
-              <button
-                key={category.id}
-                className={`flex h-12 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors ${
-                  active
-                    ? 'border-primary bg-primary text-background-dark'
-                    : 'border-primary/20 bg-primary/5 text-surface-2/60'
-                }`}
-                onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-base">{category.icon}</span>
-                <span>{label}</span>
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={category.id}
+                    className={cn(
+                      "flex h-14 shrink-0 items-center gap-2.5 rounded-2xl border px-5 text-sm font-bold transition-all duration-300",
+                      active
+                        ? "border-primary bg-primary/10 text-primary shadow-glow-primary/5"
+                        : "border-border-subtle bg-surface-1/40 text-surface-2/40 hover:bg-surface-1 hover:border-primary/20"
+                    )}
+                    onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
+                    type="button"
+                  >
+                    <span className={cn(
+                      "material-symbols-outlined text-xl transition-transform duration-300",
+                      active && "scale-110 filled-icon"
+                    )}>
+                      {category.icon}
+                    </span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollContainer>
+          {errors.categoryId && <p className="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2">{t(errors.categoryId.message!)}</p>}
         </div>
-        {errors.categoryId && <p className="mt-2 text-xs text-red-400">{t(errors.categoryId.message!)}</p>}
 
-        <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-surface-2/60">{t('expenses.paidBy')}</p>
-        <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-1">
-          {orderedProfiles.map((profile) => {
-            const active = paidByProfileId === profile.id;
-            return (
-              <button
-                key={profile.id}
-                className={`h-12 rounded-xl text-sm font-bold transition-colors ${
-                  active ? 'bg-primary text-background-dark' : 'text-surface-2/60'
-                }`}
-                onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
-                type="button"
-              >
-                {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
-              </button>
-            );
-          })}
+        <div className="mt-10">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-6 text-center">
+            {t('expenses.paidBy')}
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            {orderedProfiles.map((profile) => {
+              const active = paidByProfileId === profile.id;
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center p-6 rounded-[32px] transition-all duration-300 group",
+                    active
+                      ? "bg-primary/10 ring-2 ring-primary shadow-glow-primary/20"
+                      : "bg-surface-1/40 border border-border-subtle hover:bg-surface-1 hover:border-primary/30"
+                  )}
+                >
+                  <div className={cn(
+                    "w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-3 border-2",
+                    active 
+                      ? "border-primary shadow-glow-primary scale-110" 
+                      : "border-surface-2/10 group-hover:border-primary/30"
+                  )}>
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt={profile.name || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={cn(
+                        "w-full h-full flex items-center justify-center text-xl font-bold",
+                        active ? "bg-primary text-surface-1" : "bg-surface-2/5 text-surface-2/40"
+                      )}>
+                        {profile.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-sm font-bold tracking-tight",
+                    active ? "text-primary" : "text-surface-2/60"
+                  )}>
+                    {profile.id === profileId ? t('expenses.me') : profile.name}
+                  </span>
+                  
+                  {active && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {errors.paidByProfileId && <p className="mt-4 text-xs font-bold text-danger uppercase tracking-wider text-center">{t(errors.paidByProfileId.message!)}</p>}
         </div>
-        {errors.paidByProfileId && <p className="mt-2 text-xs text-red-400">{t(errors.paidByProfileId.message!)}</p>}
 
-        <FormField className="mt-6" label={t('expenses.date')}>
-          <TextInput size="lg" type="date" variant="soft" {...register('expenseDate')} />
+        <FormField 
+          className="mt-10" 
+          label={t('expenses.date')}
+          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
+        >
+          <TextInput 
+            size="lg" 
+            type="date" 
+            variant="soft" 
+            className="rounded-2xl border-border-subtle bg-surface-1/50"
+            {...register('expenseDate')} 
+          />
         </FormField>
-        {errors.expenseDate && <p className="mt-2 text-xs text-red-400">{t(errors.expenseDate.message!)}</p>}
+        {errors.expenseDate && <p className="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2">{t(errors.expenseDate.message!)}</p>}
       </main>
     </div>
   );
