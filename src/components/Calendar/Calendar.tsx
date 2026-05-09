@@ -513,7 +513,12 @@ export default function Calendar() {
       </div>
 
       <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
-        <div className="mx-auto w-full max-w-md pointer-events-auto">
+        <div 
+          className="mx-auto w-full max-w-md pointer-events-auto"
+          onPointerDown={() => {
+            if (menuOpen) setMenuOpen(false);
+          }}
+        >
           <div
             className={`rounded-t-2xl border border-border-subtle bg-surface-1 transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
             style={{
