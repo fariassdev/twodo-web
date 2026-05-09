@@ -255,14 +255,17 @@ export default function Profile() {
           
           <div className="text-center w-full">
             <h2 className="text-2xl font-bold">{nameValue || t('profile.noName')}</h2>
-            <div className="mt-1 relative max-w-xs mx-auto">
-               <input
-                type="text"
-                placeholder={t('profile.bioPlaceholder')}
-                className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
+            <FormField
+              error={errors.bio && t(errors.bio.message!)}
+              errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
+            >
+              <TextInput
                 {...register('bio')}
-               />
-            </div>
+                placeholder={t('profile.bioPlaceholder')}
+                type="text"
+                variant="editorial"
+              />
+            </FormField>
           </div>
         </div>
 

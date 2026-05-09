@@ -117,6 +117,7 @@ export default function CreateExpense() {
       <PageHeader
         title={t('expenses.newExpense')}
         subtitle={t('nav.expenses')}
+        showAvatars={false}
         backAction={{
           onClick: () => navigate({ to: '/expenses' }),
         }}
@@ -129,7 +130,7 @@ export default function CreateExpense() {
           <FormField
             label={t('expenses.amount')}
             labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
-            className="relative mb-6 pt-2"
+            className="relative mb-2 pt-2"
             error={errors.amountInput && t(errors.amountInput.message!)}
             errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
           >
@@ -154,16 +155,21 @@ export default function CreateExpense() {
                     €
                   </span>
                 </div>
-                <div className="mt-4 relative max-w-xs mx-auto z-10">
-                  <input
-                    type="text"
-                    placeholder={t('expenses.descriptionPlaceholder')}
-                    className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
-                    {...register('description')}
-                  />
-                </div>
               </div>
             </div>
+          </FormField>
+
+          <FormField
+            className="mb-10 relative w-full"
+            error={errors.description && t(errors.description.message!)}
+            errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
+          >
+            <TextInput
+              {...register('description')}
+              placeholder={t('expenses.descriptionPlaceholder')}
+              type="text"
+              variant="editorial"
+            />
           </FormField>
 
           <FormField

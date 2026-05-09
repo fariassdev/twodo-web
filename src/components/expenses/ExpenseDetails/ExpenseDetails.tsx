@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,6 @@ import {
   useProfilesQuery,
   useUpdateExpenseMutation,
 } from '../../../lib/queryHooks';
-import { centsToCurrency } from '../../../helpers/expense';
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 import { cn } from '../../../utils';
 import type { ExpenseDetailsSearch, ExpensesListSearch } from '../../../router';
@@ -197,7 +196,7 @@ export default function ExpenseDetails() {
           <FormField
             label={t('expenses.amount')}
             labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
-            className="relative mb-8 pt-2"
+            className="relative mb-2 pt-2"
             error={isEditing && errors.amountInput && t(errors.amountInput.message!)}
             errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
           >
@@ -228,23 +227,27 @@ export default function ExpenseDetails() {
                     €
                   </span>
                 </div>
-                
-                <div className="mt-4 relative max-w-xs mx-auto z-10 w-full text-center px-4">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      placeholder={t('expenses.descriptionPlaceholder')}
-                      className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
-                      {...register('description')}
-                    />
-                  ) : (
-                    <span className="text-primary text-sm font-medium italic">
-                      {expense.description || categoryLabel}
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
+          </FormField>
+
+          <FormField
+            className="mt-0 mb-10 relative w-full text-center px-4"
+            error={isEditing && errors.description && t(errors.description.message!)}
+            errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
+          >
+            {isEditing ? (
+              <TextInput
+                {...register('description')}
+                placeholder={t('expenses.descriptionPlaceholder')}
+                type="text"
+                variant="editorial"
+              />
+            ) : (
+              <span className="text-primary text-sm font-medium italic">
+                {expense.description || categoryLabel}
+              </span>
+            )}
           </FormField>
 
           {isEditing ? (

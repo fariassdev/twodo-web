@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import FormField from '../../ui/FormField';
@@ -18,7 +18,6 @@ import {
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
-import { cn } from '@/src/utils';
 
 export default function SettleBalance() {
   const { t, i18n } = useTranslation();
@@ -106,10 +105,10 @@ export default function SettleBalance() {
       />
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <main className="max-w-md mx-auto w-full px-6 pt-10 pb-12">
+        <main className="max-w-md mx-auto w-full px-6 pt-10">
           {actionError && <ErrorBanner className="mb-6" message={actionError} />}
 
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-8">
               {t('expenses.settlement.amountToSettle')}
             </h2>
@@ -126,6 +125,19 @@ export default function SettleBalance() {
                     €
                   </span>
                 </div>
+                <FormField
+                  className="w-full"
+                  error={errors.note && t(errors.note.message!)}
+                  errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
+                >
+                  <TextInput
+                    maxLength={200}
+                    placeholder={t('expenses.settlement.notePlaceholder')}
+                    type="text"
+                    variant="editorial"
+                    {...register('note')}
+                  />
+                </FormField>
               </div>
             </div>
 
@@ -186,24 +198,6 @@ export default function SettleBalance() {
                 : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
             </p>
           </div>
-
-          <FormField 
-            className="mt-12" 
-            label={t('expenses.settlement.noteOptional')} 
-            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
-            error={errors.note ? t(errors.note.message!) : null}
-            errorClassName="mt-3 text-xs font-bold text-danger uppercase tracking-wider px-4 animate-in fade-in slide-in-from-top-1 duration-300"
-          >
-            <TextInput
-              maxLength={200}
-              placeholder={t('expenses.settlement.notePlaceholder')}
-              size="lg"
-              className="rounded-[24px] border-border-subtle bg-surface-1/50 py-6"
-              type="text"
-              variant="soft"
-              {...register('note')}
-            />
-          </FormField>
         </main>
       </div>
 
