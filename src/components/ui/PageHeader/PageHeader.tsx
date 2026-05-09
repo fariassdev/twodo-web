@@ -14,6 +14,7 @@ export type PageHeaderMenuItem = {
   disabled?: boolean;
   danger?: boolean;
   separatorBefore?: boolean;
+  closeOnClick?: boolean;
 };
 
 export type PageHeaderMenu = {
@@ -25,6 +26,7 @@ export type PageHeaderMenu = {
   triggerIcon?: string;
   menuClassName?: string;
   overlayClassName?: string;
+  children?: React.ReactNode;
 };
 
 interface PageHeaderProps {
@@ -172,7 +174,9 @@ export default function PageHeader({
                         )}
                         disabled={item.disabled}
                         onClick={() => {
-                          setMenuOpen(false);
+                          if (item.closeOnClick !== false) {
+                            setMenuOpen(false);
+                          }
                           item.onClick();
                         }}
                         type="button"
@@ -186,6 +190,11 @@ export default function PageHeader({
                       </button>
                     </React.Fragment>
                   ))}
+                  {rightMenu.children && (
+                    <div>
+                      {rightMenu.children}
+                    </div>
+                  )}
                 </div>
               </>
             )}

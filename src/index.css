@@ -134,3 +134,12 @@ input[type="date"]::-webkit-clear-button {
   -webkit-appearance: none;
 }
 
+
+@keyframes indicator-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-indicator {
+  animation: indicator-float 3s ease-in-out infinite;
+}

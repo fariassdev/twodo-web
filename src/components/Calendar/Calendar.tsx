@@ -12,22 +12,76 @@ import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
-import SelectInput from '../ui/SelectInput';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-
+import SectionHeader from '../ui/SectionHeader';
 import { useNavigate } from '@tanstack/react-router';
+import { cn } from '../../utils';
+import { Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import Button from '../ui/Button';
 
-type SortOption = 'status' | 'name' | 'assignee';
-type TypeFilter = 'all' | 'task' | 'event';
-
-const STATUS_ORDER: Record<'pending' | 'postponed' | 'completed', number> = {
-  pending: 0,
-  postponed: 1,
-  completed: 2,
-};
+const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+interface FilterItemProps {
+  label: string;
+  description: string;
+  icon: string;
+  isActive: boolean;
+  onClick: () => void;
+  activeColor: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+function FilterItem({
+  label,
+  description,
+  icon,
+  isActive,
+  onClick,
+  activeColor,
+  disabled,
+  className,
+}: FilterItemProps) {
+  return (
+    <button
+      className={cn(
+        'group flex w-full items-start gap-3 px-4 py-3 text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
+        isActive ? 'bg-primary/5' : 'hover:bg-hover',
+        className
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      <div className={cn(
+        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all',
+        isActive ? cn('bg-white shadow-sm', activeColor) : 'bg-surface-2/5 text-surface-2/40'
+      )}>
+        <span className={cn('material-symbols-outlined text-[20px]', isActive && 'filled-icon')}>{icon}</span>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <span className={cn('text-sm font-bold transition-colors', isActive ? 'text-surface-2' : 'text-surface-2/70')}>
+          {label}
+        </span>
+        <span className="text-[11px] leading-tight text-surface-2/40">
+          {description}
+        </span>
+      </div>
+      <div className="ml-auto flex items-center self-center pl-2">
+        <div className={cn(
+          'h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center',
+          isActive ? 'border-primary bg-primary' : 'border-surface-2/20'
+        )}>
+          {isActive && <span className="material-symbols-outlined text-[14px] font-bold text-white">check</span>}
+        </div>
+      </div>
+    </button>
+  );
 }
 
 export default function Calendar() {
@@ -41,12 +95,9 @@ export default function Calendar() {
     const saved = localStorage.getItem('calendarSelectedDate');
     return saved ? new Date(saved) : new Date();
   });
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>(() => {
-    const saved = localStorage.getItem('calendarTypeFilter');
-    return (saved === 'task' || saved === 'event') ? saved : 'all';
-  });
-  const [sortBy, setSortBy] = useState<SortOption>('status');
-  const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
+  const [showTasks, setShowTasks] = useState(true);
+  const [showEvents, setShowEvents] = useState(true);
+  const [showDailyTasks, setShowDailyTasks] = useState(false);
   const [sheetMode, setSheetMode] = useState<'collapsed' | 'expanded'>('collapsed');
   const [sheetDragHeight, setSheetDragHeight] = useState<number | null>(null);
   const [isSheetDragging, setIsSheetDragging] = useState(false);
@@ -64,10 +115,6 @@ export default function Calendar() {
   useEffect(() => {
     localStorage.setItem('calendarSelectedDate', selectedDate.toISOString());
   }, [selectedDate]);
-
-  useEffect(() => {
-    localStorage.setItem('calendarTypeFilter', typeFilter);
-  }, [typeFilter]);
 
   useEffect(() => {
     const onResize = () => {
@@ -124,51 +171,48 @@ export default function Calendar() {
     return profileNameMap.get(task.assigned_to) ?? t('calendar.assigneeUnassigned');
   }
 
-  const dayEntries = useMemo(() => {
+  const tasksByBlock = useMemo(() => {
     const filtered = selectedMonthTasks
       .filter((task) => task.date === selectedStr)
       .filter((task) => {
-        if (typeFilter === 'all') return true;
-        return task.type === typeFilter;
-      })
-      .filter((task) => {
-        if (assigneeFilter === 'all') {
+        if (task.type === 'task') {
+          if (!showTasks) return false;
+          if (!showDailyTasks && task.is_recurring && task.frequency === 'daily') return false;
           return true;
         }
-
-        if (task.assignment_type === 'team_work' || task.assignment_type === 'anyone') {
-          return true;
+        if (task.type === 'event') {
+          return showEvents;
         }
-
-        return task.assigned_to === assigneeFilter;
+        return true;
       });
 
-    return [...filtered].sort((a, b) => {
-      if (sortBy === 'status') {
-        const statusDiff =
-          (STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] ?? 99) -
-          (STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] ?? 99);
-        if (statusDiff !== 0) {
-          return statusDiff;
-        }
-      }
+    const groups: Record<string, Task[]> = {
+      morning: [],
+      afternoon: [],
+      evening: [],
+      anytime: [],
+    };
 
-      if (sortBy === 'name') {
-        return a.title.localeCompare(b.title, i18n.language, { sensitivity: 'base' });
+    for (const task of filtered) {
+      const block = task.time_of_day || 'anytime';
+      if (block in groups) {
+        groups[block].push(task);
+      } else {
+        groups.anytime.push(task);
       }
+    }
 
-      if (sortBy === 'assignee') {
-        const assigneeDiff = getAssigneeSortLabel(a).localeCompare(getAssigneeSortLabel(b), i18n.language, {
-          sensitivity: 'base',
-        });
-        if (assigneeDiff !== 0) {
-          return assigneeDiff;
-        }
-      }
-
-      return a.title.localeCompare(b.title, i18n.language, { sensitivity: 'base' });
+    // sort completed tasks to bottom
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => {
+        if (a.status === 'completed' && b.status !== 'completed') return 1;
+        if (a.status !== 'completed' && b.status === 'completed') return -1;
+        return 0;
+      });
     });
-  }, [typeFilter, assigneeFilter, i18n.language, monthTasks, profileNameMap, selectedStr, sortBy]);
+
+    return groups;
+  }, [selectedMonthTasks, selectedStr, showTasks, showDailyTasks, showEvents]);
 
   useEffect(() => {
     void prefetchMonthTasks(year, month + 1, showDeleted);
@@ -245,16 +289,16 @@ export default function Calendar() {
   }
 
   function resetControls() {
-    setSortBy('status');
-    setTypeFilter('all');
-    setAssigneeFilter('all');
+    setShowTasks(true);
+    setShowEvents(true);
+    setShowDailyTasks(false);
   }
 
   function toggleSheetMode() {
     setSheetMode((prev) => (prev === 'collapsed' ? 'expanded' : 'collapsed'));
   }
 
-  const maxSheetHeight = Math.max(320, viewportHeight - 146); // 66px nav + 72px top bar + 8px margin
+  const maxSheetHeight = Math.max(320, viewportHeight - 154); // 66px nav + 72px top bar + 16px margin
   const remainingSpace = viewportHeight - calendarHeight - 66; // 66px bottom nav, no extra gap
   const collapsedHeight = clamp(
     remainingSpace,
@@ -322,13 +366,10 @@ export default function Calendar() {
     resetSheetDragState();
   }
 
-  const hasActiveControls = sortBy !== 'status' || typeFilter !== 'all' || assigneeFilter !== 'all';
-  const addButtonLabel = typeFilter === 'event' ? t('calendar.addEvent') : t('calendar.addTask');
-  const emptyDayMessage = hasActiveControls
-    ? t('calendar.emptyFiltered')
-    : t('calendar.emptyDayTask');
+  const addButtonLabel = showEvents && !showTasks ? t('calendar.addEvent') : t('calendar.addTask');
+  const emptyDayMessage = t('calendar.emptyFiltered');
 
-  if (hasQueryError && monthTasks.length === 0 && dayEntries.length === 0) {
+  if (hasQueryError && monthTasks.length === 0) {
     return (
       <QueryErrorState
         onRetry={() => {
@@ -352,18 +393,66 @@ export default function Calendar() {
         title={t('calendar.title')}
         subtitle={t('nav.calendar')}
         rightMenu={{
-          ariaLabel: t('topBar.openMenu'),
+          ariaLabel: t('calendar.viewSettings'),
           closeAriaLabel: t('topBar.closeMenu'),
           open: menuOpen,
           onOpenChange: setMenuOpen,
-          items: [
-            {
-              id: 'toggle-deleted',
-              icon: showDeleted ? 'visibility_off' : 'visibility',
-              label: showDeleted ? t('calendar.hideDeleted') : t('calendar.showDeleted'),
-              onClick: () => setShowDeleted(!showDeleted),
-            },
-          ],
+          menuClassName: "w-72",
+          items: [],
+          children: (
+            <div className="flex flex-col gap-1 pb-1">
+              <div className="px-4 py-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-surface-2/30">
+                  {t('calendar.viewSettings')}
+                </span>
+              </div>
+
+              <FilterItem
+                activeColor="text-primary"
+                description={t('calendar.showTasksDesc')}
+                icon="task_alt"
+                isActive={showTasks}
+                label={t('calendar.showTasks')}
+                onClick={() => {
+                  const newValue = !showTasks;
+                  setShowTasks(newValue);
+                  if (!newValue) {
+                    setShowDailyTasks(false);
+                  }
+                }}
+              />
+
+              <FilterItem
+                activeColor="text-primary/60"
+                description={t('calendar.showDailyTasksDesc')}
+                disabled={!showTasks}
+                icon="cached"
+                isActive={showDailyTasks}
+                label={t('calendar.showDailyTasks')}
+                onClick={() => setShowDailyTasks(!showDailyTasks)}
+              />
+
+              <FilterItem
+                activeColor="text-surface-2"
+                description={t('calendar.showEventsDesc')}
+                icon="calendar_today"
+                isActive={showEvents}
+                label={t('calendar.showEvents')}
+                onClick={() => setShowEvents(!showEvents)}
+              />
+
+              <div className="mx-4 my-2 h-px bg-border-subtle/50" />
+
+              <FilterItem
+                activeColor="text-surface-2/60"
+                description={t('calendar.showDeletedDesc')}
+                icon="history_toggle_off"
+                isActive={showDeleted}
+                label={t('calendar.showDeleted')}
+                onClick={() => setShowDeleted(!showDeleted)}
+              />
+            </div>
+          ),
         }}
       />
 
@@ -424,7 +513,12 @@ export default function Calendar() {
       </div>
 
       <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
-        <div className="mx-auto w-full max-w-md pointer-events-auto">
+        <div 
+          className="mx-auto w-full max-w-md pointer-events-auto"
+          onPointerDown={() => {
+            if (menuOpen) setMenuOpen(false);
+          }}
+        >
           <div
             className={`rounded-t-2xl border border-border-subtle bg-surface-1 transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
             style={{
@@ -433,150 +527,115 @@ export default function Calendar() {
           >
             <button
               aria-label={t('calendar.sheetHandleAriaLabel')}
-              className="group flex w-full items-center justify-center pt-2 pb-1 touch-none"
+              className="group flex w-full items-center justify-center pt-3 pb-2 touch-none"
               onPointerCancel={resetSheetDragState}
               onPointerDown={handleSheetPointerDown}
               onPointerMove={handleSheetPointerMove}
               onPointerUp={handleSheetPointerUp}
               type="button"
             >
-              <span className="h-1.5 w-12 rounded-full bg-border-subtle transition-colors group-hover:bg-primary/40" />
+              <svg 
+                width="64" 
+                height="12" 
+                viewBox="0 0 64 12" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className={cn(
+                  "text-border-subtle group-hover:text-primary transition-all duration-500 ease-in-out",
+                  sheetMode === 'collapsed' ? "animate-indicator" : "rotate-180"
+                )}
+              >
+                <path 
+                  d="M12 10L32 2L52 10" 
+                  stroke="currentColor" 
+                  strokeWidth="4" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+              </svg>
             </button>
 
             <div className="h-[calc(100%-1.5rem)] overflow-y-auto px-4 pb-5">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
-                <button
-                  className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
-                  onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: typeFilter === 'event' ? 'event' : 'task' } })}
-                  type="button"
-                >
-                  {addButtonLabel}
-                </button>
               </div>
 
-              <div className="mb-3 grid grid-cols-3 gap-2">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.sortBy')}</span>
-                  <SelectInput
-                    selectClassName="text-xs font-semibold"
-                    size="sm"
-                    variant="slate"
-                    onChange={(event) => setSortBy(event.target.value as SortOption)}
-                    value={sortBy}
-                  >
-                    <option value="status">{t('calendar.sortStatus')}</option>
-                    <option value="name">{t('calendar.sortName')}</option>
-                    <option value="assignee">{t('calendar.sortAssignee')}</option>
-                  </SelectInput>
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.filterType', 'Type')}</span>
-                  <SelectInput
-                    selectClassName="text-xs font-semibold"
-                    size="sm"
-                    variant="slate"
-                    onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
-                    value={typeFilter}
-                  >
-                    <option value="all">{t('calendar.typeAll', 'All')}</option>
-                    <option value="task">{t('entryForm.typeTask')}</option>
-                    <option value="event">{t('entryForm.typeEvent')}</option>
-                  </SelectInput>
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.filterAssignee')}</span>
-                  <SelectInput
-                    selectClassName="text-xs font-semibold"
-                    size="sm"
-                    variant="slate"
-                    onChange={(event) => setAssigneeFilter(event.target.value)}
-                    value={assigneeFilter}
-                  >
-                    <option value="all">{t('calendar.assigneeAll')}</option>
-                    {profiles.map((profile) => (
-                      <option key={profile.id} value={profile.id}>
-                        {profile.name}
-                      </option>
-                    ))}
-                  </SelectInput>
-                </label>
-              </div>
-
-              {hasActiveControls && (
-                <div className="mb-3 flex justify-end">
-                  <button
-                    className="rounded-full border border-primary/30 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary"
-                    onClick={resetControls}
-                    type="button"
-                  >
-                    {t('calendar.clearFilters')}
-                  </button>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {dayEntries.length === 0 && (
+              <div className="space-y-4">
+                {Object.values(tasksByBlock).every(arr => arr.length === 0) && (
                   <p className="py-4 text-center text-sm text-surface-2/40">{emptyDayMessage}</p>
                 )}
-                {dayEntries.map((task) => {
-                  const isDeleted = task.deleted_at !== null;
+                
+                {TIME_BLOCKS.map(block => {
+                  const blockTasks = tasksByBlock[block];
+                  if (!blockTasks || blockTasks.length === 0) return null;
+
                   return (
-                    <div
-                      key={task.id}
-                      onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-                      className={`flex items-center gap-4 p-4 bg-surface-2/5 rounded-2xl border border-primary/5 hover:border-primary/20 hover:bg-hover transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
-                    >
-                      {task.status === 'completed' ? (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-success/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-success filled-icon text-[28px]">check_circle</span>
-                        </div>
-                      ) : task.status === 'postponed' ? (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-warning/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-warning filled-icon text-[28px]">more_horiz</span>
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-primary/20 flex items-center justify-center">
-                          <div className="w-6 h-6 rounded-full border-[3px] border-primary"></div>
-                        </div>
-                      )}
+                    <div key={block} className="relative">
+                      <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-surface-2/60">
+                        {t(`dashboard.timeBlocks.${block}`)}
+                        <div className="h-[1px] flex-1 bg-primary/20"></div>
+                      </SectionHeader>
+                      <div className="space-y-3">
+                        {blockTasks.map((task) => {
+                          const isDeleted = task.deleted_at !== null;
+                          return (
+                            <div
+                              key={task.id}
+                              onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+                              className={`flex items-center gap-3 p-3 bg-surface-2/5 rounded-2xl border border-primary/5 hover:border-primary/20 hover:bg-hover transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
+                            >
+                              {task.status === 'completed' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-success/20 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-success filled-icon text-[24px]">check_circle</span>
+                                </div>
+                              ) : task.status === 'postponed' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-warning/20 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-warning filled-icon text-[24px]">more_horiz</span>
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center">
+                                  <div className="w-5 h-5 rounded-full border-[2.5px] border-primary"></div>
+                                </div>
+                              )}
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className={`font-bold text-base text-surface-2 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
-                          {isDeleted && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">{t('calendar.deletedBadge')}</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-surface-2/60 truncate flex items-center gap-1">
-                          {(task.start_time || task.end_time) && (
-                            <>
-                              <span className="material-symbols-outlined text-[16px]">schedule</span>{' '}
-                              <span>
-                                {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}
-                                {task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
-                              </span>
-                            </>
-                          )}
-                          {(task.start_time || task.end_time) && task.location && <span className="mx-0.5">•</span>}
-                          {task.location && (
-                            <span className={(task.start_time || task.end_time) ? 'text-primary' : ''}>{task.location}</span>
-                          )}
-                        </p>
-                      </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <h4 className={`font-bold text-base text-surface-2 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
+                                  {isDeleted && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">{t('calendar.deletedBadge')}</span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-surface-2/60 truncate flex items-center gap-1">
+                                  {(task.start_time || task.end_time) && (
+                                    <>
+                                      <span className="material-symbols-outlined text-[16px]">schedule</span>{' '}
+                                      <span>
+                                        {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}
+                                        {task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
+                                      </span>
+                                    </>
+                                  )}
+                                  {(task.start_time || task.end_time) && task.location && <span className="mx-0.5">•</span>}
+                                  {task.location && (
+                                    <span className={(task.start_time || task.end_time) ? 'text-primary' : ''}>{task.location}</span>
+                                  )}
+                                </p>
+                              </div>
 
-                      <div className="shrink-0 flex -space-x-2">
-                        {task.assignment_type === 'team_work' || task.assignment_type === 'anyone' ? (
-                          profiles.map((profile) => (
-                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
-                          ))
-                        ) : (
-                          profiles.filter((profile) => profile.id === task.assigned_to).map((profile) => (
-                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
-                          ))
-                        )}
+                              <div className="shrink-0 flex -space-x-2">
+                                {task.assignment_type === 'team_work' || task.assignment_type === 'anyone' ? (
+                                  profiles.map((profile) => (
+                                    <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
+                                  ))
+                                ) : (
+                                  profiles.filter((profile) => profile.id === task.assigned_to).map((profile) => (
+                                    <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -586,6 +645,26 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {sheetMode === 'expanded' && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed bottom-24 right-6 z-fab"
+          >
+            <Button
+              variant="action"
+              size="icon"
+              onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: (showEvents && !showTasks) ? 'event' : 'task' } })}
+              aria-label={addButtonLabel}
+            >
+              <Plus className="w-8 h-8 stroke-[2.5]" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
