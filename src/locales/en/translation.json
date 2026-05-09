@@ -180,11 +180,25 @@
     "overdueSection": "Pending from other days",
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Next 7 days",
-    "balanceScoreSuccess": "Total sync! You're managing your home like a great team.",
-    "balanceScoreWarning": "The balance has shifted a bit. Great time to lend a hand!",
-    "balanceScoreDanger": "It looks like one person is carrying more weight lately. Time to team up!",
-    "balanceScoreEmpty": "Your balance starts here. Complete the first task of the month.",
-    "balanceBadge": "HOUSE HARMONY",
+    "balance": {
+      "title": "House Harmony",
+      "noData": "No data",
+      "veryBalanced": "Perfectly in sync",
+      "bitMoreLoad": "{{name}} is setting the pace",
+      "muchMoreLoad": "{{name}} is leading the way",
+      "stable": "stable",
+      "completedTasks": "completed tasks",
+      "totalPoints": "total points",
+      "success": "Total sync! You're managing your home like a great team.",
+      "warning": "The balance has shifted a bit. Great time to lend a hand!",
+      "danger": "It looks like one person is carrying more weight lately. Time to team up!",
+      "empty": "Your balance starts here. Complete the first task to begin your journey together.",
+      "filters": {
+        "thisWeek": "This week",
+        "last30Days": "Last 30 days",
+        "thisYear": "This year"
+      }
+    },
     "viewMore": "View more",
     "timeBlocks": {
       "morning": "🌅 Morning",

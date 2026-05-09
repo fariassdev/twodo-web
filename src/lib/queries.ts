@@ -981,24 +981,41 @@ export interface PointsBreakdown {
   totalPoints: number;
 }
 
-export async function getBalanceScore(householdId: string, startDate: string, endDate: string): Promise<Record<string, number>> {
-  const { data, error } = await supabase
+export interface BalanceScoreData {
+  score: Record<string, number>;
+  taskCount: number;
+}
+
+export async function getBalanceScore(householdId: string, startDate: string, endDate: string): Promise<BalanceScoreData> {
+  let query = supabase
     .from('task_completions')
-    .select('completed_by, points_earned')
-    .eq('household_id', householdId)
-    .gte('completed_at', startDate)
-    .lte('completed_at', endDate);
+    .select('completed_by, points_earned, task_id')
+    .eq('household_id', householdId);
+
+  if (startDate) {
+    query = query.gte('completed_at', startDate);
+  }
+  if (endDate) {
+    query = query.lte('completed_at', endDate);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   
   const score: Record<string, number> = {};
+  const taskIds = new Set<string>();
+
   data?.forEach(completion => {
     if (completion.completed_by) {
       score[completion.completed_by] = (score[completion.completed_by] || 0) + (completion.points_earned || 1);
     }
+    if (completion.task_id) {
+      taskIds.add(completion.task_id);
+    }
   });
 
-  return score;
+  return { score, taskCount: taskIds.size };
 }
 
 export async function getPointsBreakdown(householdId: string, profilesInput?: Profile[]): Promise<PointsBreakdown[]> {

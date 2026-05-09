@@ -178,11 +178,25 @@
     "overdueSection": "Pendientes de otros días",
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Próximos 7 días",
-    "balanceScoreSuccess": "¡Sincronía total! Estáis gestionando el hogar como un gran equipo.",
-    "balanceScoreWarning": "La balanza se ha movido un poco. ¡Buen momento para echar una mano!",
-    "balanceScoreDanger": "Parece que uno lleva más peso últimamente. ¡Es el momento de unir fuerzas!",
-    "balanceScoreEmpty": "Vuestro balance empieza aquí. Completad la primera tarea del mes.",
-    "balanceBadge": "REPARTO DE CARGA",
+    "balance": {
+      "title": "House Harmony",
+      "noData": "Sin datos",
+      "veryBalanced": "Sincronía perfecta",
+      "bitMoreLoad": "{{name}} está marcando el ritmo",
+      "muchMoreLoad": "{{name}} está dándolo todo",
+      "stable": "estable",
+      "completedTasks": "tareas completadas",
+      "totalPoints": "puntos totales",
+      "success": "¡Sincronía total! Estáis gestionando el hogar como un gran equipo.",
+      "warning": "La balanza se ha movido un poco. ¡Buen momento para echar una mano!",
+      "danger": "Parece que uno lleva más peso últimamente. ¡Es el momento de unir fuerzas!",
+      "empty": "Vuestro balance empieza aquí. Completad la primera tarea juntos para comenzar la rutina.",
+      "filters": {
+        "thisWeek": "Esta semana",
+        "last30Days": "Últimos 30 días",
+        "thisYear": "Este año"
+      }
+    },
     "viewMore": "Ver más",
     "timeBlocks": {
       "morning": "🌅 Mañana",

@@ -59,6 +59,7 @@ import {
   updateQuantity,
   updateExpense,
   updateTask,
+  type BalanceScoreData,
   type CreateExpenseInput,
   type ExpenseActivityFeedPage,
   type ExpenseBalanceSnapshot,
@@ -781,10 +782,10 @@ export function useEquityBalanceQuery(profiles: Profile[] | undefined) {
 export function useBalanceScoreQuery(startDate: string, endDate: string) {
   const householdId = useCurrentHouseholdId();
 
-  return useQuery<Record<string, number>>({
+  return useQuery<BalanceScoreData>({
     queryKey: householdId ? queryKeys.metrics.balanceScore(householdId, startDate, endDate) : ['metrics', 'balanceScore', 'disabled'],
     queryFn: () => getBalanceScore(householdId as string, startDate, endDate),
-    enabled: Boolean(householdId) && Boolean(startDate) && Boolean(endDate),
+    enabled: Boolean(householdId),
   });
 }
 
