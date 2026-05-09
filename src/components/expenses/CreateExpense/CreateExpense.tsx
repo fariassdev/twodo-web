@@ -147,9 +147,6 @@ export default function CreateExpense() {
           
           <div className="relative z-10 flex flex-col items-center justify-center">
             <div className="flex items-start leading-none gap-[0.5rem]">
-              <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
-                €
-              </span>
               <Controller
                 name="amountInput"
                 control={control}
@@ -162,6 +159,9 @@ export default function CreateExpense() {
                   />
                 )}
               />
+              <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                €
+              </span>
             </div>
             {errors.amountInput && <p className="mt-6 text-xs font-bold text-danger uppercase tracking-wider">{t(errors.amountInput.message!)}</p>}
           </div>
