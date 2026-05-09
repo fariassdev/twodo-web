@@ -11,6 +11,20 @@ interface BalanceScoreWidgetProps {
 }
 
 type TimeFilter = 'thisWeek' | 'last30Days' | 'thisYear';
+type ColorTheme = 'primary' | 'success' | 'warning' | 'danger';
+type Trend = 'up' | 'down' | 'flat';
+
+
+const SKELETON_COLOR = 'rgba(73, 52, 33, 0.1)';
+
+interface BalanceInsight {
+  colorTheme: ColorTheme;
+  trend: Trend;
+  translations: {
+    headline: string;
+    insight: string;
+  };
+}
 
 export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidgetProps) {
   const { t } = useTranslation();
@@ -23,15 +37,13 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
 
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
+    const end = endOfDay(now);
     let start: Date | null = null;
-    const end: Date = endOfDay(now);
     
-    if (filter === 'thisWeek') {
-      start = startOfWeek(now, { weekStartsOn: 1 });
-    } else if (filter === 'last30Days') {
-      start = subDays(now, 30);
-    } else if (filter === 'thisYear') {
-      start = startOfYear(now);
+    switch (filter) {
+      case 'thisWeek': start = startOfWeek(now, { weekStartsOn: 1 }); break;
+      case 'last30Days': start = subDays(now, 30); break;
+      case 'thisYear': start = startOfYear(now); break;
     }
     
     return { 
@@ -48,121 +60,148 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
   const memberA = profiles[0] || null;
   const memberB = profiles[1] || null;
 
-  const ptsA = memberA ? (scoreData[memberA.id] || 0) : 0;
-  const ptsB = memberB ? (scoreData[memberB.id] || 0) : 0;
-  const total = ptsA + ptsB;
+  const pointsMemberA = memberA ? (scoreData[memberA.id] || 0) : 0;
+  const pointsMemberB = memberB ? (scoreData[memberB.id] || 0) : 0;
 
-  const pctA = total > 0 ? Math.round((ptsA / total) * 100) : 50;
-  const finalPct = (!memberA || !memberB || total === 0) ? 50 : pctA;
+  const { total, finalPercentage } = useMemo(() => {
+    const totalPoints = pointsMemberA + pointsMemberB;
+    if (totalPoints === 0) return { total: 0, finalPercentage: 50 };
+    const percentageMemberA = Math.round((pointsMemberA / totalPoints) * 100);
+    return { total: totalPoints, finalPercentage: percentageMemberA };
+  }, [pointsMemberA, pointsMemberB]);
 
-  const { colorTheme, copyText, trend, attributionText } = useMemo(() => {
-    if (!profile || profiles.length < 2 || total === 0) {
-      return { 
+  const { colorTheme, trend, translations } = useMemo((): BalanceInsight => {
+    const hasEnoughProfiles = !!profile && profiles.length >= 2;
+    
+    if (!hasEnoughProfiles || total === 0 || !memberA || !memberB) {
+      return {
         colorTheme: 'primary',
-        copyText: t('dashboard.balance.empty'),
         trend: 'flat',
-        attributionText: t('dashboard.balance.noData')
+        translations: {
+          headline: t('dashboard.balance.empty'),
+          insight: t('dashboard.balance.noData')
+        }
       };
     }
 
-    let trendValue: 'up' | 'down' | 'flat' = 'flat';
-    let attrText = t('dashboard.balance.veryBalanced');
-
-    if (finalPct >= 42 && finalPct <= 58) {
-      return { 
+    const isBalanced = finalPercentage >= 42 && finalPercentage <= 58;
+    if (isBalanced) {
+      return {
         colorTheme: 'success',
-        copyText: t('dashboard.balance.success'),
         trend: 'flat',
-        attributionText: t('dashboard.balance.veryBalanced')
-      };
-    } else if (finalPct >= 30 && finalPct <= 70) {
-      if (finalPct > 58) {
-        attrText = t('dashboard.balance.bitMoreLoad', { name: memberA.name });
-        trendValue = 'up';
-      } else {
-        attrText = t('dashboard.balance.bitMoreLoad', { name: memberB.name });
-        trendValue = 'down';
-      }
-      return { 
-        colorTheme: 'warning',
-        copyText: t('dashboard.balance.warning'),
-        trend: trendValue,
-        attributionText: attrText
-      };
-    } else {
-      if (finalPct > 70) {
-        attrText = t('dashboard.balance.muchMoreLoad', { name: memberA.name });
-        trendValue = 'up';
-      } else {
-        attrText = t('dashboard.balance.muchMoreLoad', { name: memberB.name });
-        trendValue = 'down';
-      }
-      return { 
-        colorTheme: 'danger',
-        copyText: t('dashboard.balance.danger'),
-        trend: trendValue,
-        attributionText: attrText
+        translations: {
+          headline: t('dashboard.balance.success'),
+          insight: t('dashboard.balance.veryBalanced')
+        }
       };
     }
-  }, [finalPct, profile, profiles, total, t, memberA, memberB]);
+    
+    const isMemberAMoreLoaded = finalPercentage > 50;
+    const loadedMember = isMemberAMoreLoaded ? memberA : memberB;
 
-  const themeClasses = {
-    primary: { text: 'text-primary', bg: 'bg-primary', lightBg: 'bg-primary/20', fill: 'bg-primary', border: 'border-primary' },
-    success: { text: 'text-success', bg: 'bg-success', lightBg: 'bg-success/20', fill: 'bg-success', border: 'border-success' },
-    warning: { text: 'text-warning', bg: 'bg-warning', lightBg: 'bg-warning/20', fill: 'bg-warning', border: 'border-warning' },
-    danger: { text: 'text-danger', bg: 'bg-danger', lightBg: 'bg-danger/20', fill: 'bg-danger', border: 'border-danger' },
-  }[colorTheme] ?? { text: 'text-primary', bg: 'bg-primary', lightBg: 'bg-primary/20', fill: 'bg-primary', border: 'border-primary' };
+    const isWarning = finalPercentage >= 30 && finalPercentage <= 70;
+    if (isWarning) {
+      return {
+        colorTheme: 'warning',
+        trend: isMemberAMoreLoaded ? 'up' : 'down',
+        translations: {
+          headline: t('dashboard.balance.warning'),
+          insight: t('dashboard.balance.bitMoreLoad', { name: loadedMember.name })
+        }
+      }
+    }
+
+    return {
+      colorTheme: 'danger',
+      trend: isMemberAMoreLoaded ? 'up' : 'down',
+      translations: {
+        headline: t('dashboard.balance.danger'),
+        insight: t('dashboard.balance.muchMoreLoad', { name: loadedMember.name })
+      }
+    }
+  }, [finalPercentage, total, profile, profiles.length, memberA, memberB, t]);
 
   const isLoading = isPending || profilesQuery.isPending;
-
-  // Map theme to CSS variables for motion animation
   const themeColorVar = `var(--color-${colorTheme})`;
-  const skeletonColor = 'rgba(73, 52, 33, 0.1)';
+
+  const trendConfig = useMemo(() => {
+    const percentageDifference = Math.abs(finalPercentage - 50);
+    if (trend === 'up') {
+      return {
+        classes: 'bg-success/20 text-success',
+        label: `↑ ${percentageDifference}pts`
+      };
+    }
+    if (trend === 'down') {
+      return {
+        classes: 'bg-danger/20 text-danger',
+        label: `↓ ${percentageDifference}pts`
+      };
+    }
+    return {
+      classes: 'bg-border-strong text-surface-2/60',
+      label: `→ ${t('dashboard.balance.stable')}`
+    };
+  }, [trend, finalPercentage, t]);
+
+  const handleNavigation = () => {
+    if (compact) navigate({ to: '/metrics' });
+  };
 
   return (
-    <article 
+    <div 
       className={cn(
-        "w-full bg-surface-1 rounded-[1.5rem] shadow-card-md overflow-hidden transition-all duration-300",
-        compact && "mb-8 mt-2 cursor-pointer active:scale-[0.98]",
+        "relative w-full bg-surface-1 rounded-[1.5rem] shadow-card-md overflow-hidden transition-all duration-300",
+        compact && "mb-8 mt-2 hover:shadow-card-lg active:scale-[0.98]",
         isFetching && !isPending && "opacity-80"
       )}
-      onClick={() => { if(compact) navigate({ to: '/metrics' }) }}
-      aria-label={t('dashboard.balance.title')}
+      aria-busy={isLoading}
     >
-      <div className="p-6 flex flex-col gap-4">
+      {/* Native invisible button for area interaction */}
+      {compact && (
+        <button 
+          type="button"
+          onClick={handleNavigation}
+          className="absolute inset-0 w-full h-full z-0 cursor-pointer opacity-0"
+          aria-label={t('dashboard.balance.title')}
+        />
+      )}
+
+      {/* Content wrapper - pointer-events-none lets clicks through to the button behind */}
+      <div className={cn("p-6 flex flex-col gap-4 relative z-10", compact && "pointer-events-none")}>
         
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-surface-2/60">
             <motion.div 
-              animate={{ backgroundColor: isLoading ? skeletonColor : themeColorVar }}
+              animate={{ backgroundColor: isLoading ? SKELETON_COLOR : themeColorVar }}
               className={cn("w-[7px] h-[7px] rounded-full shrink-0 transition-colors", isLoading && "animate-pulse")}
             ></motion.div>
             {t('dashboard.balance.title')}
           </div>
-          <div className="relative">
+          <div className="relative pointer-events-auto">
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as TimeFilter)}
               onClick={(e) => e.stopPropagation()}
               className="appearance-none text-xs font-medium text-surface-2/60 bg-border-subtle border border-border-strong rounded-full py-1 pl-3 pr-7 cursor-pointer hover:bg-border-strong transition-colors outline-none focus:ring-2 focus:ring-primary/20"
               disabled={isLoading}
+              aria-label={t('dashboard.balance.filterAria')}
             >
               <option value="thisWeek">{t('dashboard.balance.filters.thisWeek')}</option>
               <option value="last30Days">{t('dashboard.balance.filters.last30Days')}</option>
               <option value="thisYear">{t('dashboard.balance.filters.thisYear')}</option>
             </select>
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-surface-2/40">
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
         </header>
 
-
         {/* Hero number */}
-        <div className="flex flex-col items-center gap-3 text-center min-h-[8rem] justify-center">
+        <div className="flex flex-col items-center gap-3 text-center min-h-[8rem] justify-center" aria-live="polite">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div 
@@ -174,7 +213,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
               />
             ) : (
               <motion.div 
-                key={`${filter}-${finalPct}`}
+                key={`${filter}-${finalPercentage}`}
                 initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
@@ -183,9 +222,9 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
               >
                 <span className={cn(
                   "font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
-                  themeClasses.text
+                  `text-${colorTheme}`
                 )}>
-                  {finalPct}
+                  {finalPercentage}
                 </span>
                 <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/40 pt-[0.3em] transition-colors">
                   %
@@ -215,16 +254,12 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="flex items-center justify-center gap-2 text-sm text-surface-2/60"
                 >
-                  <span>{attributionText}</span>
+                  <span>{translations.insight}</span>
                   <span className={cn(
                     "inline-flex items-center gap-1 text-xs font-semibold py-[3px] px-2 rounded-full tabular-nums transition-colors",
-                    trend === 'up' ? 'bg-success/20 text-success' :
-                    trend === 'down' ? 'bg-danger/20 text-danger' :
-                    'bg-border-strong text-surface-2/60'
+                    trendConfig.classes
                   )}>
-                    {trend === 'up' ? `↑ ${Math.abs(finalPct - 50)}pts` : 
-                     trend === 'down' ? `↓ ${Math.abs(finalPct - 50)}pts` : 
-                     `→ ${t('dashboard.balance.stable')}`}
+                    {trendConfig.label}
                   </span>
                 </motion.div>
               )}
@@ -251,18 +286,18 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
                     {memberA?.avatar_url ? (
                       <img src={memberA.avatar_url} alt={memberA.name} className="w-full h-full object-cover" />
                     ) : (
-                      memberA?.name.charAt(0).toUpperCase()
+                      memberA?.name?.charAt(0)?.toUpperCase() || '?'
                     )}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-surface-2 leading-tight">{memberA?.name}</span>
                     <motion.span 
-                      key={`${filter}-${ptsA}`}
+                      key={`${filter}-${pointsMemberA}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-xs text-surface-2/60 tabular-nums"
                     >
-                      {ptsA} pts
+                      {pointsMemberA} pts
                     </motion.span>
                   </div>
                 </motion.div>
@@ -276,18 +311,18 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
                     {memberB?.avatar_url ? (
                       <img src={memberB.avatar_url} alt={memberB.name} className="w-full h-full object-cover" />
                     ) : (
-                      memberB?.name.charAt(0).toUpperCase()
+                      memberB?.name?.charAt(0)?.toUpperCase() || '?'
                     )}
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-sm font-semibold text-surface-2 leading-tight">{memberB?.name}</span>
                     <motion.span 
-                      key={`${filter}-${ptsB}`}
+                      key={`${filter}-${pointsMemberB}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-xs text-surface-2/60 tabular-nums"
                     >
-                      {ptsB} pts
+                      {pointsMemberB} pts
                     </motion.span>
                   </div>
                 </motion.div>
@@ -295,14 +330,14 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
             )}
           </div>
 
-          <div className="relative pt-1">
+          <div className="relative pt-1" aria-hidden="true">
             <div className="w-full h-2.5 bg-surface-2/10 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full rounded-full origin-left"
                 initial={{ width: '50%' }}
                 animate={{ 
-                  width: isLoading ? '50%' : `${finalPct}%`,
-                  backgroundColor: isLoading ? skeletonColor : themeColorVar
+                  width: isLoading ? '50%' : `${finalPercentage}%`,
+                  backgroundColor: isLoading ? SKELETON_COLOR : themeColorVar
                 }}
                 transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
               ></motion.div>
@@ -336,7 +371,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
                 exit={{ opacity: 0, y: -5 }}
                 className="text-center text-sm text-surface-2/60 leading-relaxed max-w-[85%] mx-auto"
               >
-                {copyText}
+                {translations.headline}
               </motion.p>
             )}
           </AnimatePresence>
@@ -353,7 +388,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
               <div className="flex flex-col items-center justify-center gap-0.5">
                 <AnimatePresence mode="wait">
                   {isLoading ? (
-                    <motion.div key="sk-tasks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-8 h-5 bg-surface-2/5 animate-pulse rounded" />
+                    <motion.div key="skeleton-tasks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-8 h-5 bg-surface-2/5 animate-pulse rounded" />
                   ) : (
                     <motion.span key={completedTasks} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-lg font-bold text-surface-2 tabular-nums">{completedTasks}</motion.span>
                   )}
@@ -364,7 +399,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
               <div className="flex flex-col items-center justify-center gap-0.5">
                 <AnimatePresence mode="wait">
                   {isLoading ? (
-                    <motion.div key="sk-total" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-8 h-5 bg-surface-2/5 animate-pulse rounded" />
+                    <motion.div key="skeleton-total" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-8 h-5 bg-surface-2/5 animate-pulse rounded" />
                   ) : (
                     <motion.span key={total} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-lg font-bold text-surface-2 tabular-nums">{total}</motion.span>
                   )}
@@ -375,7 +410,6 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
           </motion.div>
         )}
       </div>
-    </article>
+    </div>
   );
 }
-
