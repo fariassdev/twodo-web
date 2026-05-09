@@ -214,7 +214,7 @@ export default function ExpensesDashboard() {
                       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                       exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
                       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                      className="flex items-start leading-none gap-[0.05em]"
+                      className="flex items-start leading-none gap-[0.5rem]"
                     >
                       <span className={cn(
                         "font-display text-[clamp(4.5rem,20vw,6.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
@@ -224,7 +224,7 @@ export default function ExpensesDashboard() {
                       )}>
                         {balance?.direction === 'settled' ? '0' : amountLabel.replace(/[^\d.,]/g, '')}
                       </span>
-                    <span className="font-sans text-[clamp(1.2rem,5vw,2rem)] font-light text-surface-2/20 pt-[0.2em] transition-colors">
+                    <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.3rem] transition-colors">
                       €
                     </span>
                   </motion.div>

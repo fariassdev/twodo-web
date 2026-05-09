@@ -95,8 +95,9 @@ export default function ExpenseListItem({
 
       {/* Amount Container */}
       <div className="text-right flex flex-col items-end">
-        <p className="text-lg font-bold tracking-tight text-surface-2">
-          {amountLabel}
+        <p className="text-lg font-bold tracking-tight text-surface-2 flex items-baseline gap-1">
+          <span>{amountLabel.replace(/[^\d.,]/g, '')}</span>
+          <span className="text-sm font-medium text-surface-2/30">€</span>
         </p>
         <p className={`text-[9px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-success'}`}>
           {impactLabel}
