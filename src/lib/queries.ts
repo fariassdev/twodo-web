@@ -1485,8 +1485,12 @@ export async function getExpensesActivityFeedPage(
       settlement,
     })),
   ].sort((left, right) => {
-    const byActivity = toEpoch(right.activity_at) - toEpoch(left.activity_at);
-    if (byActivity !== 0) return byActivity;
+    const leftDay = left.activity_day;
+    const rightDay = right.activity_day;
+    
+    if (leftDay !== rightDay) {
+      return rightDay.localeCompare(leftDay);
+    }
 
     const byCreatedAt = toEpoch(right.created_at) - toEpoch(left.created_at);
     if (byCreatedAt !== 0) return byCreatedAt;
@@ -1497,7 +1501,6 @@ export async function getExpensesActivityFeedPage(
 
     return right.id.localeCompare(left.id);
   });
-
   const startIndex = normalizedPageIndex * normalizedPageSize;
 
   return {

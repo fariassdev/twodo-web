@@ -71,7 +71,7 @@ export default function ExpensesDashboard() {
         ? t('expenses.balance.youOwe', { name: counterpartyName })
         : t('expenses.balance.settled');
 
-  const canSettle = balance?.direction === 'you_owe' && balance.amountCents > 0;
+  const canSettle = balance?.direction !== 'settled' && (balance?.amountCents ?? 0) > 0;
 
   const handleConfirmSettlement = handleSubmit(async ({ note }) => {
     if (!canSettle) return;
