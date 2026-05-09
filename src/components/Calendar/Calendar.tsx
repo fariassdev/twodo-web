@@ -16,6 +16,9 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import SectionHeader from '../ui/SectionHeader';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from '../../utils';
+import { Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import Button from '../ui/Button';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -550,13 +553,6 @@ export default function Calendar() {
             <div className="h-[calc(100%-1.5rem)] overflow-y-auto px-4 pb-5">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <h3 className="text-base font-bold">{formatSelectedDate()}</h3>
-                <button
-                  className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
-                  onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: (showEvents && !showTasks) ? 'event' : 'task' } })}
-                  type="button"
-                >
-                  {addButtonLabel}
-                </button>
               </div>
 
               <div className="space-y-6">
@@ -644,6 +640,26 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {sheetMode === 'expanded' && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed bottom-24 right-6 z-fab"
+          >
+            <Button
+              variant="action"
+              size="icon"
+              onClick={() => navigate({ to: '/create', search: { date: selectedStr, type: (showEvents && !showTasks) ? 'event' : 'task' } })}
+              aria-label={addButtonLabel}
+            >
+              <Plus className="w-8 h-8 stroke-[2.5]" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
