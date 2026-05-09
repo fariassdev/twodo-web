@@ -301,7 +301,7 @@ export default function Calendar() {
     setSheetMode((prev) => (prev === 'collapsed' ? 'expanded' : 'collapsed'));
   }
 
-  const maxSheetHeight = Math.max(320, viewportHeight - 146); // 66px nav + 72px top bar + 8px margin
+  const maxSheetHeight = Math.max(320, viewportHeight - 154); // 66px nav + 72px top bar + 16px margin
   const remainingSpace = viewportHeight - calendarHeight - 66; // 66px bottom nav, no extra gap
   const collapsedHeight = clamp(
     remainingSpace,
