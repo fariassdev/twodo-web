@@ -76,73 +76,80 @@ export default function BalanceScoreWidget() {
     }
   }, [scoreData, profile, profiles, t]);
 
-  const radius = 28;
+  const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const dashoffset = circumference - (percentage / 100) * circumference;
 
-  // Map statusColor to actual Tailwind text classes to ensure they are picked up
-  const statusIconColor = {
-    primary: 'text-primary',
-    success: 'text-success',
-    warning: 'text-warning',
-    danger: 'text-danger',
-  }[statusColor];
+  // Map statusColor to explicit Tailwind classes for both text and background
+  const theme = {
+    primary: { text: 'text-primary', bg: 'bg-primary', stroke: 'text-primary stroke-primary' },
+    success: { text: 'text-success', bg: 'bg-success', stroke: 'text-success stroke-success' },
+    warning: { text: 'text-warning', bg: 'bg-warning', stroke: 'text-warning stroke-warning' },
+    danger: { text: 'text-danger', bg: 'bg-danger', stroke: 'text-danger stroke-danger' },
+  }[statusColor] ?? { text: 'text-primary', bg: 'bg-primary', stroke: 'text-primary stroke-primary' };
 
   return (
     <Card
-      className="mb-6 mt-2 border-primary/10 shadow-card-sm overflow-hidden"
+      className="mb-8 mt-2 border-primary/10 shadow-card-md overflow-hidden"
       interactive
       onClick={() => navigate({ to: '/metrics' })}
-      padding="md"
+      padding="none"
       radius="2xl"
       variant="elevated"
     >
-      <div className="flex items-center gap-5">
-        <div className="relative w-[64px] h-[64px] flex-shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full transform -rotate-90">
-            <circle
-              className="text-surface-2/5 stroke-current"
-              strokeWidth="5"
-              cx="32"
-              cy="32"
-              r="28"
-              fill="transparent"
-            />
-            <motion.circle
-              className={colorClass}
-              strokeWidth="6"
-              strokeLinecap="round"
-              cx="32"
-              cy="32"
-              r="28"
-              fill="transparent"
-              strokeDasharray={circumference}
-              initial={{ strokeDashoffset: circumference }}
-              animate={{ strokeDashoffset: dashoffset }}
-              transition={{ duration: 1.5, ease: "circOut" }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`text-[22px] font-black tracking-tighter leading-none ${statusIconColor}`}>
-              {percentage}<span className="text-[11px] font-bold opacity-60 ml-0.5">%</span>
-            </span>
+      <div className="flex flex-col sm:flex-row items-stretch">
+        {/* Metric Area: More visual weight on larger screens */}
+        <div className="bg-surface-2/[0.02] sm:bg-surface-2/[0.03] p-6 pb-3 sm:p-8 flex items-center justify-center sm:border-r border-primary/5">
+          <div className="relative w-[88px] h-[88px] sm:w-[110px] sm:h-[110px] flex-shrink-0 flex items-center justify-center">
+            {/* Subtle glow background */}
+            <div className={`absolute inset-0 rounded-full blur-xl opacity-20 ${theme.bg}`} />
+            
+            <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 relative z-10">
+              <circle
+                className="text-surface-2/5 stroke-current"
+                strokeWidth="8"
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="transparent"
+              />
+              <motion.circle
+                className={theme.stroke}
+                strokeWidth="10"
+                strokeLinecap="round"
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="transparent"
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: dashoffset }}
+                transition={{ duration: 1.5, ease: "circOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <span className={`text-[24px] sm:text-[28px] font-black tracking-tighter leading-none ${theme.text}`}>
+                {percentage}<span className="text-[12px] sm:text-[14px] font-bold opacity-60 ml-0.5">%</span>
+              </span>
+            </div>
           </div>
         </div>
         
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Activity className={`w-3.5 h-3.5 ${statusIconColor}`} strokeWidth={3} />
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-surface-2/40">
+        {/* Content Area */}
+        <div className="flex-1 p-6 pt-3 sm:p-8 flex flex-col justify-center text-center sm:text-left min-w-0 relative">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+            <Activity className={`w-3.5 h-3.5 ${theme.text}`} strokeWidth={3} />
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-surface-2/40">
               {t('dashboard.balanceBadge')}
             </span>
           </div>
-          <p className="text-[15px] font-bold text-surface-2 leading-tight pr-1">
+          <p className="text-[15px] sm:text-[17px] font-bold text-surface-2 leading-tight max-w-md mx-auto sm:mx-0 px-2 sm:px-0">
             {secondaryText}
           </p>
-        </div>
-
-        <div className="flex-shrink-0 text-surface-2/15">
-          <ChevronRight className="w-6 h-6" strokeWidth={1.5} />
+          
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:block text-surface-2/10">
+            <ChevronRight className="w-8 h-8" strokeWidth={1.5} />
+          </div>
         </div>
       </div>
     </Card>
