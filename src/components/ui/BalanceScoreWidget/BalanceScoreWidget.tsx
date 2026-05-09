@@ -201,7 +201,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
         </header>
 
         {/* Hero number */}
-        <div className="flex flex-col items-center gap-3 text-center min-h-[8rem] justify-center" aria-live="polite">
+        <div className="flex flex-col items-center text-center justify-center" aria-live="polite">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div 
