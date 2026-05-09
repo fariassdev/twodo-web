@@ -113,182 +113,187 @@ export default function CreateExpense() {
   });
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background-light dark:bg-background-dark animate-in fade-in slide-in-from-right duration-300">
       <PageHeader
         title={t('expenses.newExpense')}
         subtitle={t('nav.expenses')}
         backAction={{
           onClick: () => navigate({ to: '/expenses' }),
         }}
-        rightSlot={(
-          <Button
-            aria-label={t('cta.save')}
-            className="min-h-10 justify-end px-0 text-base font-bold tracking-[0.015em] text-primary disabled:text-primary/40"
-            disabled={!canSubmit || createExpenseMutation.isPending}
-            onClick={handleSave}
-            size="sm"
-            variant="ghost"
-          >
-            {createExpenseMutation.isPending ? t('common.saving') : t('cta.save')}
-          </Button>
-        )}
       />
 
-      <main className="mx-auto max-w-md px-6 pb-12 pt-6">
-        {actionError ? <ErrorBanner className="mb-6" message={actionError} /> : null}
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-12 pt-6">
+        <main className="mx-auto max-w-md">
+          {actionError ? <ErrorBanner className="mb-6" message={actionError} /> : null}
 
-        <FormField
-          label={t('expenses.amount')}
-          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
-          className="relative mb-6 pt-2"
-          error={errors.amountInput && t(errors.amountInput.message!)}
-          errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
-        >
-          <div className="relative">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/5 blur-3xl z-0" />
-            
-            <div className="relative z-10 flex flex-col items-center justify-center">
-              <div className="flex items-start leading-none gap-[0.5rem]">
-                <Controller
-                  name="amountInput"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericInput
-                      {...field}
-                      autoFocus
-                      className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
-                      placeholder="0.00"
-                    />
-                  )}
-                />
-                <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
-                  €
-                </span>
-              </div>
-              <div className="mt-4 relative max-w-xs mx-auto z-10">
-                <input
-                  type="text"
-                  placeholder={t('expenses.descriptionPlaceholder')}
-                  className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
-                  {...register('description')}
-                />
+          <FormField
+            label={t('expenses.amount')}
+            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
+            className="relative mb-6 pt-2"
+            error={errors.amountInput && t(errors.amountInput.message!)}
+            errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
+          >
+            <div className="relative">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/5 blur-3xl z-0" />
+              
+              <div className="relative z-10 flex flex-col items-center justify-center">
+                <div className="flex items-start leading-none gap-[0.5rem]">
+                  <Controller
+                    name="amountInput"
+                    control={control}
+                    render={({ field }) => (
+                      <NumericInput
+                        {...field}
+                        autoFocus
+                        className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
+                        placeholder="0.00"
+                      />
+                    )}
+                  />
+                  <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                    €
+                  </span>
+                </div>
+                <div className="mt-4 relative max-w-xs mx-auto z-10">
+                  <input
+                    type="text"
+                    placeholder={t('expenses.descriptionPlaceholder')}
+                    className="bg-transparent text-primary text-sm font-medium border-b border-dashed border-primary/30 pb-0.5 text-center px-2 w-full focus:outline-none focus:border-primary/80 transition-colors"
+                    {...register('description')}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </FormField>
+          </FormField>
 
-        <FormField
-          label={t('expenses.category')}
-          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
-          className="mt-6"
-          error={errors.categoryId && t(errors.categoryId.message!)}
-          errorClassName="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2"
-        >
-          <ScrollContainer className="-mx-2 px-2">
-            <div className="flex gap-3 pb-2">
-              {categories.map((category) => {
-                const active = selectedCategoryId === category.id;
-                const label = i18n.language.startsWith('es') ? category.name_es : category.name_en;
+          <FormField
+            label={t('expenses.category')}
+            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
+            className="mt-6"
+            error={errors.categoryId && t(errors.categoryId.message!)}
+            errorClassName="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2"
+          >
+            <ScrollContainer className="-mx-2 px-2">
+              <div className="flex gap-3 pb-2">
+                {categories.map((category) => {
+                  const active = selectedCategoryId === category.id;
+                  const label = i18n.language.startsWith('es') ? category.name_es : category.name_en;
 
+                  return (
+                    <button
+                      key={category.id}
+                      className={cn(
+                        "flex h-14 shrink-0 items-center gap-2.5 rounded-2xl border px-5 text-sm font-bold transition-all duration-300",
+                        active
+                          ? "border-primary bg-primary/10 text-primary shadow-glow-primary/5"
+                          : "border-border-subtle bg-surface-1/40 text-surface-2/40 hover:bg-surface-1 hover:border-primary/20"
+                      )}
+                      onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
+                      type="button"
+                    >
+                      <span className={cn(
+                        "material-symbols-outlined text-xl transition-transform duration-300",
+                        active && "scale-110 filled-icon"
+                      )}>
+                        {category.icon}
+                      </span>
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </ScrollContainer>
+          </FormField>
+
+          <FormField
+            label={t('expenses.paidBy')}
+            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-6 text-center"
+            className="mt-6"
+            error={errors.paidByProfileId && t(errors.paidByProfileId.message!)}
+            errorClassName="mt-4 text-xs font-bold text-danger uppercase tracking-wider text-center"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              {orderedProfiles.map((profile) => {
+                const active = paidByProfileId === profile.id;
                 return (
                   <button
-                    key={category.id}
-                    className={cn(
-                      "flex h-14 shrink-0 items-center gap-2.5 rounded-2xl border px-5 text-sm font-bold transition-all duration-300",
-                      active
-                        ? "border-primary bg-primary/10 text-primary shadow-glow-primary/5"
-                        : "border-border-subtle bg-surface-1/40 text-surface-2/40 hover:bg-surface-1 hover:border-primary/20"
-                    )}
-                    onClick={() => setValue('categoryId', category.id, { shouldValidate: true })}
+                    key={profile.id}
                     type="button"
+                    onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
+                    className={cn(
+                      "relative flex flex-col items-center justify-center p-6 rounded-[32px] transition-all duration-300 group",
+                      active
+                        ? "bg-primary/10 ring-2 ring-primary shadow-glow-primary/20"
+                        : "bg-surface-1/40 border border-border-subtle hover:bg-surface-1 hover:border-primary/30"
+                    )}
                   >
-                    <span className={cn(
-                      "material-symbols-outlined text-xl transition-transform duration-300",
-                      active && "scale-110 filled-icon"
+                    <div className={cn(
+                      "w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-3 border-2",
+                      active 
+                        ? "border-primary shadow-glow-primary scale-110" 
+                        : "border-surface-2/10 group-hover:border-primary/30"
                     )}>
-                      {category.icon}
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt={profile.name || ''} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className={cn(
+                          "w-full h-full flex items-center justify-center text-xl font-bold",
+                          active ? "bg-primary text-surface-1" : "bg-surface-2/5 text-surface-2/40"
+                        )}>
+                          {profile.name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-bold tracking-tight",
+                      active ? "text-primary" : "text-surface-2/60"
+                    )}>
+                      {profile.id === profileId ? t('expenses.me') : profile.name}
                     </span>
-                    <span>{label}</span>
+                    
+                    {active && (
+                      <div className="absolute top-3 right-3 w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
-          </ScrollContainer>
-        </FormField>
+          </FormField>
 
-        <FormField
-          label={t('expenses.paidBy')}
-          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-6 text-center"
-          className="mt-6"
-          error={errors.paidByProfileId && t(errors.paidByProfileId.message!)}
-          errorClassName="mt-4 text-xs font-bold text-danger uppercase tracking-wider text-center"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            {orderedProfiles.map((profile) => {
-              const active = paidByProfileId === profile.id;
-              return (
-                <button
-                  key={profile.id}
-                  type="button"
-                  onClick={() => setValue('paidByProfileId', profile.id, { shouldValidate: true })}
-                  className={cn(
-                    "relative flex flex-col items-center justify-center p-6 rounded-[32px] transition-all duration-300 group",
-                    active
-                      ? "bg-primary/10 ring-2 ring-primary shadow-glow-primary/20"
-                      : "bg-surface-1/40 border border-border-subtle hover:bg-surface-1 hover:border-primary/30"
-                  )}
-                >
-                  <div className={cn(
-                    "w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-3 border-2",
-                    active 
-                      ? "border-primary shadow-glow-primary scale-110" 
-                      : "border-surface-2/10 group-hover:border-primary/30"
-                  )}>
-                    {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt={profile.name || ''} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className={cn(
-                        "w-full h-full flex items-center justify-center text-xl font-bold",
-                        active ? "bg-primary text-surface-1" : "bg-surface-2/5 text-surface-2/40"
-                      )}>
-                        {profile.name?.[0]?.toUpperCase() || '?'}
-                      </div>
-                    )}
-                  </div>
-                  <span className={cn(
-                    "text-sm font-bold tracking-tight",
-                    active ? "text-primary" : "text-surface-2/60"
-                  )}>
-                    {profile.id === profileId ? t('expenses.me') : profile.name}
-                  </span>
-                  
-                  {active && (
-                    <div className="absolute top-3 right-3 w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </FormField>
+          <FormField
+            label={t('expenses.date')}
+            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
+            className="mt-6"
+            error={errors.expenseDate && t(errors.expenseDate.message!)}
+            errorClassName="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2"
+          >
+            <TextInput 
+              size="lg" 
+              type="date" 
+              variant="soft" 
+              className="rounded-2xl border-border-subtle bg-surface-1/50"
+              {...register('expenseDate')} 
+            />
+          </FormField>
+        </main>
+      </div>
 
-        <FormField
-          label={t('expenses.date')}
-          labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-4 px-2"
-          className="mt-6"
-          error={errors.expenseDate && t(errors.expenseDate.message!)}
-          errorClassName="mt-2 text-xs font-bold text-danger uppercase tracking-wider px-2"
-        >
-          <TextInput 
-            size="lg" 
-            type="date" 
-            variant="soft" 
-            className="rounded-2xl border-border-subtle bg-surface-1/50"
-            {...register('expenseDate')} 
-          />
-        </FormField>
-      </main>
+      <div className="shrink-0 p-4 pb-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
+        <div className="max-w-md mx-auto w-full">
+          <Button 
+            className="h-16 shadow-glow-primary text-lg rounded-2xl font-bold" 
+            fullWidth
+            disabled={!canSubmit || createExpenseMutation.isPending}
+            loading={createExpenseMutation.isPending} 
+            onClick={handleSave} 
+            variant="primary"
+          >
+            {createExpenseMutation.isPending ? t('common.saving') : t('cta.save')}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
