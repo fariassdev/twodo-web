@@ -525,14 +525,32 @@ export default function Calendar() {
           >
             <button
               aria-label={t('calendar.sheetHandleAriaLabel')}
-              className="group flex w-full items-center justify-center pt-2 pb-1 touch-none"
+              className="group flex w-full items-center justify-center pt-3 pb-2 touch-none"
               onPointerCancel={resetSheetDragState}
               onPointerDown={handleSheetPointerDown}
               onPointerMove={handleSheetPointerMove}
               onPointerUp={handleSheetPointerUp}
               type="button"
             >
-              <span className="h-1.5 w-12 rounded-full bg-border-subtle transition-colors group-hover:bg-primary/40" />
+              <svg 
+                width="64" 
+                height="12" 
+                viewBox="0 0 64 12" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className={cn(
+                  "text-border-subtle group-hover:text-primary transition-all duration-500 ease-in-out",
+                  sheetMode === 'collapsed' ? "animate-indicator" : "rotate-180"
+                )}
+              >
+                <path 
+                  d="M12 10L32 2L52 10" 
+                  stroke="currentColor" 
+                  strokeWidth="4" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+              </svg>
             </button>
 
             <div className="h-[calc(100%-1.5rem)] overflow-y-auto px-4 pb-5">
