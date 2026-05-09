@@ -4,6 +4,7 @@ import type { ExpenseWithDetails } from '../../../lib/types';
 import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
+import { cn } from '@/src/utils';
 
 type ExpenseListItemProps = {
   expense: ExpenseWithDetails;
@@ -72,14 +73,14 @@ export default function ExpenseListItem({
 
   return (
     <ListRow
-      className="group pr-6"
+      className="group p-3 gap-3"
       interactive={Boolean(onClick)}
       variant="subtle"
       {...clickableProps}
     >
       {/* Icon Container */}
-      <IconBox className={`${iconBg} ${iconText}`} size="lg" tone="custom">
-        <span className="material-symbols-outlined !text-2xl">{icon}</span>
+      <IconBox className={cn(iconBg, iconText, "rounded-xl")} size="sm" tone="custom">
+        <span className="material-symbols-outlined !text-[20px]">{icon}</span>
       </IconBox>
 
       {/* Info Container */}
@@ -94,10 +95,10 @@ export default function ExpenseListItem({
 
       {/* Amount Container */}
       <div className="text-right flex flex-col items-end">
-        <p className="text-xl font-extrabold tracking-tight text-surface-2">
+        <p className="text-lg font-bold tracking-tight text-surface-2">
           {amountLabel}
         </p>
-        <p className={`text-[8px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-primary'}`}>
+        <p className={`text-[9px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-primary'}`}>
           {impactLabel}
         </p>
       </div>
