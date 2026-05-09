@@ -171,59 +171,65 @@ export default function ExpensesDashboard() {
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
         <section className="relative overflow-hidden rounded-xl bg-surface-1 p-8 shadow-card-lg border border-border-strong">
-          {/* Subtle background glow */}
-          <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
+          {/* Decorative background elements */}
+          <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/15 blur-3xl z-0" />
+          <div className="absolute -bottom-6 -right-6 opacity-[0.05] pointer-events-none z-0">
+            <span className="material-symbols-outlined !text-[10rem] select-none">
+              {balance?.direction === 'settled' ? 'check_circle' : 'account_balance_wallet'}
+            </span>
+          </div>
           
-          <div className="relative flex flex-col items-center text-center">
+          {/* Main Content Layer */}
+          <div className="relative z-10 flex flex-col items-center text-center">
             <header className="w-full flex items-center justify-start gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-surface-2/60 mb-2">
-                <motion.div 
-                  animate={{ 
-                    backgroundColor: isFetching 
-                      ? 'rgba(73, 52, 33, 0.1)' 
-                      : (balance?.direction === 'settled' 
-                          ? 'var(--color-success)' 
-                          : (balance?.direction === 'you_are_owed' ? 'var(--color-success)' : 'var(--color-danger)')) 
-                  }}
-                  className={cn(
-                    "w-[7px] h-[7px] rounded-full shrink-0",
-                    isFetching && "animate-pulse"
-                  )}
-                />
-                {t('expenses.currentBalance')}
-              </header>
+              <motion.div 
+                animate={{ 
+                  backgroundColor: isFetching 
+                    ? 'rgba(73, 52, 33, 0.1)' 
+                    : (balance?.direction === 'settled' 
+                        ? 'var(--color-success)' 
+                        : (balance?.direction === 'you_are_owed' ? 'var(--color-success)' : 'var(--color-danger)')) 
+                }}
+                className={cn(
+                  "w-[7px] h-[7px] rounded-full shrink-0",
+                  isFetching && "animate-pulse"
+                )}
+              />
+              {t('expenses.currentBalance')}
+            </header>
 
-              <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2">
+              <AnimatePresence mode="wait">
+                <motion.h2 
+                  key={balanceHeadline}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-xl font-bold tracking-tight text-surface-2"
+                >
+                  {balanceHeadline}
+                </motion.h2>
+              </AnimatePresence>
+
+              <div className="flex flex-col items-center justify-center py-2" aria-live="polite">
                 <AnimatePresence mode="wait">
-                  <motion.h2 
-                    key={balanceHeadline}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-xl font-bold tracking-tight text-surface-2"
+                  <motion.div 
+                    key={amountLabel}
+                    initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                    className="flex items-start leading-none gap-[0.5rem]"
                   >
-                    {balanceHeadline}
-                  </motion.h2>
-                </AnimatePresence>
-
-                <div className="flex flex-col items-center justify-center py-2" aria-live="polite">
-                  <AnimatePresence mode="wait">
-                    <motion.div 
-                      key={amountLabel}
-                      initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
-                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
-                      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                      className="flex items-start leading-none gap-[0.5rem]"
-                    >
-                      <span className={cn(
-                        "font-display text-[clamp(4.5rem,20vw,6.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
-                        balance?.direction === 'settled' 
-                          ? 'text-surface-2/10' 
-                          : (balance?.direction === 'you_are_owed' ? 'text-success' : 'text-danger')
-                      )}>
-                        {balance?.direction === 'settled' ? '0' : amountLabel.replace(/[^\d.,]/g, '')}
-                      </span>
+                    <span className={cn(
+                      "font-display text-[clamp(4.5rem,20vw,6.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
+                      balance?.direction === 'settled' 
+                        ? 'text-surface-2/10' 
+                        : (balance?.direction === 'you_are_owed' ? 'text-success' : 'text-danger')
+                    )}>
+                      {balance?.direction === 'settled' ? '0' : amountLabel.replace(/[^\d.,]/g, '')}
+                    </span>
                     <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.3rem] transition-colors">
                       €
                     </span>
@@ -268,13 +274,6 @@ export default function ExpensesDashboard() {
                 </AnimatePresence>
               )}
             </div>
-          </div>
-
-          {/* Watermark Icon */}
-          <div className="absolute -bottom-6 -right-6 opacity-[0.05] pointer-events-none">
-            <span className="material-symbols-outlined !text-[10rem] select-none">
-              {balance?.direction === 'settled' ? 'check_circle' : 'account_balance_wallet'}
-            </span>
           </div>
         </section>
 
