@@ -97,11 +97,11 @@ export default function PageHeader({
         )}
         <div className={cn("flex flex-col py-0.5 min-w-0", showLogo && "border-l border-border-subtle pl-4")}>
           {subtitle && (
-            <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase leading-none mb-1.5 truncate">
+            <span className="text-[10px] font-black text-primary tracking-[0.2em] uppercase truncate">
               {subtitle}
             </span>
           )}
-          <h1 className="text-sm font-bold text-surface-2/80 leading-none tracking-tight first-letter:uppercase truncate">
+          <h1 className="text-sm font-bold text-surface-2/80 tracking-tight first-letter:uppercase truncate">
             {title}
           </h1>
         </div>
