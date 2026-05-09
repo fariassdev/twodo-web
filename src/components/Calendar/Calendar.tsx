@@ -19,12 +19,6 @@ import { cn } from '../../utils';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
-const STATUS_ORDER: Record<'pending' | 'postponed' | 'completed', number> = {
-  pending: 0,
-  postponed: 1,
-  completed: 2,
-};
-
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
