@@ -60,7 +60,7 @@ function RootComponent() {
 
   return (
     <AuthQueryContext.Provider value={authContextQuery}>
-      <div className="bg-background-dark text-surface-2 min-h-screen font-display flex flex-col">
+      <div className="bg-background-dark text-surface-2 min-h-dvh font-display flex flex-col">
         <Outlet />
       </div>
     </AuthQueryContext.Provider>
@@ -279,7 +279,7 @@ export const mainLayoutRoute = createRoute({
   id: 'mainLayout',
   getParentRoute: () => privateGateRoute,
   component: () => (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="flex h-dvh flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar relative">
         <Outlet />
       </div>
