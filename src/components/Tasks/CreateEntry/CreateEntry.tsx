@@ -5,7 +5,7 @@ import { useCreateTasksMutation, useProfilesQuery, useTaskCatalogQuery } from '.
 import type { CreateTaskInput } from '../../../lib/queries';
 import type { Profile, TaskCatalogItem } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../../../helpers/schemas';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -260,7 +260,7 @@ export default function CreateEntry() {
     }
   }
 
-  const labelClass = 'text-slate-100 text-sm font-semibold leading-normal pb-2';
+  const labelClass = 'text-surface-2 text-sm font-semibold leading-normal pb-2';
 
   // ═══════════════════════════════════════════════════════════════
   //  STEP 1 — TYPE SELECTOR
@@ -271,15 +271,15 @@ export default function CreateEntry() {
         {/* Spacer to push content down like a bottom sheet */}
         <div className="flex-1" />
 
-        <div className="flex flex-col items-center px-6 pb-10 pt-6 bg-background-dark/95 backdrop-blur-sm rounded-t-3xl border-t border-primary/10 relative">
+        <div className="flex flex-col items-center px-6 pb-10 pt-6 bg-surface-1 rounded-t-3xl border-t border-primary/10 relative">
           {/* Handle bar */}
-          <div className="w-12 h-1.5 rounded-full bg-primary/30 mb-8" />
+          <div className="w-12 h-1.5 rounded-full bg-border-subtle mb-8" />
 
           {/* Title */}
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+          <h2 className="text-2xl font-bold text-surface-2 mb-2">
             {t('entryCreate.title')}
           </h2>
-          <p className="text-sm text-primary/60 mb-8">
+          <p className="text-sm text-surface-2/60 mb-8">
             {t('entryCreate.subtitle')}
           </p>
 
@@ -297,7 +297,7 @@ export default function CreateEntry() {
               }`}>
                 <span className="material-symbols-outlined text-primary text-3xl">check_circle</span>
               </div>
-              <span className={`text-base font-bold ${selectedType === 'task' ? 'text-slate-100' : 'text-primary/70'}`}>
+              <span className={`text-base font-bold ${selectedType === 'task' ? 'text-surface-2' : 'text-primary/70'}`}>
                 {t('entryForm.typeTask')}
               </span>
             </Button>
@@ -314,7 +314,7 @@ export default function CreateEntry() {
               }`}>
                 <span className="material-symbols-outlined text-primary/70 text-3xl">calendar_today</span>
               </div>
-              <span className={`text-base font-bold ${selectedType === 'event' ? 'text-slate-100' : 'text-primary/70'}`}>
+              <span className={`text-base font-bold ${selectedType === 'event' ? 'text-surface-2' : 'text-primary/70'}`}>
                 {t('entryForm.typeEvent')}
               </span>
             </Button>
@@ -351,11 +351,10 @@ export default function CreateEntry() {
   if (step === 'catalog') {
     return (
       <div className="flex flex-col min-h-screen bg-background-dark">
-        <TopBar
+        <PageHeader
           title={t('entryCreate.selectTask')}
-          leftAction={{
-            ariaLabel: t('topBar.back'),
-            icon: 'arrow_back',
+          subtitle={t('nav.calendar')}
+          backAction={{
             onClick: handleBackFromCatalog,
           }}
         />
@@ -397,7 +396,7 @@ export default function CreateEntry() {
                       variant="subtle"
                     >
                       <span className="text-xl w-8 text-center shrink-0">{item.icon}</span>
-                      <span className="flex-1 text-slate-100 text-sm font-medium truncate">{name}</span>
+                      <span className="flex-1 text-surface-2 text-sm font-medium truncate">{name}</span>
                       <Badge className="shrink-0 whitespace-nowrap" size="md" tone="primary">
                         {item.default_effort_level} · {points}pts
                       </Badge>
@@ -429,12 +428,10 @@ export default function CreateEntry() {
   // ═══════════════════════════════════════════════════════════════
   return (
     <div className="flex flex-col min-h-screen bg-background-dark">
-      <TopBar
+      <PageHeader
         title={t('entryCreate.title')}
-        titleIcon="edit_note"
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+        subtitle={type === 'task' ? t('entryForm.typeTask') : t('entryForm.typeEvent')}
+        backAction={{
           onClick: handleBackFromForm,
         }}
         rightSlot={(
@@ -457,10 +454,10 @@ export default function CreateEntry() {
           <Card className="flex items-center gap-3" padding="sm" radius="xl" variant="info">
             <span className="text-xl">{selectedCatalogItem.icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-slate-100 text-sm font-semibold truncate">
+              <p className="text-surface-2 text-sm font-semibold truncate">
                 {i18n.language === 'es' ? selectedCatalogItem.name_es : selectedCatalogItem.name_en}
               </p>
-              <p className="text-primary/60 text-xs">
+              <p className="text-surface-2/60 text-xs">
                 {t(`entryForm.categories.${selectedCatalogItem.category}` as const)}
               </p>
             </div>
@@ -594,8 +591,8 @@ export default function CreateEntry() {
         <FormSection>
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <p className="text-slate-100 text-base font-bold leading-tight">{t('entryForm.recurring')}</p>
-              <p className="text-primary/60 text-sm font-normal leading-normal">{t('entryForm.recurringDescription')}</p>
+              <p className="text-surface-2 text-base font-bold leading-tight">{t('entryForm.recurring')}</p>
+              <p className="text-surface-2/60 text-sm font-normal leading-normal">{t('entryForm.recurringDescription')}</p>
             </div>
             <label className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${isRecurring ? 'justify-end bg-primary' : 'bg-primary/20'}`}>
               <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
@@ -604,7 +601,7 @@ export default function CreateEntry() {
           </div>
           {isRecurring && (
             <div className="mt-2">
-              <p className="text-slate-100 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
+              <p className="text-surface-2 text-sm font-semibold leading-normal pb-3">{t('entryForm.frequency')}</p>
               <SegmentedControl>
                 {(['daily', 'weekly', 'monthly'] as const).map((f) => (
                   <SegmentedControlItem active={frequency === f} key={f}>
@@ -626,7 +623,7 @@ export default function CreateEntry() {
                 {assignmentCategory === 'team_work' && <div className="w-3 h-3 rounded-full bg-primary" />}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentTeamTitle')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentTeamTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentTeamDescription')}</span>
               </div>
               <input type="radio" className="hidden" value="team_work" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'team_work'); setValue('isRotating', false); }} />
@@ -637,7 +634,7 @@ export default function CreateEntry() {
                 {assignmentCategory === 'anyone' && <div className="w-3 h-3 rounded-full bg-primary" />}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentAnyoneTitle')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentAnyoneTitle')}</span>
                 <span className="text-xs text-primary/80">{t('entryForm.assignmentAnyoneDescription')}</span>
               </div>
               <input type="radio" className="hidden" value="anyone" {...register('assignmentCategory')} onChange={() => { setValue('assignmentCategory', 'anyone'); setValue('isRotating', false); }} />
@@ -648,13 +645,13 @@ export default function CreateEntry() {
                 <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary shrink-0 relative">
                   {assignmentCategory === 'individual' && <div className="w-3 h-3 rounded-full bg-primary" />}
                 </div>
-                <span className="text-sm font-bold text-slate-100">{t('entryForm.assignmentIndividual')}</span>
+                <span className="text-sm font-bold text-surface-2">{t('entryForm.assignmentIndividual')}</span>
                 <input type="radio" className="hidden" value="individual" {...register('assignmentCategory')} />
               </label>
 
               {assignmentCategory === 'individual' && (
                 <div className="flex flex-col gap-4 pl-9">
-                  <div className="flex h-11 items-center justify-center rounded-xl border border-primary/20 bg-background-dark/50 p-1">
+                  <div className="flex h-11 items-center justify-center rounded-xl border border-primary/20 bg-surface-2/5 p-1">
                     {profiles.map(p => (
                       <button
                         key={p.id}
@@ -699,7 +696,7 @@ export default function CreateEntry() {
           )}
         >
           <textarea
-            className="flex w-full rounded-xl text-slate-100 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
+            className="flex w-full rounded-xl text-surface-2 focus:outline-0 focus:ring-1 focus:ring-primary border border-primary/20 bg-primary/5 h-32 placeholder:text-primary/40 p-4 text-base font-normal leading-normal resize-none"
             placeholder={t('entryForm.descriptionPlaceholder')}
             {...register('description')}
           />

@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import i18n from './i18n';
 import {
   Navigate,
   Outlet,
@@ -12,6 +13,8 @@ import { useScreenTelemetry } from './hooks/useScreenTelemetry';
 import { useAuthContextQuery } from './lib/queryHooks';
 import BottomNav from './components/ui/BottomNav';
 import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
+import FullPageLoading from './components/ui/FullPageLoading';
+import ErrorPage from './components/ui/ErrorPage';
 
 const Dashboard = React.lazy(() => import('./components/dashboard'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
@@ -31,17 +34,15 @@ const ForgotPassword = React.lazy(() => import('./components/Auth/ForgotPassword
 const ResetPassword = React.lazy(() => import('./components/Auth/ResetPassword'));
 const VerifyEmail = React.lazy(() => import('./components/Auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/Auth/PendingAccess'));
-const ConnectPartner = React.lazy(() => import('./components/ConnectPartner'));
+const TaskAssignment = React.lazy(() => import('./components/Tasks/TaskAssignment/TaskAssignment'));
 
 const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
 
+
 function RouteLoadingFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-    </div>
-  );
+  return <FullPageLoading message={i18n.t('loading')} />;
 }
+
 
 function RouteShell({ children, sectionName }: { children: React.ReactNode; sectionName: string }) {
   return (
@@ -59,7 +60,7 @@ function RootComponent() {
 
   return (
     <AuthQueryContext.Provider value={authContextQuery}>
-      <div className="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col">
+      <div className="bg-background-dark text-surface-2 min-h-screen font-display flex flex-col">
         <Outlet />
       </div>
     </AuthQueryContext.Provider>
@@ -278,10 +279,12 @@ export const mainLayoutRoute = createRoute({
   id: 'mainLayout',
   getParentRoute: () => privateGateRoute,
   component: () => (
-    <>
-      <Outlet />
+    <div className="flex h-screen flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+        <Outlet />
+      </div>
       <BottomNav />
-    </>
+    </div>
   ),
 });
 
@@ -398,8 +401,18 @@ interface TaskDetailsSearch {
   editAssignment?: boolean;
 }
 
+export const taskAssignmentRoute = createRoute({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/task/$taskId/assignment',
+  component: () => (
+    <RouteShell sectionName="task-assignment">
+      <TaskAssignment />
+    </RouteShell>
+  ),
+});
+
 export const taskDetailsRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/task/$taskId',
   validateSearch: (search: Record<string, unknown>): TaskDetailsSearch => ({
     editAssignment:
@@ -415,7 +428,7 @@ export const taskDetailsRoute = createRoute({
 });
 
 export const editEntryRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/task/$taskId/edit',
   component: () => (
     <RouteShell sectionName="edit-entry">
@@ -432,7 +445,7 @@ interface CreateEntrySearch {
 }
 
 export const createEntryRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/create',
   validateSearch: (search: Record<string, unknown>): CreateEntrySearch => {
     return {
@@ -453,7 +466,7 @@ export const createEntryRoute = createRoute({
 });
 
 export const createExpenseRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/expenses/new',
   component: () => (
     <RouteShell sectionName="expenses-new">
@@ -463,7 +476,7 @@ export const createExpenseRoute = createRoute({
 });
 
 export const expenseDetailsRoute = createRoute({
-  getParentRoute: () => privateGateRoute,
+  getParentRoute: () => mainLayoutRoute,
   path: '/expenses/$expenseId',
   validateSearch: (search: Record<string, unknown>): ExpenseDetailsSearch => ({
     from: readExpenseFromSearch(search?.from),
@@ -495,16 +508,31 @@ const routeTree = rootRoute.addChildren([
       profileRoute,
       expensesDashboardRoute,
       expensesListRoute,
+      taskDetailsRoute,
+      editEntryRoute,
+      taskAssignmentRoute,
+      createEntryRoute,
+      createExpenseRoute,
+      expenseDetailsRoute,
     ]),
-    taskDetailsRoute,
-    editEntryRoute,
-    createEntryRoute,
-    createExpenseRoute,
-    expenseDetailsRoute,
   ]),
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({ 
+  routeTree,
+  defaultErrorComponent: ({ error, reset }) => (
+    <ErrorPage 
+      error={error} 
+      onRetry={reset} 
+    />
+  ),
+  defaultNotFoundComponent: () => (
+    <ErrorPage 
+      title={i18n.t('errorPage.notFoundTitle')} 
+      description={i18n.t('errorPage.notFoundDescription')} 
+    />
+  ),
+});
 
 declare module '@tanstack/react-router' {
   interface Register {

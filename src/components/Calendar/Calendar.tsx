@@ -9,7 +9,7 @@ import {
 import { queryKeys } from '../../lib/queryKeys';
 import type { Profile, Task } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../ui/TopBar';
+import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import QueryErrorState from '../ui/QueryErrorState';
 import SelectInput from '../ui/SelectInput';
@@ -346,11 +346,11 @@ export default function Calendar() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden relative bg-background-dark">
+    <div className="flex h-full flex-col overflow-hidden relative bg-background-dark">
       <div ref={calendarRef} className="shrink-0 flex flex-col">
-        <TopBar
-          title={t('calendar.title')}
-        titleIcon="calendar_month"
+      <PageHeader
+        title={t('calendar.title')}
+        subtitle={t('nav.calendar')}
         rightMenu={{
           ariaLabel: t('topBar.openMenu'),
           closeAriaLabel: t('topBar.closeMenu'),
@@ -368,12 +368,12 @@ export default function Calendar() {
       />
 
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
-        <button onClick={prevMonth} className="p-2 rounded-full hover:bg-surface-3 transition-colors">
-          <span className="material-symbols-outlined">chevron_left</span>
+        <button onClick={prevMonth} className="p-2 rounded-full hover:bg-hover transition-colors">
+          <span className="material-symbols-outlined text-surface-2">chevron_left</span>
         </button>
         <h2 className="text-base font-bold">{monthName} {year}</h2>
-        <button onClick={nextMonth} className="p-2 rounded-full hover:bg-surface-3 transition-colors">
-          <span className="material-symbols-outlined">chevron_right</span>
+        <button onClick={nextMonth} className="p-2 rounded-full hover:bg-hover transition-colors">
+          <span className="material-symbols-outlined text-surface-2">chevron_right</span>
         </button>
       </div>
 
@@ -384,7 +384,7 @@ export default function Calendar() {
       <div className="px-4 max-w-md mx-auto w-full">
         <div className="grid grid-cols-7 mb-2">
           {weekdayLabels.map((d, i) => (
-            <div key={i} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">{d}</div>
+            <div key={i} className="text-center text-[11px] font-bold text-surface-2/40 uppercase tracking-widest">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-2">
@@ -399,10 +399,10 @@ export default function Calendar() {
                 key={i}
                 onClick={() => setSelectedDate(new Date(cd.date))}
                 className={`relative h-12 flex flex-col items-center justify-center rounded-xl transition-colors ${
-                  !cd.isCurrentMonth ? 'text-slate-700' :
+                  !cd.isCurrentMonth ? 'text-surface-2/30' :
                   isSelected ? 'bg-primary text-background-dark font-bold shadow-lg shadow-primary/20' :
                   isToday ? 'bg-primary/20 text-primary font-bold' :
-                  'hover:bg-surface-3'
+                  'hover:bg-hover text-surface-2'
                 }`}
               >
                 <span className="text-sm font-medium">{cd.day}</span>
@@ -426,7 +426,7 @@ export default function Calendar() {
       <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
         <div className="mx-auto w-full max-w-md pointer-events-auto">
           <div
-            className={`rounded-t-2xl border border-border-subtle bg-surface-1/95 shadow-2xl backdrop-blur-xl transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
+            className={`rounded-t-2xl border border-border-subtle bg-surface-1 transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}
             style={{
               height: `${currentSheetHeight}px`,
             }}
@@ -440,7 +440,7 @@ export default function Calendar() {
               onPointerUp={handleSheetPointerUp}
               type="button"
             >
-              <span className="h-1.5 w-12 rounded-full bg-surface-3 transition-colors group-hover:bg-slate-500" />
+              <span className="h-1.5 w-12 rounded-full bg-border-subtle transition-colors group-hover:bg-primary/40" />
             </button>
 
             <div className="h-[calc(100%-1.5rem)] overflow-y-auto px-4 pb-5">
@@ -457,7 +457,7 @@ export default function Calendar() {
 
               <div className="mb-3 grid grid-cols-3 gap-2">
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.sortBy')}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.sortBy')}</span>
                   <SelectInput
                     selectClassName="text-xs font-semibold"
                     size="sm"
@@ -472,7 +472,7 @@ export default function Calendar() {
                 </label>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterType', 'Tipo')}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.filterType', 'Type')}</span>
                   <SelectInput
                     selectClassName="text-xs font-semibold"
                     size="sm"
@@ -480,14 +480,14 @@ export default function Calendar() {
                     onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
                     value={typeFilter}
                   >
-                    <option value="all">{t('calendar.typeAll', 'Todos')}</option>
+                    <option value="all">{t('calendar.typeAll', 'All')}</option>
                     <option value="task">{t('entryForm.typeTask')}</option>
                     <option value="event">{t('entryForm.typeEvent')}</option>
                   </SelectInput>
                 </label>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('calendar.filterAssignee')}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-2/60">{t('calendar.filterAssignee')}</span>
                   <SelectInput
                     selectClassName="text-xs font-semibold"
                     size="sm"
@@ -519,7 +519,7 @@ export default function Calendar() {
 
               <div className="space-y-3">
                 {dayEntries.length === 0 && (
-                  <p className="py-4 text-center text-sm text-slate-500">{emptyDayMessage}</p>
+                  <p className="py-4 text-center text-sm text-surface-2/40">{emptyDayMessage}</p>
                 )}
                 {dayEntries.map((task) => {
                   const isDeleted = task.deleted_at !== null;
@@ -527,30 +527,30 @@ export default function Calendar() {
                     <div
                       key={task.id}
                       onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
-                      className={`flex items-center gap-4 p-4 bg-surface-2/60 rounded-2xl border border-transparent hover:border-primary/30 transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
+                      className={`flex items-center gap-4 p-4 bg-surface-2/5 rounded-2xl border border-primary/5 hover:border-primary/20 hover:bg-hover transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
                     >
                       {task.status === 'completed' ? (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-emerald-500 filled-icon text-[28px]">check_circle</span>
+                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-success/20 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-success filled-icon text-[28px]">check_circle</span>
                         </div>
                       ) : task.status === 'postponed' ? (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-orange-500/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-orange-500 filled-icon text-[28px]">more_horiz</span>
+                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-warning/20 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-warning filled-icon text-[28px]">more_horiz</span>
                         </div>
                       ) : (
-                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-blue-500/20 flex items-center justify-center">
-                          <div className="w-6 h-6 rounded-full border-[3px] border-blue-400"></div>
+                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-primary/20 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full border-[3px] border-primary"></div>
                         </div>
                       )}
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className={`font-bold text-base text-slate-100 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
+                          <h4 className={`font-bold text-base text-surface-2 truncate ${isDeleted ? 'line-through' : ''}`}>{task.title}</h4>
                           {isDeleted && (
                             <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-500 px-2 rounded-md">{t('calendar.deletedBadge')}</span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-400 truncate flex items-center gap-1">
+                        <p className="text-sm text-surface-2/60 truncate flex items-center gap-1">
                           {(task.start_time || task.end_time) && (
                             <>
                               <span className="material-symbols-outlined text-[16px]">schedule</span>{' '}
@@ -562,7 +562,7 @@ export default function Calendar() {
                           )}
                           {(task.start_time || task.end_time) && task.location && <span className="mx-0.5">•</span>}
                           {task.location && (
-                            <span className={(task.start_time || task.end_time) ? 'text-emerald-400' : ''}>{task.location}</span>
+                            <span className={(task.start_time || task.end_time) ? 'text-primary' : ''}>{task.location}</span>
                           )}
                         </p>
                       </div>
@@ -570,11 +570,11 @@ export default function Calendar() {
                       <div className="shrink-0 flex -space-x-2">
                         {task.assignment_type === 'team_work' || task.assignment_type === 'anyone' ? (
                           profiles.map((profile) => (
-                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-[1.5px] border-slate-800 bg-slate-700 object-cover" alt={profile.name} />
+                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
                           ))
                         ) : (
                           profiles.filter((profile) => profile.id === task.assigned_to).map((profile) => (
-                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-[1.5px] border-slate-800 bg-slate-700 object-cover" alt={profile.name} />
+                            <img key={profile.id} src={profile.avatar_url || ''} className="w-7 h-7 rounded-full border-2 border-background-dark bg-primary/20 object-cover" alt={profile.name} />
                           ))
                         )}
                       </div>

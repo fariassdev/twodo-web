@@ -97,10 +97,10 @@ export default function ExpensesList({
             </IconBox>
 
             <div className="flex-1 min-w-0">
-              <h3 className="truncate text-xl font-bold tracking-tight text-slate-100">
+              <h3 className="truncate text-xl font-bold tracking-tight text-surface-2">
                 {t('expenses.settleUp')}
               </h3>
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-sm font-medium text-surface-2/60">
                 {toRelativeExpenseDate(item.activity_day, locale, {
                   today: t('expenses.today'),
                   yesterday: t('expenses.yesterday'),

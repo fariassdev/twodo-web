@@ -72,7 +72,7 @@ export default function ExpenseListItem({
 
   return (
     <ListRow
-      className={onClick ? 'group pr-6 hover:bg-[#1a2523]' : 'group pr-6'}
+      className="group pr-6"
       interactive={Boolean(onClick)}
       variant="subtle"
       {...clickableProps}
@@ -84,20 +84,20 @@ export default function ExpenseListItem({
 
       {/* Info Container */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-xl font-bold tracking-tight text-slate-100">
+        <h3 className="truncate text-base font-bold tracking-tight text-surface-2">
           {expense.description?.trim() || categoryName}
         </h3>
-        <p className="text-sm font-medium text-slate-500">
+        <p className="text-sm font-medium text-surface-2/60">
           {whenLabel}
         </p>
       </div>
 
       {/* Amount Container */}
       <div className="text-right flex flex-col items-end">
-        <p className="text-xl font-bold tracking-tight text-slate-100">
+        <p className="text-xl font-extrabold tracking-tight text-surface-2">
           {amountLabel}
         </p>
-        <p className={`text-[10px] font-black uppercase tracking-[0.05em] ${isDebtor ? 'text-rose-400' : 'text-[#2ecc71]'}`}>
+        <p className={`text-[8px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-primary'}`}>
           {impactLabel}
         </p>
       </div>

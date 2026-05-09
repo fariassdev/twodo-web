@@ -5,14 +5,14 @@ import { cn } from '../../../utils';
 const listRowVariants = cva('relative flex items-center gap-4 border p-4 transition-all', {
   variants: {
     variant: {
-      default: 'rounded-xl border-border-subtle bg-surface-2',
-      subtle: 'rounded-xl border-border-subtle bg-surface-1',
-      transparent: 'rounded-xl border-transparent bg-transparent',
-      alert: 'rounded-xl border-rose-500/10 bg-rose-950/20 text-white/90',
-      success: 'rounded-xl border-emerald-500/20 bg-emerald-950/20 text-emerald-100',
+      default: 'rounded-xl border-border-subtle bg-surface-1 text-surface-2',
+      subtle: 'rounded-xl border-border-subtle bg-surface-1 text-surface-2',
+      transparent: 'rounded-xl border-transparent bg-transparent text-surface-2',
+      alert: 'rounded-xl border-danger/20 bg-danger/10 text-danger',
+      success: 'rounded-xl border-primary/20 bg-primary/10 text-primary',
     },
     interactive: {
-      true: 'cursor-pointer active:scale-[0.98]',
+      true: 'cursor-pointer active:scale-[0.98] hover:bg-hover',
       false: '',
     },
     completed: {

@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import TopBar from '../../ui/TopBar';
+import { Plus } from 'lucide-react';
+import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import DataStatusBanner from '../../ui/DataStatusBanner';
@@ -12,6 +13,7 @@ import FormField from '../../ui/FormField';
 import Modal from '../../ui/Modal';
 import QueryErrorState from '../../ui/QueryErrorState';
 import TextInput from '../../ui/TextInput';
+import FullPageLoading from '../../ui/FullPageLoading';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
@@ -22,6 +24,7 @@ import {
   useExpensesDashboardQuery,
 } from '../../../lib/queryHooks';
 import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
+
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
@@ -87,19 +90,16 @@ export default function ExpensesDashboard() {
   }
 
   if (dashboardQuery.isPending || activityQuery.isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
+
 
   if ((dashboardQuery.isError && !dashboardData) || (activityQuery.isError && activityItems.length === 0)) {
     return <QueryErrorState onRetry={retryQuery} />;
   }
 
   return (
-    <div className="pb-28 bg-background-dark min-h-screen">
+    <div>
       <Modal
         className="items-end justify-center pb-6"
         onClose={() => setSettlementSheetOpen(false)}
@@ -109,14 +109,14 @@ export default function ExpensesDashboard() {
       >
         <Card className="relative w-full bg-surface-1 shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
-          <h2 className="text-xl font-bold text-slate-100">{t('expenses.settlement.title')}</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-xl font-bold text-surface-2">{t('expenses.settlement.title')}</h2>
+          <p className="mt-2 text-sm text-surface-2/80">
             {balance?.direction === 'you_are_owed'
               ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
               : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
           </p>
 
-          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-surface-2/60">
             <TextInput
               maxLength={200}
               placeholder={t('expenses.settlement.notePlaceholder')}
@@ -137,7 +137,7 @@ export default function ExpensesDashboard() {
             {createSettlementMutation.isPending ? t('common.saving') : t('expenses.settlement.confirmButton')}
           </Button>
           <Button
-            className="mt-2 border-primary/20 text-sm font-semibold text-slate-300"
+            className="mt-2 border-primary/20 text-sm font-semibold text-surface-2/60"
             onClick={() => setSettlementSheetOpen(false)}
             fullWidth
             variant="subtle"
@@ -147,13 +147,13 @@ export default function ExpensesDashboard() {
         </Card>
       </Modal>
 
-      <TopBar
+      <PageHeader
         title={t('expenses.dashboardTitle')}
-        titleIcon="payments"
+        subtitle={t('nav.expenses')}
         rightSlot={(
           <Button
             aria-label={t('expenses.openSearch')}
-            className="text-slate-100"
+            className="text-surface-2/60 hover:text-surface-2"
             onClick={() => navigate({ to: '/expenses/list' })}
             size="icon"
             variant="icon"
@@ -163,12 +163,12 @@ export default function ExpensesDashboard() {
         )}
       />
 
-      <main className="mx-auto max-w-md px-4 pt-5">
+      <main className="mx-auto max-w-md w-full px-4 pt-5 pb-8">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
         {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
 
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-2xl shadow-black/40 border border-border-strong">
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-lg shadow-black/10 border border-border-strong">
           <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-10 -right-6 opacity-[0.07] pointer-events-none">
             <span className="material-symbols-outlined !text-[12rem] select-none">
@@ -180,11 +180,11 @@ export default function ExpensesDashboard() {
             <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-primary/60">
               {t('expenses.currentBalance')}
             </p>
-            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-white`}>
+            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-surface-2`}>
               {balanceHeadline}
             </h2>
 
-            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-slate-400' : 'text-primary'}`}>
+            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-surface-2/40' : 'text-primary'}`}>
               {amountLabel}
             </p>
 
@@ -211,11 +211,11 @@ export default function ExpensesDashboard() {
 
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">{t('expenses.historyTitle')}</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-surface-2">{t('expenses.historyTitle')}</h3>
           </div>
 
           {activityItems.length === 0 ? (
-            <Card className="text-center text-sm text-slate-300" padding="lg" radius="2xl" variant="surface">
+            <Card className="text-center text-sm text-surface-2/60" padding="lg" radius="2xl" variant="surface">
               {t('expenses.emptyFirstExpense')}
             </Card>
           ) : (
@@ -244,11 +244,12 @@ export default function ExpensesDashboard() {
 
       <Button
         aria-label={t('expenses.newExpense')}
-        className="fixed bottom-28 right-6 z-30 h-16 w-16 rounded-full p-0 text-background-dark shadow-2xl shadow-primary/30"
+        className="fixed bottom-24 right-6 z-fab"
         onClick={() => navigate({ to: '/expenses/new' })}
-        variant="primary"
+        variant="action"
+        size="icon"
       >
-        <span className="material-symbols-outlined text-4xl">add</span>
+        <Plus className="w-8 h-8 stroke-[2.5]" />
       </Button>
     </div>
   );

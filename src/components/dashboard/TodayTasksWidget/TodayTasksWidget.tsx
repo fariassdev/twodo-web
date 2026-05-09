@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTodaysTasksQuery, useOverdueTasksQuery, useCompleteTaskMutation, useProfilesQuery } from '../../../lib/queryHooks';
+import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery } from '../../../lib/queryHooks';
 import type { Task } from '../../../lib/types';
 import TaskAvatars from '../TaskAvatars';
-import Snackbar from '../../ui/Snackbar';
+import EmptyTodayState from './EmptyTodayState';
+import { toast } from '../../ui/Snackbar';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import ListRow from '../../ui/ListRow';
@@ -18,11 +19,11 @@ export default function TodayTasksWidget() {
   const navigate = useNavigate();
   const todaysTasksQuery = useTodaysTasksQuery();
   const overdueTasksQuery = useOverdueTasksQuery();
+  const taskCountQuery = useTaskCountQuery();
   const completeTaskMutation = useCompleteTaskMutation();
   const { data: profiles = [] } = useProfilesQuery();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
   const tasks = todaysTasksQuery.data ?? [];
@@ -73,18 +74,32 @@ export default function TodayTasksWidget() {
       await completeTaskMutation.mutateAsync({ taskId });
       const completedTask = tasks.find((task) => task.id === taskId) ?? overdueTasks.find((task) => task.id === taskId) ?? null;
       setLastCompletedTask(completedTask);
-      setSnackbarOpen(true);
+      
+      const assignmentText =
+        completedTask?.assignment_type === 'team_work'
+          ? t('taskCompletion.teamWork')
+          : completedTask?.assignment_type === 'individual'
+            ? t('taskCompletion.individual')
+            : t('taskCompletion.anyone');
+
+      toast.success(`${t('taskCompletion.completed')}. ${t('taskCompletion.pointsAssignedTo')} ${assignmentText}`, {
+        action: {
+          label: t('taskCompletion.change'),
+          onClick: () => {
+            if (!completedTask) return;
+            navigate({
+              to: '/task/$taskId',
+              params: { taskId: completedTask.id },
+              search: { editAssignment: true },
+            });
+          },
+        },
+      });
     } catch (err) {
       console.error('Complete error', err);
     }
   };
 
-  const lastAssignmentText =
-    lastCompletedTask?.assignment_type === 'team_work'
-      ? t('taskCompletion.teamWork')
-      : lastCompletedTask?.assignment_type === 'individual'
-        ? t('taskCompletion.individual')
-        : t('taskCompletion.anyone');
 
   const renderTask = (task: Task) => {
     const isCompleted = task.status === 'completed';
@@ -103,13 +118,13 @@ export default function TodayTasksWidget() {
       >
         {/* Glow left edge for high priority/morning like the design */}
         {!isCompleted && isHighPriority && (
-          <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-lg bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+          <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-lg bg-primary shadow-[0_0_8px_rgba(207,116,85,0.6)]"></div>
         )}
 
         <Button
           className={`h-[22px] w-[22px] shrink-0 p-0 transition-colors ${
             isCompleted
-              ? 'rounded-md text-emerald-500 hover:bg-transparent'
+              ? 'rounded-md text-primary hover:bg-transparent'
               : 'rounded-[6px] border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
@@ -122,16 +137,16 @@ export default function TodayTasksWidget() {
           size="icon"
           variant="icon"
         >
-          {isCompleted && <CheckCircle2 className="w-6 h-6 fill-emerald-500/20" />}
+          {isCompleted && <CheckCircle2 className="w-6 h-6 fill-primary/20" />}
         </Button>
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
-            isCompleted ? 'line-through text-slate-500' : 'text-slate-100'
+            isCompleted ? 'line-through opacity-40' : ''
           }`}>
             {task.title}
             {isHighPriority && !isCompleted && (
-              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <Zap className="w-4 h-4 text-primary fill-primary" />
             )}
             {showSize && !isCompleted && (
               <Badge size="xs" tone={task.effort_level === 'XL' ? 'warning' : 'success'}>
@@ -140,7 +155,7 @@ export default function TodayTasksWidget() {
             )}
           </div>
           {isCompleted && (
-            <div className="text-xs text-emerald-500/80 mt-1 font-medium italic">
+            <div className="text-xs text-primary/80 mt-1 font-medium italic">
               {isTeamWork 
                 ? t('dashboard.completedByBoth') 
                 : t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
@@ -157,26 +172,8 @@ export default function TodayTasksWidget() {
   };
 
   return (
-    <div className="mt-6 mb-8 relative">
-      <Snackbar
-        open={snackbarOpen}
-        onClose={() => setSnackbarOpen(false)}
-        message={`${t('taskCompletion.completed')}. ${t('taskCompletion.pointsAssignedTo')} ${lastAssignmentText}`}
-        actionLabel={t('taskCompletion.change')}
-        onAction={() => {
-          if (!lastCompletedTask) return;
-          setSnackbarOpen(false);
-          navigate({
-            to: '/task/$taskId',
-            params: { taskId: lastCompletedTask.id },
-            search: { editAssignment: true },
-          });
-        }}
-      />
+    <div className="mt-2 relative">
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-white">{t('dashboard.today')}</h2>
-      </div>
 
       {TIME_BLOCKS.map(block => {
         const blockTasks = tasksByBlock[block];
@@ -184,9 +181,9 @@ export default function TodayTasksWidget() {
 
         return (
           <div key={block} className="mb-6 relative">
-            <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-gray-400">
+            <SectionHeader className="mb-3 flex items-center gap-2 px-0 text-[10px] text-surface-2/60">
               {t(`dashboard.timeBlocks.${block}`)}
-              <div className="h-[1px] flex-1 bg-surface-1"></div>
+              <div className="h-[1px] flex-1 bg-primary/20"></div>
             </SectionHeader>
             <div>
               {blockTasks.map(renderTask)}
@@ -196,9 +193,11 @@ export default function TodayTasksWidget() {
       })}
 
       {tasks.length === 0 && overdueTasks.length === 0 && (
-        <ListRow as="div" className="justify-center rounded-3xl border-dashed p-8 text-center text-slate-500" variant="default">
-          {t('dashboard.noTasksFound')}
-        </ListRow>
+        <EmptyTodayState 
+          isOnboarding={taskCountQuery.data === 0}
+          onAddClick={() => navigate({ to: '/create' })}
+          onPlanClick={() => navigate({ to: '/calendar' })}
+        />
       )}
 
       {overdueTasks.length > 0 && (
@@ -212,26 +211,26 @@ export default function TodayTasksWidget() {
           >
             <div className="flex items-center gap-3">
               {allOverdueCompleted ? (
-                <Check className="w-5 h-5 text-emerald-400" strokeWidth={3} />
+                <Check className="w-5 h-5 text-primary" strokeWidth={3} />
               ) : (
-                <History className="w-5 h-5 text-rose-300" />
+                <History className="w-5 h-5 text-danger" />
               )}
-              <span className={`font-semibold text-[15px] ${allOverdueCompleted ? 'text-emerald-100' : 'text-rose-100'}`}>
+              <span className={`font-semibold text-[15px] ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`}>
                 {t('dashboard.overdueSection')}
               </span>
             </div>
             <div className="flex items-center gap-3">
               <Badge
-                className={`size-6 rounded-full p-0 text-background-dark ${allOverdueCompleted ? 'bg-emerald-400 text-background-dark' : 'bg-danger/80 text-background-dark'}`}
+                className={`size-6 rounded-full p-0 text-surface-1 ${allOverdueCompleted ? 'bg-primary text-surface-1' : 'bg-danger/80 text-surface-1'}`}
                 size="sm"
                 tone="neutral"
               >
                 {overdueTasks.filter(t => t.status !== 'completed').length}
               </Badge>
               {isPendingExpanded ? (
-                <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
+                <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />
               ) : (
-                <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-emerald-400' : 'text-rose-300'}`} />
+                <ChevronDown className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />
               )}
             </div>
           </ListRow>

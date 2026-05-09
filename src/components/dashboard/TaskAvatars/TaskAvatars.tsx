@@ -34,7 +34,7 @@ export default function TaskAvatars({ task, profiles, className = "ml-3", overla
       {avatarsToShow.map((p, i) => (
         <div 
           key={p.id} 
-          className={`w-7 h-7 rounded-full overflow-hidden flex flex-shrink-0 items-center justify-center bg-surface-3 border-2 border-surface-2 transition-all z-${10 - i}`}
+          className={`w-7 h-7 rounded-full overflow-hidden flex flex-shrink-0 items-center justify-center bg-primary/20 border-2 border-background-dark transition-all z-${10 - i}`}
         >
           {p.avatar_url ? (
             <img src={p.avatar_url} alt="" className="w-full h-full object-cover shadow-sm" />

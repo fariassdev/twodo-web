@@ -15,7 +15,7 @@ import {
 } from '../../../lib/queryHooks';
 import { queryKeys } from '../../../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../ui/TopBar';
+import PageHeader from '../../ui/PageHeader';
 import DataStatusBanner from '../../ui/DataStatusBanner';
 import QueryErrorState from '../../ui/QueryErrorState';
 import Button from '../../ui/Button';
@@ -24,12 +24,9 @@ import Badge from '../../ui/Badge';
 import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
 import SectionHeader from '../../ui/SectionHeader';
+import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import AssignmentSelector, { type AssignmentSelection } from '../AssignmentSelector';
-import AssignmentEditor from '../AssignmentEditor';
-import type { TaskAssignmentOverrideType } from '../../../lib/queries';
-
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 
 type MetaChipProps = {
   icon: string;
@@ -39,9 +36,9 @@ type MetaChipProps = {
 
 function MetaChip({ icon, label, iconClassName }: Readonly<MetaChipProps>): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-1.5">
+    <div className="flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-3 py-1.5">
       <span className={`material-symbols-outlined text-lg ${iconClassName ?? 'text-primary'}`}>{icon}</span>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium text-surface-2">{label}</span>
     </div>
   );
 }
@@ -53,11 +50,8 @@ export default function TaskDetails() {
   const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  const searchParams = useSearch({ strict: false }) as { editAssignment?: boolean };
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [assignmentSelectorOpen, setAssignmentSelectorOpen] = useState(false);
-  const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const taskQuery = useTaskByIdQuery(taskId);
@@ -81,45 +75,6 @@ export default function TaskDetails() {
   const completions = taskCompletionsQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
-  const defaultSelection = useMemo<AssignmentSelection>(() => {
-    if (!task) return { type: 'anyone', assignedTo: [] };
-    if (task.assignment_type === 'team_work') return { type: 'team_work', assignedTo: [] };
-    if (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') {
-      return { type: 'individual', assignedTo: [task.assigned_to ?? profiles[0]?.id ?? ''].filter(Boolean) };
-    }
-    return { type: 'anyone', assignedTo: [] };
-  }, [profiles, task]);
-
-  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection>({
-    type: 'anyone',
-    assignedTo: [],
-  });
-
-  function normalizeForMutation(selection: AssignmentSelection): {
-    type: TaskAssignmentOverrideType;
-    assignedTo: string[];
-  } {
-    if (selection.type === 'individual') {
-      const fallbackId = task?.assigned_to ?? profiles[0]?.id ?? '';
-      const selectedId = selection.assignedTo[0] ?? fallbackId;
-      return { type: 'individual', assignedTo: selectedId ? [selectedId] : [] };
-    }
-    return { type: selection.type, assignedTo: [] };
-  }
-
-  const safeDefaultAssignmentType =
-    task?.assignment_type === 'strict_rotation' ||
-    task?.assignment_type === 'team_work' ||
-    task?.assignment_type === 'individual' ||
-    task?.assignment_type === 'anyone'
-      ? task.assignment_type
-      : 'anyone';
-
-  useEffect(() => {
-    if (!searchParams.editAssignment || task?.status !== 'completed') return;
-    setSelectedAssignment(defaultSelection);
-    setAssignmentEditorOpen(true);
-  }, [defaultSelection, searchParams.editAssignment, task?.status]);
 
   const loading =
     taskQuery.isPending ||
@@ -147,37 +102,6 @@ export default function TaskDetails() {
     loveNoteQuery.isFetching ||
     assignedProfileQuery.isFetching ||
     lastDoneByProfileQuery.isFetching;
-
-  async function handleComplete() {
-    if (!task || acting) return;
-    setActionError(null);
-    try {
-      await completeTaskMutation.mutateAsync({
-        taskId: task.id,
-        assignmentOverride: normalizeForMutation(selectedAssignment),
-      });
-      navigate({ to: '/' });
-    } catch (err) {
-      console.error('Complete error:', err);
-      setActionError(t('queryState.mutationError'));
-    }
-  }
-
-  async function handleUpdateAssignment() {
-    if (!task) return;
-    setActionError(null);
-    try {
-      await updateTaskCompletionAssignmentMutation.mutateAsync({
-        taskId: task.id,
-        assignmentType: normalizeForMutation(selectedAssignment).type,
-        assignedTo: normalizeForMutation(selectedAssignment).assignedTo,
-      });
-      setAssignmentEditorOpen(false);
-    } catch (err) {
-      console.error('Update assignment error:', err);
-      setActionError(t('queryState.mutationError'));
-    }
-  }
 
   async function handlePostpone() {
     if (!task || acting) return;
@@ -282,11 +206,7 @@ export default function TaskDetails() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <FullPageLoading message={t('loading')} />;
   }
 
   if (!task) {
@@ -303,23 +223,23 @@ export default function TaskDetails() {
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-slate-400">{t('taskDetails.notFound')}</p>
+        <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
         <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">
-          {t('taskDetails.back')}
+          {t('cta.back')}
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-32">
+    <div className="flex flex-col min-h-screen">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
-            <h3 className="mb-2 text-lg font-bold text-slate-100">{t('taskDetails.deleteRecurringTitle')}</h3>
-            <p className="text-sm text-slate-400">{t('taskDetails.deleteRecurringDescription')}</p>
+            <h3 className="mb-2 text-lg font-bold text-surface-2">{t('taskDetails.deleteRecurringTitle')}</h3>
+            <p className="text-sm text-surface-2/60">{t('taskDetails.deleteRecurringDescription')}</p>
           </div>
-          <div className="flex flex-col divide-y divide-slate-700 border-t border-slate-700">
+          <div className="flex flex-col divide-y divide-border-subtle border-t border-border-subtle">
             <Button className="justify-start" onClick={handleDeleteSingle} size="menu" variant="modalAction">
               {t('taskDetails.deleteOnlyThis')}
             </Button>
@@ -329,51 +249,18 @@ export default function TaskDetails() {
             <Button className="justify-start text-rose-500" onClick={handleDeleteAll} size="menu" variant="modalAction">
               {t('taskDetails.deleteAll')}
             </Button>
-            <Button className="justify-center bg-slate-800/50 text-slate-400" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
+            <Button className="justify-center bg-surface-1 text-surface-2/60" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
               {t('cta.cancel')}
             </Button>
           </div>
         </Card>
       </Modal>
 
-      {(task.status === 'pending' || task.status === 'overdue') && (
-        <AssignmentSelector
-          open={assignmentSelectorOpen}
-          defaultAssignmentType={safeDefaultAssignmentType}
-          defaultAssignedTo={task.assigned_to}
-          profiles={profiles}
-          value={selectedAssignment}
-          onChange={setSelectedAssignment}
-          onConfirm={async () => {
-            setAssignmentSelectorOpen(false);
-            await handleComplete();
-          }}
-          onCancel={() => setAssignmentSelectorOpen(false)}
-          loading={completeTaskMutation.isPending}
-        />
-      )}
 
-      {task.status === 'completed' && (
-        <AssignmentEditor
-          open={assignmentEditorOpen}
-          profiles={profiles}
-          completions={completions}
-          defaultAssignmentType={safeDefaultAssignmentType}
-          defaultAssignedTo={task.assigned_to}
-          value={selectedAssignment}
-          onChange={setSelectedAssignment}
-          onSave={handleUpdateAssignment}
-          onCancel={() => setAssignmentEditorOpen(false)}
-          loading={updateTaskCompletionAssignmentMutation.isPending}
-        />
-      )}
-
-      <TopBar
-        title={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
-        titleIcon={task.type === 'event' ? 'event' : 'task_alt'}
-        leftAction={{
-          ariaLabel: t('topBar.back'),
-          icon: 'arrow_back',
+      <PageHeader
+        title={task.title}
+        subtitle={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
+        backAction={{
           onClick: () => navigate({ to: '/' }),
         }}
         rightMenu={!task.deleted_at ? {
@@ -418,7 +305,7 @@ export default function TaskDetails() {
         } : undefined}
       />
 
-      <main className="flex-1 px-4 max-w-md mx-auto w-full">
+      <main className="px-4 max-w-md mx-auto w-full pb-20">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
         <div className="pt-4 pb-6">
@@ -435,11 +322,11 @@ export default function TaskDetails() {
               </Badge>
             )}
             {assignedProfile && (
-              <span className="text-slate-400 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
+              <span className="text-surface-2/60 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
             )}
           </div>
           {task.date && (
-            <p className="text-slate-400 text-sm font-medium mb-1 capitalize">
+            <p className="text-primary text-sm font-medium mb-1 capitalize">
               {new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
@@ -449,7 +336,7 @@ export default function TaskDetails() {
             {task.type === 'task' && (
               <MetaChip
                 icon="priority_high"
-                iconClassName={task.priority === 'high' ? 'text-rose-500' : 'text-primary'}
+                iconClassName={task.priority === 'high' ? 'text-danger' : 'text-primary'}
                 label={urgencyLabels[task.priority] || task.priority}
               />
             )}
@@ -480,18 +367,18 @@ export default function TaskDetails() {
           </div>
 
           {task.description && (
-            <p className="text-slate-400 mt-4 leading-relaxed">{task.description}</p>
+            <p className="text-surface-2 mt-4 leading-relaxed">{task.description}</p>
           )}
 
           {task.type === 'event' && task.location && (
-            <div className="flex items-center gap-2 mt-3 text-slate-400">
+            <div className="flex items-center gap-2 mt-3 text-surface-2/60">
               <span className="material-symbols-outlined text-primary text-sm">location_on</span>
               <span className="text-sm">{task.location}</span>
             </div>
           )}
 
           {task.type === 'event' && (task.start_time || task.end_time) && (
-            <div className="flex items-center gap-2 mt-2 text-slate-400">
+            <div className="flex items-center gap-2 mt-2 text-surface-2/60">
               <span className="material-symbols-outlined text-primary text-sm">schedule</span>
               <span className="text-sm">
                 {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}{task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
@@ -504,17 +391,14 @@ export default function TaskDetails() {
               <Button
                 className="justify-center shadow-lg shadow-primary/20"
                 fullWidth
-                onClick={() => {
-                  setSelectedAssignment(defaultSelection);
-                  setAssignmentSelectorOpen(true);
-                }}
+                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
                 disabled={acting}
               >
                 <span className="material-symbols-outlined font-bold">check_circle</span>
                 {acting ? t('taskDetails.processing') : t('taskDetails.markCompleted')}
               </Button>
               <Button
-                className="justify-center border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700/60"
+                className="justify-center"
                 fullWidth
                 onClick={handlePostpone}
                 disabled={acting}
@@ -532,7 +416,7 @@ export default function TaskDetails() {
               <span className="material-symbols-outlined text-primary filled-icon">favorite</span>
               <h3 className="text-lg font-bold">{t('dashboard.loveNoteTitle')}</h3>
             </div>
-            <div className="bg-slate-800/40 p-5 rounded-xl border border-slate-700 italic text-slate-300 leading-relaxed relative overflow-hidden">
+            <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 italic text-primary leading-relaxed relative overflow-hidden">
               <div className="absolute -right-4 -bottom-4 opacity-10">
                 <span className="material-symbols-outlined text-8xl">format_quote</span>
               </div>
@@ -543,17 +427,17 @@ export default function TaskDetails() {
 
         <div className="space-y-4">
           <SectionHeader>{t('taskDetails.assignmentDetails')}</SectionHeader>
-          <div className="bg-slate-800/40 rounded-xl border border-slate-700 divide-y divide-slate-700">
+          <div className="bg-surface-1 rounded-xl border border-border-subtle divide-y divide-border-subtle">
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.rotationType')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.rotationType')}</span>
               <span className="font-medium">{assignmentLabels[task.assignment_type]}</span>
             </div>
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.lastDoneBy')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.lastDoneBy')}</span>
               <span className="font-medium">{lastDoneByProfile?.name || t('taskDetails.none')}</span>
             </div>
             <div className="p-4 flex justify-between items-center">
-              <span className="text-slate-400">{t('taskDetails.currentReward')}</span>
+              <span className="text-surface-2/60">{t('taskDetails.currentReward')}</span>
               <span className="font-medium text-primary">{t('taskDetails.pointsReward', { points: task.points })}</span>
             </div>
           </div>
@@ -562,10 +446,7 @@ export default function TaskDetails() {
             <Button
               className="text-sm font-semibold"
               fullWidth
-              onClick={() => {
-                setSelectedAssignment(defaultSelection);
-                setAssignmentEditorOpen(true);
-              }}
+                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
               variant="subtle"
             >
               {t('taskCompletion.editAssignment')}

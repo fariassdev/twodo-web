@@ -10,17 +10,25 @@
   "cta": {
     "add": "Añadir",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "back": "Volver"
   },
   "common": {
     "saving": "...",
     "hourSuffix": "h"
   },
   "runtimeBoundary": {
-    "title": "Algo fallo en esta seccion",
-    "description": "No pudimos renderizar {{section}}. Puedes reintentar sin salir de la app.",
-    "retry": "Reintentar",
-    "defaultSection": "esta area"
+    "title": "Un pequeño bache en el camino",
+    "description": "No hemos podido cargar {{section}}, pero podemos intentarlo de nuevo juntos.",
+    "retry": "Intentar de nuevo",
+    "backHome": "Ir al inicio",
+    "defaultSection": "esta parte"
+  },
+  "errorPage": {
+    "notFoundTitle": "Página no encontrada",
+    "notFoundDescription": "Parece que te has desviado del camino. No te preocupes, ¡te ayudamos a volver!",
+    "backHome": "Volver al inicio",
+    "oops": "¡Ups! Algo ha salido mal"
   },
   "dataStatus": {
     "offline": "Modo sin conexion: mostrando datos en cache.",
@@ -28,10 +36,10 @@
     "syncing": "Sincronizando datos recientes..."
   },
   "queryState": {
-    "loadErrorTitle": "No se pudo cargar esta seccion",
-    "loadErrorDescription": "Revisa tu conexion e intentalo de nuevo.",
-    "retry": "Reintentar",
-    "mutationError": "No pudimos guardar tu ultima accion. Intentalo de nuevo."
+    "loadErrorTitle": "Vaya, algo no ha cargado bien",
+    "loadErrorDescription": "Parece que hay un problema de conexión. ¿Lo intentamos de nuevo?",
+    "retry": "Volver a intentar",
+    "mutationError": "No hemos podido guardar tu último cambio. Por favor, inténtalo de nuevo."
   },
   "topBar": {
     "back": "Volver",
@@ -117,7 +125,7 @@
     }
   },
   "calendar": {
-    "title": "Nuestro calendario",
+    "title": "Nuestra agenda",
     "hideDeleted": "Ocultar eliminadas",
     "showDeleted": "Ver eliminadas",
     "addEvent": "+ Añadir evento",
@@ -148,6 +156,15 @@
     "pendingCount_one": "{{count}} Pendiente",
     "pendingCount_other": "{{count}} Pendientes",
     "noTasksFound": "No se encontraron tareas",
+    "emptyToday": {
+      "title": "¡Todo despejado por hoy!",
+      "subtitle": "Disfrutad de vuestro tiempo juntos, o planificad con antelación para un mañana equilibrado.",
+      "onboardingTitle": "¡Bienvenidos a Twodo!",
+      "onboardingSubtitle": "Vuestro viaje hacia una carga mental equilibrada comienza aquí. Añadid vuestra primera tarea recurrente para empezar.",
+      "cta": "Añadir primera tarea",
+      "ctaExisting": "Añadir tarea",
+      "planAhead": "Planificar mañana"
+    },
     "completedBy": "Completado por {{name}}",
     "completedByBoth": "Completada en equipo",
     "allDoneToday": "Todo completado por hoy! 🎉",
@@ -161,9 +178,11 @@
     "overdueSection": "Pendientes de otros días",
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Próximos 7 días",
-    "balanceScoreText": "Lleváis una carga equilibrada entre ambos",
+    "balanceScoreSuccess": "¡Sincronía total! Estáis gestionando el hogar como un gran equipo.",
+    "balanceScoreWarning": "La balanza se ha movido un poco. ¡Buen momento para echar una mano!",
+    "balanceScoreDanger": "Parece que uno lleva más peso últimamente. ¡Es el momento de unir fuerzas!",
+    "balanceScoreEmpty": "Vuestro balance empieza aquí. Completad la primera tarea del mes.",
     "balanceBadge": "REPARTO DE CARGA",
-    "balanceScoreImbalance": "La carga recae más sobre uno de los dos",
     "viewMore": "Ver más",
     "timeBlocks": {
       "morning": "🌅 Mañana",
@@ -281,6 +300,10 @@
     "emailAddress": "Correo electrónico",
     "avatarUrlLabel": "URL de imagen de perfil",
     "avatarUrlPlaceholder": "https://ejemplo.com/avatar.jpg",
+    "selectAvatar": "Seleccionar avatar",
+    "avatarOption1": "Estilo 1",
+    "avatarOption2": "Estilo 2",
+    "avatarOptionCustom": "Personalizado",
     "appSettings": "Ajustes de la app",
     "language": "Idioma",
     "preferredLanguage": "Idioma preferido de la app",
@@ -297,7 +320,7 @@
     "alertSaveError": "Ocurrió un error al guardar el perfil."
   },
   "shopping": {
-    "title": "Lista de compra",
+    "title": "Cesta de la compra",
     "addToList": "Añadir a la lista",
     "newItemPlaceholder": "¿Qué falta?",
     "toBuyWithCount": "Por comprar ({{count}})",
@@ -305,7 +328,7 @@
     "purchasedWithCount": "Comprados ({{count}})"
   },
   "expenses": {
-    "dashboardTitle": "Gastos",
+    "dashboardTitle": "Cuentas comunes",
     "allExpenses": "Todos los gastos",
     "expenseDetail": "Detalle de gasto",
     "newExpense": "Nuevo gasto",
@@ -401,7 +424,6 @@
       "individual": "Individual"
     },
     "notFound": "Tarea no encontrada",
-    "back": "Volver",
     "deleteRecurringTitle": "Eliminar evento recurrente",
     "deleteRecurringDescription": "Este evento se repite. ¿Qué quieres eliminar?",
     "deleteOnlyThis": "Solo este evento",

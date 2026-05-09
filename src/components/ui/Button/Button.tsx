@@ -9,17 +9,18 @@ const buttonVariants = cva(
       variant: {
         primary: 'bg-primary text-background-dark hover:brightness-110 active:scale-[0.98]',
         ghost: 'bg-transparent text-primary/60 hover:text-primary/80',
-        icon: 'rounded-full text-slate-100 hover:bg-primary/10',
+        icon: 'rounded-full text-surface-2 hover:bg-hover',
         selector: 'border text-left',
-        modalAction: 'text-slate-100 hover:bg-slate-700',
-        danger: 'bg-rose-500/20 text-rose-50 hover:bg-rose-500/30',
-        subtle: 'border border-primary/20 bg-primary/5 text-slate-200 hover:border-primary/40 hover:bg-primary/10',
+        modalAction: 'text-surface-2 hover:bg-hover',
+        danger: 'bg-danger/20 text-danger hover:bg-danger/30',
+        subtle: 'border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10',
+        action: 'size-16 bg-primary text-background-dark shadow-button hover:scale-110 active:scale-95 transition-all p-0',
       },
       size: {
         sm: 'h-9 rounded-md px-3 text-sm',
         md: 'h-12 rounded-lg px-4 text-sm',
-        lg: 'h-14 rounded-xl px-5 text-base',
-        icon: 'size-10 rounded-full',
+        lg: 'h-14 rounded-2xl px-5 text-base',
+        icon: 'size-10 rounded-lg',
         menu: 'w-full px-4 py-3 text-sm',
       },
       active: {
@@ -35,12 +36,12 @@ const buttonVariants = cva(
       {
         variant: 'selector',
         active: true,
-        className: 'border-primary bg-primary/10 text-slate-100',
+        className: 'border-primary bg-primary/10 text-surface-2',
       },
       {
         variant: 'selector',
         active: false,
-        className: 'border-slate-700 text-slate-100 hover:bg-slate-700/50',
+        className: 'border-border-subtle text-surface-2 hover:bg-hover',
       },
       {
         variant: 'modalAction',

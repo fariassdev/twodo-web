@@ -241,6 +241,17 @@ const TASK_FULL_QUERY = `
   last_done_by_profile:profiles!tasks_last_done_by_fkey(*)
 `;
 
+export async function getTaskCount(householdId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('household_id', householdId)
+    .is('deleted_at', null);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getTodaysTasks(householdId: string): Promise<Task[]> {
   const today = new Date().toISOString().split('T')[0];
 
@@ -498,10 +509,11 @@ async function resolveAssignmentRecipients(
   }
 
   if (assignmentOverride?.type === 'anyone') {
+    const selectedRecipientId = assignmentOverride.assignedTo?.[0] ?? scope.profileId;
     return {
       assignmentType: 'anyone',
       assignedTo: null,
-      recipientIds: [scope.profileId],
+      recipientIds: [selectedRecipientId],
     };
   }
 

@@ -72,7 +72,7 @@ export const profileSchema = z.object({
   name: z.string(),
   email: z.union([z.literal(''), z.string().email('auth.validation.invalidEmail')]),
   bio: z.string(),
-  avatarUrl: z.union([z.literal(''), z.string().url('profile.validation.invalidUrl')]),
+  avatarUrl: z.string(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

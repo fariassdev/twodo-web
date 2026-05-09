@@ -40,47 +40,97 @@
 }
 
 @theme {
-  --color-primary: #17cf91;
-  --color-background-light: #f6f8f7;
-  --color-background-dark: #131815;
-  --color-surface-1: #141d1b;
-  --color-surface-2: #1c221e;
-  --color-surface-3: #2a302c;
-  --color-border-subtle: rgb(255 255 255 / 0.05);
-  --color-border-strong: rgb(23 207 145 / 0.2);
-  --color-success: #2ecc71;
-  --color-warning: #facc15;
-  --color-danger: #f87171;
-  --color-dot-task: #3b82f6;
-  --color-dot-event: #e55381;
+  --color-primary: #CF7455;
+  --color-background-light: #F4EBD9;
+  --color-background-dark: #F4EBD9;
+  --color-surface-1: #EADDC3;
+  --color-surface-2: #493421;
+  --color-surface-3: #513823;
+  --color-toast-bg: #2D1E12;
+  --color-toast-text: #F9F3E9;
+  --color-toast-border: rgba(207, 116, 85, 0.2);
+  --color-border-subtle: rgb(73 52 33 / 0.1);
+  --color-border-strong: rgb(207 116 85 / 0.2);
+  --color-success: #8BA888;
+  --color-warning: #F59E0B;
+  --color-danger: #B53E3E;
+  --color-dot-task: #CF7455;
+  --color-dot-event: #493421;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
-  --shadow-card-sm: 0 2px 8px rgb(0 0 0 / 0.2);
-  --shadow-glow-primary: 0 4px 14px rgb(52 211 153 / 0.3);
+  --shadow-card-sm: 2px 2px 8px rgb(73 52 33 / 0.15);
+  --shadow-card-md: 2px 4px 10px rgb(73 52 33 / 0.2);
+  --shadow-card-lg: 2px 4px 14px rgb(73 52 33 / 0.25);
+  --shadow-toast: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2), 0 25px 50px -12px rgb(0 0 0 / 0.3);
+  --shadow-button: 4px 8px 14px rgb(73 52 33 / 0.4);
+  --shadow-glow-primary: 0 4px 14px rgb(207 116 85 / 0.3);
+  --color-hover: rgb(73 52 33 / 0.05);
   --motion-fast: 75ms;
   --motion-base: 200ms;
   --motion-slow: 250ms;
-  --z-modal: 50;
-  --z-fab: 50;
+  --z-index-modal: 50;
+  --z-index-fab: 50;
+  --z-index-nav: 60;
   --font-display: "Plus Jakarta Sans", sans-serif;
 }
 
 body {
   font-family: "Plus Jakarta Sans", sans-serif;
   background-color: var(--color-background-dark);
-  color: #f1f5f9;
+  color: #493421;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(23, 207, 145, 0.2);
+  background: rgba(207, 116, 85, 0.3);
   border-radius: 10px;
 }
 
 .custom-checkbox:checked {
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
 }
+
+@keyframes twodo-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px rgba(207, 116, 85, 0)); }
+  50% { transform: scale(1.05); opacity: 0.9; filter: drop-shadow(0 0 15px rgba(207, 116, 85, 0.2)); }
+}
+
+@keyframes twodo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-twodo-pulse {
+  animation: twodo-pulse 2s ease-in-out infinite;
+}
+
+.animate-twodo-spin {
+  animation: twodo-spin 1.5s linear infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide default date picker icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Hide date clear button */
+input[type="date"]::-webkit-clear-button {
+  display: none;
+  -webkit-appearance: none;
+}
+

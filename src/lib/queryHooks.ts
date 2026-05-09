@@ -45,6 +45,7 @@ import {
   getSettlementsHistory,
   getTaskById,
   getTaskCompletions,
+  getTaskCount,
   getTaskCatalog,
   getTasksForMonth,
   getTodaysTasks,
@@ -640,6 +641,16 @@ export function useTaskCatalogQuery() {
     queryKey: queryKeys.tasks.catalog(),
     queryFn: getTaskCatalog,
     staleTime: 1000 * 60 * 60, // 1 hour
+  });
+}
+
+export function useTaskCountQuery() {
+  const householdId = useCurrentHouseholdId();
+
+  return useQuery<number>({
+    queryKey: householdId ? queryKeys.tasks.count(householdId) : disabledKey('tasks', 'count'),
+    queryFn: () => getTaskCount(householdId as string),
+    enabled: Boolean(householdId),
   });
 }
 

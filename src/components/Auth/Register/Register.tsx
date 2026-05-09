@@ -10,6 +10,7 @@ import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FormField from '../../ui/FormField';
 import TextInput from '../../ui/TextInput';
+import TwodoLogo from '../../ui/TwodoLogo';
 
 export default function Register() {
   const { t } = useTranslation();
@@ -40,8 +41,9 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md shadow-xl" padding="xl" variant="surface">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-100">{t('auth.register.title')}</h1>
-          <p className="mt-2 text-sm text-slate-400">{t('auth.register.subtitle')}</p>
+          <TwodoLogo width={180} className="mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-surface-2">{t('auth.register.title')}</h1>
+          <p className="mt-2 text-sm text-surface-2/60">{t('auth.register.subtitle')}</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -88,7 +90,7 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-slate-400">
+        <p className="mt-5 text-center text-sm text-surface-2/60">
           {t('auth.register.hasAccount')}{' '}
           <Link to="/auth/login" className="font-semibold text-primary hover:text-primary/80">
             {t('auth.register.goLogin')}

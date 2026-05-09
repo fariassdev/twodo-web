@@ -10,17 +10,25 @@
   "cta": {
     "add": "Add",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "back": "Back"
   },
   "common": {
     "saving": "...",
     "hourSuffix": "h"
   },
   "runtimeBoundary": {
-    "title": "Something went wrong in this section",
-    "description": "We couldn't render {{section}}. You can retry without leaving the app.",
+    "title": "A little bump in the road",
+    "description": "We couldn't load {{section}}, but we can try again together.",
     "retry": "Try again",
-    "defaultSection": "this area"
+    "backHome": "Back to home",
+    "defaultSection": "this part"
+  },
+  "errorPage": {
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "It seems you've strayed from the path. Don't worry, we'll help you get back!",
+    "backHome": "Back to home",
+    "oops": "Oops! Something went wrong"
   },
   "dataStatus": {
     "offline": "Offline mode: showing cached data.",
@@ -28,10 +36,10 @@
     "syncing": "Syncing latest data..."
   },
   "queryState": {
-    "loadErrorTitle": "Couldn't load this section",
-    "loadErrorDescription": "Check your connection and try again.",
-    "retry": "Retry",
-    "mutationError": "We couldn't save your latest action. Please try again."
+    "loadErrorTitle": "Oops, something didn't load right",
+    "loadErrorDescription": "It looks like there's a connection issue. Shall we try again?",
+    "retry": "Try again",
+    "mutationError": "We couldn't save your last change. Please try again."
   },
   "topBar": {
     "back": "Go back",
@@ -117,7 +125,7 @@
     }
   },
   "calendar": {
-    "title": "Our Calendar",
+    "title": "Our schedule",
     "hideDeleted": "Hide deleted",
     "showDeleted": "Show deleted",
     "addEvent": "+ Add Event",
@@ -131,8 +139,10 @@
     "sortName": "Name",
     "sortAssignee": "Assignee",
     "filterStatus": "Status",
+    "filterType": "Type",
     "filterAssignee": "Assignee",
     "statusAll": "All",
+    "typeAll": "All",
     "assigneeAll": "Anyone",
     "assigneeShared": "Shared",
     "assigneeUnassigned": "Unassigned",
@@ -148,6 +158,15 @@
     "pendingCount_one": "{{count}} Pending",
     "pendingCount_other": "{{count}} Pending",
     "noTasksFound": "No tasks found",
+    "emptyToday": {
+      "title": "All clear for today!",
+      "subtitle": "Enjoy your shared time together, or plan ahead for a balanced tomorrow.",
+      "onboardingTitle": "Welcome to Twodo!",
+      "onboardingSubtitle": "Your journey to a balanced mental load starts here. Add your first recurring task to get started.",
+      "cta": "Add first task",
+      "ctaExisting": "Add task",
+      "planAhead": "Plan tomorrow"
+    },
     "completedBy": "Completed by {{name}}",
     "completedByBoth": "Done together",
     "allDoneToday": "All done for today! 🎉",
@@ -161,9 +180,11 @@
     "overdueSection": "Pending from other days",
     "overdueSectionCount": "({{count}})",
     "upcomingTasks": "Next 7 days",
-    "balanceScoreText": "You are carrying a balanced load",
-    "balanceBadge": "BALANCE SCORE",
-    "balanceScoreImbalance": "The load is leaning to one side",
+    "balanceScoreSuccess": "Total sync! You're managing your home like a great team.",
+    "balanceScoreWarning": "The balance has shifted a bit. Great time to lend a hand!",
+    "balanceScoreDanger": "It looks like one person is carrying more weight lately. Time to team up!",
+    "balanceScoreEmpty": "Your balance starts here. Complete the first task of the month.",
+    "balanceBadge": "HOUSE HARMONY",
     "viewMore": "View more",
     "timeBlocks": {
       "morning": "🌅 Morning",
@@ -281,6 +302,10 @@
     "emailAddress": "Email Address",
     "avatarUrlLabel": "Profile image URL",
     "avatarUrlPlaceholder": "https://example.com/avatar.jpg",
+    "selectAvatar": "Select avatar",
+    "avatarOption1": "Style 1",
+    "avatarOption2": "Style 2",
+    "avatarOptionCustom": "Custom",
     "appSettings": "App Settings",
     "language": "Language",
     "preferredLanguage": "Preferred app language",
@@ -297,7 +322,7 @@
     "alertSaveError": "An error occurred while saving the profile."
   },
   "shopping": {
-    "title": "Shopping List",
+    "title": "Grocery list",
     "addToList": "Add to list",
     "newItemPlaceholder": "What's missing?",
     "toBuyWithCount": "To Buy ({{count}})",
@@ -305,7 +330,7 @@
     "purchasedWithCount": "Purchased ({{count}})"
   },
   "expenses": {
-    "dashboardTitle": "Expenses",
+    "dashboardTitle": "Shared finances",
     "allExpenses": "All expenses",
     "expenseDetail": "Expense details",
     "newExpense": "New expense",
@@ -401,7 +426,6 @@
       "individual": "Individual"
     },
     "notFound": "Task not found",
-    "back": "Back",
     "deleteRecurringTitle": "Delete recurring event",
     "deleteRecurringDescription": "This event repeats. What do you want to delete?",
     "deleteOnlyThis": "Only this event",

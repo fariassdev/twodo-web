@@ -1,8 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useAuthScope, useSignOutMutation } from '../../../lib/queryHooks';
 import ConnectPartner from '../../ConnectPartner';
+import TwodoLogo from '../../ui/TwodoLogo';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
+import FullPageLoading from '../../ui/FullPageLoading';
+
 
 export default function PendingAccess() {
   const { t } = useTranslation();
@@ -13,6 +16,12 @@ export default function PendingAccess() {
   if (status === 'pending_household') {
     return <ConnectPartner />;
   }
+
+  // If status changed to signed_out or linked, router will soon navigate away.
+  if (status !== 'pending_profile') {
+    return <FullPageLoading message={t('loading')} />;
+  }
+
 
   const loading = signOutMutation.isPending;
   const pendingReason = status === 'pending_profile'
@@ -30,18 +39,20 @@ export default function PendingAccess() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md shadow-xl" padding="xl" radius="2xl" variant="surface">
-        <h1 className="text-2xl font-bold text-slate-100">{t('auth.pending.title')}</h1>
-        <p className="mt-3 text-sm text-slate-300">{t('auth.pending.description')}</p>
-        <p className="mt-3 rounded-xl border border-primary/20 bg-background-dark/40 px-3 py-2 text-sm text-primary">
+        <TwodoLogo width={180} className="mx-auto mb-6" />
+        <h1 className="text-2xl font-bold text-surface-2">{t('auth.pending.title')}</h1>
+        <p className="mt-3 text-sm text-surface-2/60">{t('auth.pending.description')}</p>
+        <p className="mt-3 rounded-xl border border-primary/20 bg-surface-2/10 px-3 py-2 text-sm text-primary">
           {pendingReason}
         </p>
 
         <Button
-          className="mt-6 border-primary/40 text-sm font-semibold text-primary"
+          className="mt-6"
           onClick={handleSignOut}
           disabled={loading}
           fullWidth
           variant="subtle"
+          size="lg"
         >
           {loading ? t('auth.loading') : t('auth.pending.signOut')}
         </Button>

@@ -5,10 +5,10 @@ import { cn } from '../../../utils';
 const bannerVariants = cva('rounded-xl border px-3 py-2 text-xs font-medium', {
   variants: {
     tone: {
-      error: 'border-rose-400/30 bg-rose-500/10 text-rose-100',
-      warning: 'border-amber-400/40 bg-amber-500/10 text-amber-100',
-      neutral: 'border-slate-400/40 bg-slate-500/10 text-slate-200',
-      success: 'border-primary/30 bg-primary/10 text-primary',
+      error: 'border-danger/30 bg-danger/10 text-danger',
+      warning: 'border-warning/40 bg-warning/10 text-warning',
+      neutral: 'border-surface-2/40 bg-surface-2/10 text-surface-2',
+      success: 'border-success/30 bg-success/10 text-success',
     },
   },
   defaultVariants: {

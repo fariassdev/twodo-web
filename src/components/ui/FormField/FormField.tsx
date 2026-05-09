@@ -23,12 +23,12 @@ export default function FormField({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       {label ? (
-        <label className={cn('text-sm font-semibold text-slate-200', labelClassName)} htmlFor={htmlFor}>
+        <label className={cn('text-sm font-semibold text-surface-2/80', labelClassName)} htmlFor={htmlFor}>
           {label}
         </label>
       ) : null}
       {children}
-      {error ? <p className={cn('text-xs font-medium text-rose-300', errorClassName)}>{error}</p> : null}
+      {error ? <p className={cn('text-xs font-medium text-danger', errorClassName)}>{error}</p> : null}
     </div>
   );
 }
