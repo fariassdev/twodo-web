@@ -151,7 +151,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
   return (
     <div 
       className={cn(
-        "relative w-full bg-surface-1 rounded-[1.5rem] shadow-card-md overflow-hidden transition-all duration-300",
+        "relative w-full bg-surface-1 rounded-xl shadow-card-lg border border-border-strong overflow-hidden transition-all duration-300",
         compact && "mb-8 mt-2 hover:shadow-card-lg active:scale-[0.98]",
         isFetching && !isPending && "opacity-80"
       )}
@@ -218,7 +218,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
                 transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                className="flex items-start leading-none gap-[0.05em]"
+                className="flex items-start leading-none gap-[0.5rem]"
               >
                 <span className={cn(
                   "font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",

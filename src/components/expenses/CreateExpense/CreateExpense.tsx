@@ -145,7 +145,7 @@ export default function CreateExpense() {
                       <NumericInput
                         {...field}
                         autoFocus
-                        className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
+                        className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(3.5rem,18vw,6rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
                         placeholder="0.00"
                       />
                     )}

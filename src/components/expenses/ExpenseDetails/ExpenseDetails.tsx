@@ -214,17 +214,17 @@ export default function ExpenseDetails() {
                         <NumericInput
                           {...field}
                           autoFocus
-                          className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
+                          className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
                           placeholder="0.00"
                         />
                       )}
                     />
                   ) : (
-                    <span className="font-display text-[clamp(5rem,22vw,7.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 italic">
+                    <span className="font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 italic">
                       {centsToInput(expense.amount_cents)}
                     </span>
                   )}
-                  <span className="font-sans text-[clamp(1.5rem,6vw,2.5rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                  <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem]">
                     €
                   </span>
                 </div>
