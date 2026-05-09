@@ -174,8 +174,8 @@ export default function ExpensesDashboard() {
           {/* Subtle background glow */}
           <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
           
-          <div className="relative">
-            <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-surface-2/60 mb-2">
+          <div className="relative flex flex-col items-center text-center">
+            <header className="w-full flex items-center justify-start gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-surface-2/60 mb-2">
               <motion.div 
                 animate={{ 
                   backgroundColor: isFetching 
@@ -190,7 +190,7 @@ export default function ExpensesDashboard() {
               {t('expenses.currentBalance')}
             </header>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col items-center gap-2">
               <AnimatePresence mode="wait">
                 <motion.h2 
                   key={balanceHeadline}
@@ -198,13 +198,13 @@ export default function ExpensesDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   transition={{ duration: 0.3 }}
-                  className="text-base font-semibold leading-relaxed text-surface-2/70 max-w-[90%]"
+                  className="text-xl font-bold tracking-tight text-surface-2"
                 >
                   {balanceHeadline}
                 </motion.h2>
               </AnimatePresence>
 
-              <div className="flex flex-col items-center justify-center py-4" aria-live="polite">
+              <div className="flex flex-col items-center justify-center py-2" aria-live="polite">
                 <AnimatePresence mode="wait">
                   <motion.div 
                     key={amountLabel}
@@ -215,12 +215,12 @@ export default function ExpensesDashboard() {
                     className="flex items-start leading-none gap-[0.05em]"
                   >
                     <span className={cn(
-                      "font-display text-[clamp(4.5rem,18vw,6rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
-                      balance?.direction === 'settled' ? 'text-surface-2/20' : 'text-primary'
+                      "font-display text-[clamp(4.5rem,20vw,6.5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
+                      balance?.direction === 'settled' ? 'text-surface-2/10' : 'text-primary'
                     )}>
                       {balance?.direction === 'settled' ? '0' : amountLabel.replace(/[^\d.,]/g, '')}
                     </span>
-                    <span className="font-sans text-[clamp(1.2rem,5vw,2rem)] font-light text-surface-2/30 pt-[0.2em] transition-colors">
+                    <span className="font-sans text-[clamp(1.2rem,5vw,2rem)] font-light text-surface-2/20 pt-[0.2em] transition-colors">
                       €
                     </span>
                   </motion.div>
@@ -228,7 +228,7 @@ export default function ExpensesDashboard() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col items-center">
+            <div className="mt-4 w-full flex flex-col items-center max-w-[280px]">
               {balance?.direction !== 'settled' ? (
                 <AnimatePresence mode="wait">
                   <motion.div
