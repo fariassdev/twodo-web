@@ -111,7 +111,7 @@ export default function TodayTasksWidget() {
     const isCompleted = task.status === 'completed';
     const showSize = task.effort_level === 'L' || task.effort_level === 'XL';
     const isHighPriority = task.priority === 'high';
-    const isTeamWork = task.assignment_type === 'team_work' || task.assignment_type === 'anyone';
+    const isTeamWork = task.assignment_type === 'team_work';
 
     return (
       <ListRow
@@ -164,7 +164,9 @@ export default function TodayTasksWidget() {
             <div className="text-xs text-primary/80 mt-1 font-medium italic">
               {isTeamWork 
                 ? t('dashboard.completedByBoth') 
-                : t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
+                : task.assignment_type === 'anyone'
+                  ? t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
+                  : t('dashboard.completedBy', { name: task.assigned_profile?.name || t('expenses.partnerFallback') })
               }
             </div>
           )}
