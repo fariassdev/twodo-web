@@ -10,6 +10,7 @@ import DataStatusBanner from '../../ui/DataStatusBanner';
 import ErrorBanner from '../../ui/ErrorBanner';
 import QueryErrorState from '../../ui/QueryErrorState';
 import FullPageLoading from '../../ui/FullPageLoading';
+import SettlementSuccess from '../SettleBalance/SettlementSuccess';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
@@ -25,7 +26,8 @@ export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
-  const { profileId } = useAuthScope();
+  const { profileId, profile } = useAuthScope();
+  const [showPreview, setShowPreview] = React.useState(false);
 
   const dashboardQuery = useExpensesDashboardQuery();
   const activityQuery = useExpensesActivityFeedInfiniteQuery(20);
@@ -52,6 +54,17 @@ export default function ExpensesDashboard() {
 
   function retryQuery() {
     void Promise.all([dashboardQuery.refetch(), activityQuery.refetch()]);
+  }
+
+  if (showPreview) {
+    return (
+      <SettlementSuccess 
+        onDone={() => setShowPreview(false)} 
+        userAvatar={profile?.avatar_url}
+        partnerAvatar={balance?.counterpartyProfile?.avatar_url}
+        partnerName={counterpartyName}
+      />
+    );
   }
 
   if (dashboardQuery.isPending || activityQuery.isPending) {
@@ -123,7 +136,33 @@ export default function ExpensesDashboard() {
                   transition={{ duration: 0.3 }}
                   className="text-xl font-bold tracking-tight text-surface-2"
                 >
-                  {balanceHeadline}
+                  {balance?.direction === 'settled' ? (
+                    <>
+                      {balanceHeadline}
+                      <motion.span 
+                        role="button"
+                        onClick={() => setShowPreview(true)}
+                        animate={{ 
+                          rotate: [0, 3, -3, 3, 0],
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{ 
+                          duration: 3, 
+                          repeat: Infinity,
+                          repeatDelay: 6,
+                          ease: "easeInOut"
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="cursor-pointer inline-block ml-1 select-none origin-center"
+                        title={t('expenses.settlement.successWatermark')}
+                      >
+                        🎉
+                      </motion.span>
+                    </>
+                  ) : (
+                    balanceHeadline
+                  )}
                 </motion.h2>
               </AnimatePresence>
 

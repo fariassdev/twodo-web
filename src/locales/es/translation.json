@@ -417,7 +417,7 @@
     "balance": {
       "theyOweYou": "{{name}} te debe",
       "youOwe": "Debes a {{name}}",
-      "settled": "Estáis en paz 🎉",
+      "settled": "Estáis en paz",
       "settledSubtitle": "Disfruta de la tranquilidad"
     },
     "settlement": {
@@ -431,7 +431,10 @@
       "confirmButton": "Confirmar liquidación",
       "onlyDebtorHint": "Solo quien debe puede confirmar una liquidación.",
       "paidTo": "{{from}} pagó a {{to}}",
-      "feedStatus": "Liquidado"
+      "feedStatus": "Liquidado",
+      "successTitle": "¡Liquidado!",
+      "successSubtitle": "Vuestras cuentas están al día.",
+      "successWatermark": "LISTO"
     }
   },
   "taskDetails": {

@@ -12,6 +12,7 @@ import FormField from '../../ui/FormField';
 import TextInput from '../../ui/TextInput';
 import FullPageLoading from '../../ui/FullPageLoading';
 import ErrorBanner from '../../ui/ErrorBanner';
+import SettlementSuccess from './SettlementSuccess';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
   useAuthScope,
@@ -94,6 +95,7 @@ export default function SettleBalance() {
 
   // Animation State Machine
   const [animationPhase, setAnimationPhase] = useState<1 | 2 | 3 | 4>(1);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -131,12 +133,23 @@ export default function SettleBalance() {
     setActionError(null);
     try {
       await createSettlementMutation.mutateAsync({ note });
-      navigate({ to: '/expenses' });
+      setShowSuccess(true);
     } catch (error) {
       console.error('Settlement error:', error);
       setActionError(t('queryState.mutationError'));
     }
   });
+
+  if (showSuccess) {
+    return (
+      <SettlementSuccess 
+        onDone={() => navigate({ to: '/expenses' })} 
+        userAvatar={profilesQuery.data?.find(p => p.id === profileId)?.avatar_url}
+        partnerAvatar={balance?.counterpartyProfile?.avatar_url}
+        partnerName={counterpartyName}
+      />
+    );
+  }
 
   if (dashboardQuery.isPending || profilesQuery.isPending) {
     return <FullPageLoading message={t('loading')} />;
