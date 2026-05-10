@@ -254,7 +254,7 @@ export default function CreateExpense() {
                       "text-sm font-bold tracking-tight",
                       active ? "text-primary" : "text-surface-2/60"
                     )}>
-                      {profile.id === profileId ? t('expenses.me') : profile.name}
+                      {profile.id === profileId ? t('common.me') : profile.name}
                     </span>
                     
                     {active && (

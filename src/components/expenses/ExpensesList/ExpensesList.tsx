@@ -102,8 +102,8 @@ export default function ExpensesList({
               </h3>
               <p className="text-sm font-medium text-surface-2/60">
                 {toRelativeExpenseDate(item.activity_day, locale, {
-                  today: t('expenses.today'),
-                  yesterday: t('expenses.yesterday'),
+                  today: t('common.today'),
+                  yesterday: t('common.yesterday'),
                 })}
               </p>
             </div>

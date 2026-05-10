@@ -36,7 +36,7 @@ export default function Dashboard() {
 
       <PageHeader 
         title={dateStr}
-        subtitle={t('dashboard.today')}
+        subtitle={t('common.today')}
       />
 
       <main className="max-w-md mx-auto w-full px-4 pt-4 pb-20">

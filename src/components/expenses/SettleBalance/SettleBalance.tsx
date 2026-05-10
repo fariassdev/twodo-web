@@ -123,7 +123,7 @@ export default function SettleBalance() {
 
   const balance = dashboardQuery.data?.balance;
   const amountLabel = centsToCurrency(balance?.amountCents ?? 0, i18n.language);
-  const counterpartyName = balance?.counterpartyProfile?.name ?? t('expenses.partnerFallback');
+  const counterpartyName = balance?.counterpartyProfile?.name ?? t('common.partnerFallback');
 
   const canSettle = balance?.direction !== 'settled' && (balance?.amountCents ?? 0) > 0;
 
@@ -256,7 +256,7 @@ export default function SettleBalance() {
                   )}
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-[0.1em] text-surface-2/40">
-                  {balance?.direction === 'you_owe' ? t('expenses.me') : counterpartyName}
+                  {balance?.direction === 'you_owe' ? t('common.me') : counterpartyName}
                 </span>
               </motion.div>
 
@@ -315,7 +315,7 @@ export default function SettleBalance() {
                   )}
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-[0.1em] text-surface-2/40">
-                  {balance?.direction === 'you_are_owed' ? t('expenses.me') : counterpartyName}
+                  {balance?.direction === 'you_are_owed' ? t('common.me') : counterpartyName}
                 </span>
               </motion.div>
             </div>

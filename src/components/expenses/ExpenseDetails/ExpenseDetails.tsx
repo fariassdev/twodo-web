@@ -315,7 +315,7 @@ export default function ExpenseDetails() {
                           )}
                         </div>
                         <span className={cn("text-sm font-bold tracking-tight", active ? "text-primary" : "text-surface-2/60")}>
-                          {profile.id === profileId ? t('expenses.me') : profile.name}
+                          {profile.id === profileId ? t('common.me') : profile.name}
                         </span>
                         {active && (
                           <div className="absolute top-3 right-3 w-6 h-6 bg-primary text-surface-1 rounded-full flex items-center justify-center shadow-md animate-in zoom-in duration-300">
@@ -348,7 +348,7 @@ export default function ExpenseDetails() {
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-0.5">{t('expenses.paidBy')}</p>
                     <p className="text-sm font-bold text-surface-2">
                       {expense.paid_by_profile_id === profileId
-                        ? t('expenses.meWithName', { name: expense.paid_by_profile?.name ?? t('expenses.me') })
+                        ? t('common.meWithName', { name: expense.paid_by_profile?.name ?? t('common.me') })
                         : expense.paid_by_profile?.name}
                     </p>
                   </div>

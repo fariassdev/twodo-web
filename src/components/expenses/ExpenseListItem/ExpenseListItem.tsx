@@ -53,8 +53,8 @@ export default function ExpenseListItem({
     : t('expenses.impact.theyOwe', { amount: splitAmountLabel });
 
   const whenLabel = toRelativeExpenseDate(expense.expense_date, locale, {
-    today: t('expenses.today'),
-    yesterday: t('expenses.yesterday'),
+    today: t('common.today'),
+    yesterday: t('common.yesterday'),
   });
 
   const clickableProps = onClick

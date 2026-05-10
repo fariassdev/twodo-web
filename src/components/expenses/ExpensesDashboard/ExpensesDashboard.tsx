@@ -43,7 +43,7 @@ export default function ExpensesDashboard() {
   const isStale = dashboardQuery.isStale || activityQuery.isStale;
 
   const amountLabel = centsToCurrency(balance?.amountCents ?? 0, i18n.language);
-  const counterpartyName = balance?.counterpartyProfile?.name ?? t('expenses.partnerFallback');
+  const counterpartyName = balance?.counterpartyProfile?.name ?? t('common.partnerFallback');
 
   const balanceHeadline =
     balance?.direction === 'you_are_owed'

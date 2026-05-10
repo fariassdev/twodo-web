@@ -353,7 +353,7 @@ export default function ExpensesListPage() {
             <option value="all">{t('expenses.filterPaidBy')}</option>
             {(profilesQuery.data ?? []).map((profile) => (
               <option key={profile.id} value={profile.id}>
-                {profile.id === profileId ? t('expenses.meWithName', { name: profile.name }) : profile.name}
+                {profile.id === profileId ? t('common.meWithName', { name: profile.name }) : profile.name}
               </option>
             ))}
           </SelectInput>
