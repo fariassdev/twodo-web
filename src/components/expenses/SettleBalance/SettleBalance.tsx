@@ -49,7 +49,7 @@ const MoneyFlowParticles = ({ direction }: { direction: 'to-center' | 'from-cent
           }}
           className={cn(
             "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center drop-shadow-md",
-            isToCenter ? "text-rose-400" : "text-emerald-400"
+            isToCenter ? "text-rose-400/70" : "text-emerald-400/70"
           )}
         >
           <Banknote className="w-5 h-5" />
@@ -256,13 +256,13 @@ export default function SettleBalance() {
                 <motion.div 
                   initial={{ scale: 1 }}
                   animate={{ 
-                    scale: animationPhase === 1 || animationPhase === 2 ? 1.3 : 1
+                    scale: animationPhase === 1 || animationPhase === 2 ? 1.2 : 1
                   }}
                   transition={{
                     duration: animationPhase === 1 || animationPhase === 3 ? 3 : 0.3,
                     ease: "easeInOut"
                   }}
-                  className="relative z-10 w-14 h-14 rounded-full bg-background-light flex items-center justify-center text-primary shadow-glow-primary/20 ring-1 ring-primary/30"
+                  className="relative z-10 w-14 h-14 rounded-full bg-background-light flex items-center justify-center text-primary/60 shadow-glow-primary/10 ring-1 ring-primary/15"
                 >
                   <PiggyBank className="w-7 h-7" />
 
@@ -272,11 +272,11 @@ export default function SettleBalance() {
                   <motion.div
                     initial={{ scale: 1, opacity: 0.3 }}
                     animate={{ 
-                      scale: animationPhase === 2 ? 1.6 : 1, 
-                      opacity: animationPhase === 2 ? 0 : 0.3 
+                      scale: animationPhase === 2 ? 1.4 : 1, 
+                      opacity: animationPhase === 2 ? 0 : 0.2
                     }}
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full border border-primary/30"
+                    className="absolute inset-0 rounded-full border border-primary/20"
                   />
                 </motion.div>
               </div>
