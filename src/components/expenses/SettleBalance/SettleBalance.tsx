@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,22 +60,29 @@ const MoneyFlowParticles = ({ direction }: { direction: 'to-center' | 'from-cent
 };
 
 const PiggyBankBurst = () => {
+  const particles = useMemo(() => [...Array(6)].map((_, i) => {
+    const angle = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+    const distance = 20 + Math.random() * 15;
+    return {
+      id: i,
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      delay: Math.random() * 0.2,
+      duration: 0.8 + Math.random() * 0.4,
+    };
+  }), []);
+
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-      {[...Array(8)].map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2;
-        const x = Math.cos(angle) * 35;
-        const y = Math.sin(angle) * 35;
-        return (
-          <motion.div
-            key={i}
-            initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-            animate={{ x, y, opacity: 0, scale: 1.5 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute w-2 h-2 rounded-full bg-emerald-400/60"
-          />
-        );
-      })}
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          initial={{ x: 0, y: 0, opacity: 0.8, scale: 0 }}
+          animate={{ x: p.x, y: p.y, opacity: 0, scale: 1 }}
+          transition={{ duration: p.duration, delay: p.delay, ease: "easeOut" }}
+          className="absolute w-1.5 h-1.5 rounded-full bg-emerald-400/40"
+        />
+      ))}
     </div>
   );
 };
