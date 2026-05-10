@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { subDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
@@ -11,6 +12,7 @@ import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import ListRow from '../../ui/ListRow';
 import SectionHeader from '../../ui/SectionHeader';
+import { getLocalDateString } from '../../../utils';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -27,7 +29,12 @@ export default function TodayTasksWidget() {
   const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
   const tasks = todaysTasksQuery.data ?? [];
-  const overdueTasks = overdueTasksQuery.data ?? [];
+  const allOverdueTasks = overdueTasksQuery.data ?? [];
+
+  const overdueTasks = useMemo(() => {
+    const sevenDaysAgo = getLocalDateString(subDays(new Date(), 7));
+    return allOverdueTasks.filter(task => task.date && task.date >= sevenDaysAgo);
+  }, [allOverdueTasks]);
 
   const sortedOverdueTasks = useMemo(() => {
     return [...overdueTasks].sort((a, b) => {
@@ -72,7 +79,7 @@ export default function TodayTasksWidget() {
     e.stopPropagation();
     try {
       await completeTaskMutation.mutateAsync({ taskId });
-      const completedTask = tasks.find((task) => task.id === taskId) ?? overdueTasks.find((task) => task.id === taskId) ?? null;
+      const completedTask = tasks.find((task) => task.id === taskId) ?? allOverdueTasks.find((task) => task.id === taskId) ?? null;
       setLastCompletedTask(completedTask);
       
       const assignmentText =
