@@ -162,42 +162,49 @@ export default function ShoppingList() {
           )}
 
           {toBuy.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 bg-surface-1 p-4 rounded-2xl border border-primary/10 shadow-sm transition-all active:scale-[0.98]">
-              <div className="flex-1 flex items-center gap-4">
-                <div className="relative flex items-center justify-center">
-                  <input
-                    className="custom-checkbox h-8 w-8 rounded-lg border-2 border-primary/30 bg-transparent text-primary checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer appearance-none"
-                    type="checkbox"
-                    checked={item.is_purchased}
-                    onChange={() => handleToggle(item)}
-                  />
-                </div>
-                <span className="text-lg font-bold text-surface-2">{item.name}</span>
-                <div className="flex items-center gap-3 bg-primary/10 rounded-lg p-1 px-2 mx-2">
+            <div key={item.id} className="flex items-center gap-3 sm:gap-4 bg-surface-1 p-3 sm:p-4 rounded-2xl border border-primary/10 shadow-sm transition-all active:scale-[0.98]">
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <input
+                  className="custom-checkbox h-8 w-8 rounded-lg border-2 border-primary/30 bg-transparent text-primary checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer appearance-none"
+                  type="checkbox"
+                  checked={item.is_purchased}
+                  onChange={() => handleToggle(item)}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <span className="text-base font-bold text-surface-2 block break-words leading-tight">
+                  {item.name}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 bg-primary/10 rounded-lg p-1 sm:px-2">
                   <button
                     type="button"
-                    className="w-6 h-6 flex items-center justify-center text-primary hover:bg-primary/20 rounded transition-colors"
+                    className="w-7 h-7 flex items-center justify-center text-primary hover:bg-primary/20 rounded transition-colors"
                     onClick={() => handleQuantity(item, -1)}
                   >
                     <span className="material-symbols-outlined text-sm font-bold">remove</span>
                   </button>
-                  <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                  <span className="text-sm font-bold w-5 text-center">{item.quantity}</span>
                   <button
                     type="button"
-                    className="w-6 h-6 flex items-center justify-center text-primary hover:bg-primary/20 rounded transition-colors"
+                    className="w-7 h-7 flex items-center justify-center text-primary hover:bg-primary/20 rounded transition-colors"
                     onClick={() => handleQuantity(item, 1)}
                   >
                     <span className="material-symbols-outlined text-sm font-bold">add</span>
                   </button>
                 </div>
+                
+                <button
+                  type="button"
+                  className="text-surface-2/40 hover:text-danger transition-colors p-1.5 sm:p-2"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  <span className="material-symbols-outlined text-xl">delete</span>
+                </button>
               </div>
-              <button
-                type="button"
-                className="text-surface-2/40 hover:text-danger transition-colors p-2"
-                onClick={() => handleDelete(item.id)}
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
             </div>
           ))}
         </div>
@@ -208,24 +215,26 @@ export default function ShoppingList() {
               {t('shopping.purchasedWithCount', { count: purchased.length })}
             </h2>
             {purchased.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 bg-surface-1/50 p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
-                <div className="flex-1 flex items-center gap-4">
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      className="custom-checkbox h-8 w-8 rounded-lg border-2 border-primary/30 bg-primary text-primary checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer appearance-none"
-                      type="checkbox"
-                      checked={true}
-                      onChange={() => handleToggle(item)}
-                    />
-                  </div>
-                  <span className="text-lg font-medium line-through text-surface-2/40">{item.name}</span>
+              <div key={item.id} className="flex items-center gap-3 sm:gap-4 bg-surface-1/50 p-3 sm:p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
+                <div className="flex-shrink-0 flex items-center justify-center">
+                  <input
+                    className="custom-checkbox h-8 w-8 rounded-lg border-2 border-primary/30 bg-primary text-primary checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer appearance-none"
+                    type="checkbox"
+                    checked={true}
+                    onChange={() => handleToggle(item)}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-base font-medium line-through text-surface-2/40 block break-words leading-tight">
+                    {item.name}
+                  </span>
                 </div>
                 <button
                   type="button"
-                  className="text-surface-2/40 hover:text-danger transition-colors p-2"
+                  className="text-surface-2/40 hover:text-danger transition-colors p-1.5 sm:p-2 flex-shrink-0"
                   onClick={() => handleDelete(item.id)}
                 >
-                  <span className="material-symbols-outlined">delete</span>
+                  <span className="material-symbols-outlined text-xl">delete</span>
                 </button>
               </div>
             ))}
