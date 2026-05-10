@@ -60,7 +60,7 @@ function FilterItem({
     >
       <div className={cn(
         'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all',
-        isActive ? cn('bg-white shadow-sm', activeColor) : 'bg-surface-2/5 text-surface-2/40'
+        isActive ? cn('bg-surface-1 shadow-sm', activeColor) : 'bg-surface-2/5 text-surface-2/40'
       )}>
         <span className={cn('material-symbols-outlined text-[20px]', isActive && 'filled-icon')}>{icon}</span>
       </div>
@@ -77,7 +77,7 @@ function FilterItem({
           'h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center',
           isActive ? 'border-primary bg-primary' : 'border-surface-2/20'
         )}>
-          {isActive && <span className="material-symbols-outlined text-[14px] font-bold text-white">check</span>}
+          {isActive && <span className="material-symbols-outlined text-[14px] font-bold text-background-dark">check</span>}
         </div>
       </div>
     </button>
@@ -423,7 +423,7 @@ export default function Calendar() {
               />
 
               <FilterItem
-                activeColor="text-primary/60"
+                activeColor="text-primary"
                 description={t('calendar.showDailyTasksDesc')}
                 disabled={!showTasks}
                 icon="cached"
@@ -433,7 +433,7 @@ export default function Calendar() {
               />
 
               <FilterItem
-                activeColor="text-surface-2"
+                activeColor="text-primary"
                 description={t('calendar.showEventsDesc')}
                 icon="calendar_today"
                 isActive={showEvents}
@@ -444,7 +444,7 @@ export default function Calendar() {
               <div className="mx-4 my-2 h-px bg-border-subtle/50" />
 
               <FilterItem
-                activeColor="text-surface-2/60"
+                activeColor="text-primary"
                 description={t('calendar.showDeletedDesc')}
                 icon="history_toggle_off"
                 isActive={showDeleted}
