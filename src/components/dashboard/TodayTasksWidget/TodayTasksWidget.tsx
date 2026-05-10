@@ -88,9 +88,8 @@ export default function TodayTasksWidget() {
           onClick: () => {
             if (!completedTask) return;
             navigate({
-              to: '/task/$taskId',
+              to: '/task/$taskId/assignment',
               params: { taskId: completedTask.id },
-              search: { editAssignment: true },
             });
           },
         },
