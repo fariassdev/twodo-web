@@ -30,14 +30,14 @@ const MoneyFlowParticles = ({ direction }: { direction: 'to-center' | 'from-cent
         <motion.div
           key={i}
           initial={{ 
-            x: isToCenter ? -90 : 0, 
+            x: isToCenter ? -90 : 30, 
             y: (Math.random() - 0.5) * 20,
             opacity: 0, 
             scale: 0.5, 
             rotate: 0 
           }}
           animate={{ 
-            x: isToCenter ? 0 : 90,
+            x: isToCenter ? -30 : 90,
             opacity: [0, 1, 1, 0], 
             scale: [0.5, 1, 1, 0.8],
             rotate: (Math.random() - 0.5) * 40
