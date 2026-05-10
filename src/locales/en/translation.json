@@ -190,7 +190,7 @@
     "noDateDay": "--",
     "overdueSection": "Pending from other days",
     "overdueSectionCount": "({{count}})",
-    "upcomingTasks": "Next 7 days",
+    "tomorrowTasks": "For tomorrow",
     "balance": {
       "title": "House Harmony",
       "noData": "No data",

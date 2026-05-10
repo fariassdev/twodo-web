@@ -123,8 +123,8 @@ export default function TodayTasksWidget() {
         <Button
           className={`h-[22px] w-[22px] shrink-0 p-0 transition-colors ${
             isCompleted
-              ? 'rounded-md text-primary hover:bg-transparent'
-              : 'rounded-[6px] border-2 border-border-subtle text-transparent hover:bg-transparent'
+              ? 'rounded-full text-primary hover:bg-transparent'
+              : 'rounded-full border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
             if (isCompleted) {
