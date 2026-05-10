@@ -13,6 +13,7 @@ import type { Task, Profile } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
+import { getLocalDateString } from '../../../utils';
 import Card from '../../ui/Card';
 import FormField from '../../ui/FormField';
 import FormSection from '../../ui/FormSection';
@@ -234,7 +235,7 @@ export default function EditEntry() {
               description: data.description.trim() || undefined,
               type: data.type,
               priority: data.type === 'task' ? data.urgency : 'normal',
-              date: currentDate.toISOString().split('T')[0],
+              date: getLocalDateString(currentDate),
               effort_level: data.type === 'task' ? data.effortLevel as EffortLevel : undefined,
               time_of_day: data.type === 'task' ? data.timeOfDay as TimeOfDay : undefined,
               category: data.type === 'task' ? data.category : undefined,

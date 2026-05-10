@@ -14,6 +14,7 @@ import TextInput from '../../ui/TextInput';
 import FormField from '../../ui/FormField';
 import FormSection from '../../ui/FormSection';
 import { SegmentedControl, SegmentedControlItem } from '../../ui/SegmentedControl';
+import { getLocalDateString } from '../../../utils';
 
 import { useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 
@@ -55,7 +56,7 @@ export default function CreateEntry() {
     resolver: zodResolver(entryFormSchema),
     defaultValues: {
       title: '',
-      date: initialDate || new Date().toISOString().split('T')[0],
+      date: initialDate || getLocalDateString(),
       effortLevel: 'M',
       urgency: 'normal',
       timeOfDay: 'anytime',
@@ -231,7 +232,7 @@ export default function CreateEntry() {
           inputs.push({
             ...baseInput,
             assigned_to: data.assignmentCategory === 'individual' ? currentAssignedTo : undefined,
-            date: instanceDate.toISOString().split('T')[0],
+            date: getLocalDateString(instanceDate),
             recurrence_id: recurrenceId,
           });
 

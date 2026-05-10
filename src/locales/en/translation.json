@@ -171,6 +171,7 @@
     "emptyToday": {
       "title": "All clear for today!",
       "subtitle": "Enjoy your shared time together, or plan ahead for a balanced tomorrow.",
+      "overdueSubtitle": "Want to tackle a few pending tasks from the list below?",
       "onboardingTitle": "Welcome to Twodo!",
       "onboardingSubtitle": "Your journey to a balanced mental load starts here. Add your first recurring task to get started.",
       "cta": "Add first task",

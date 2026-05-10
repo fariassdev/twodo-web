@@ -191,16 +191,17 @@ export default function TodayTasksWidget() {
         );
       })}
 
-      {tasks.length === 0 && overdueTasks.length === 0 && (
+      {tasks.length === 0 && (
         <EmptyTodayState 
           isOnboarding={taskCountQuery.data === 0}
           onAddClick={() => navigate({ to: '/create' })}
           onPlanClick={() => navigate({ to: '/calendar' })}
+          compact={overdueTasks.length > 0}
         />
       )}
 
       {overdueTasks.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-4">
           <ListRow
             as="div"
             onClick={() => setIsPendingExpanded(!isPendingExpanded)}

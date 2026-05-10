@@ -18,7 +18,7 @@ import {
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
-import { cn } from '../../../utils';
+import { cn, getLocalDateString } from '../../../utils';
 
 function parseAmountToCents(raw: string): number {
   const normalized = raw.replace(',', '.').trim();
@@ -46,7 +46,7 @@ export default function CreateExpense() {
       description: '',
       categoryId: '',
       paidByProfileId: '',
-      expenseDate: new Date().toISOString().slice(0, 10),
+      expenseDate: getLocalDateString(),
     },
   });
 

@@ -16,6 +16,7 @@ import type {
   TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
+import { getLocalDateString } from '../utils';
 import { EFFORT_POINTS, type EffortLevel } from '../constants';
 
 function isNotFoundError(error: unknown): boolean {
@@ -253,7 +254,7 @@ export async function getTaskCount(householdId: string): Promise<number> {
 }
 
 export async function getTodaysTasks(householdId: string): Promise<Task[]> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   const { data, error } = await supabase
     .from('tasks')
@@ -270,7 +271,7 @@ export async function getTodaysTasks(householdId: string): Promise<Task[]> {
 }
 
 export async function getOverdueTasks(householdId: string): Promise<Task[]> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   const { data, error } = await supabase
     .from('tasks')
@@ -311,8 +312,8 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
   const endDate = new Date(today);
   endDate.setDate(endDate.getDate() + daysLimit);
 
-  const todayStr = today.toISOString().split('T')[0];
-  const endDateStr = endDate.toISOString().split('T')[0];
+  const todayStr = getLocalDateString(today);
+  const endDateStr = getLocalDateString(endDate);
 
   const { data, error } = await supabase
     .from('tasks')
@@ -331,7 +332,7 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
 }
 
 export async function expireDailyTasks(householdId: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   const { error } = await supabase
     .from('tasks')
@@ -357,7 +358,7 @@ export async function getTaskCatalog(): Promise<TaskCatalogItem[]> {
 }
 
 export async function getUpcomingEvents(householdId: string): Promise<Task[]> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   const { data, error } = await supabase
     .from('tasks')

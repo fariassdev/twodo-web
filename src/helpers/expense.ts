@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 import type { ExpenseWithDetails } from '../lib/types';
 
 const DEFAULT_CURRENCY = 'EUR';
@@ -46,13 +47,8 @@ export function toRelativeExpenseDate(
   locale: string,
   labels: { today: string; yesterday: string },
 ): string {
-  const target = new Date(`${expenseDate}T00:00:00`);
-  if (Number.isNaN(target.getTime())) return expenseDate;
-
-  const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startTarget = new Date(target.getFullYear(), target.getMonth(), target.getDate());
-  const diffDays = Math.round((startToday.getTime() - startTarget.getTime()) / 86400000);
+  const target = parseISO(expenseDate);
+  const diffDays = differenceInCalendarDays(new Date(), target);
 
   if (diffDays === 0) return labels.today;
   if (diffDays === 1) return labels.yesterday;

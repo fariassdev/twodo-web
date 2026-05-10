@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { format, parseISO } from 'date-fns';
+import { es, enUS } from 'date-fns/locale';
 import { useUpcomingTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
 import type { Task } from '../../../lib/types';
 import TaskAvatars from '../TaskAvatars';
@@ -14,6 +16,8 @@ export default function UpcomingTasksWidget() {
 
   if (isPending || upcomingTasks.length === 0) return null;
 
+  const dateFnsLocale = i18n.language === 'es' ? es : enUS;
+
   // Group by date
   const groups: Record<string, Task[]> = {};
   for (const task of upcomingTasks) {
@@ -26,9 +30,9 @@ export default function UpcomingTasksWidget() {
 
   const formatDate = (dateStr: string) => {
     if (dateStr === 'unknown') return { dow: '', day: '' };
-    const d = new Date(dateStr + 'T00:00:00');
-    const dow = d.toLocaleDateString(i18n.language, { weekday: 'short' }).slice(0, 3).toUpperCase();
-    const day = d.getDate();
+    const d = parseISO(dateStr);
+    const dow = format(d, 'EEE', { locale: dateFnsLocale }).toUpperCase();
+    const day = format(d, 'd');
     return { dow, day };
   };
 

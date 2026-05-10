@@ -9,14 +9,39 @@ interface EmptyTodayStateProps {
   isOnboarding?: boolean;
   onAddClick: () => void;
   onPlanClick: () => void;
+  compact?: boolean;
 }
 
 export default function EmptyTodayState({ 
   isOnboarding = false, 
   onAddClick, 
-  onPlanClick 
+  onPlanClick,
+  compact = false
 }: EmptyTodayStateProps) {
   const { t } = useTranslation();
+
+  if (compact) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center py-2 mb-2 text-center"
+      >
+        <div className="relative mb-4">
+          <Checkmark size={48} />
+          <div className="absolute inset-0 bg-primary/15 blur-2xl rounded-full -z-10"></div>
+        </div>
+        <div className="flex flex-col items-center">
+          <h3 className="text-lg font-bold text-surface-2 leading-tight tracking-tight">
+            {t('dashboard.allDoneToday')}
+          </h3>
+          <p className="text-sm text-surface-2/50 mt-1 font-medium max-w-[280px]">
+            {t('dashboard.emptyToday.overdueSubtitle')}
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 

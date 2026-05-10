@@ -169,6 +169,7 @@
     "emptyToday": {
       "title": "¡Todo despejado por hoy!",
       "subtitle": "Disfrutad de vuestro tiempo juntos, o planificad con antelación para un mañana equilibrado.",
+      "overdueSubtitle": "¿Echamos un vistazo a las tareas pendientes de abajo?",
       "onboardingTitle": "¡Bienvenidos a Twodo!",
       "onboardingSubtitle": "Vuestro viaje hacia una carga mental equilibrada comienza aquí. Añadid vuestra primera tarea recurrente para empezar.",
       "cta": "Añadir primera tarea",
