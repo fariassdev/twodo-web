@@ -596,7 +596,7 @@ export default function CreateEntry() {
               <p className="text-surface-2/60 text-sm font-normal leading-normal">{t('entryForm.recurringDescription')}</p>
             </div>
             <label className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${isRecurring ? 'justify-end bg-primary' : 'bg-primary/20'}`}>
-              <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
+              <div className="h-full w-[27px] rounded-full bg-background-light shadow-md"></div>
               <input className="invisible absolute" type="checkbox" {...register('isRecurring')} />
             </label>
           </div>
@@ -671,7 +671,7 @@ export default function CreateEntry() {
                       title={!isRecurring ? t('entryForm.rotatingDisabledHint') : ''}
                       className={`relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none p-0.5 transition-all duration-200 ${!isRecurring ? 'opacity-50 !cursor-not-allowed' : ''} ${isRotating ? 'justify-end bg-primary' : 'bg-primary/20'}`}
                     >
-                      <div className="h-full w-[27px] rounded-full bg-white shadow-md"></div>
+                      <div className="h-full w-[27px] rounded-full bg-background-light shadow-md"></div>
                       <input
                         className="invisible absolute"
                         type="checkbox"
