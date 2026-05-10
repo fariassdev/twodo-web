@@ -15,7 +15,12 @@
   },
   "common": {
     "saving": "...",
-    "hourSuffix": "h"
+    "hourSuffix": "h",
+    "partnerFallback": "your partner",
+    "me": "Me",
+    "meWithName": "Me ({{name}})",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "runtimeBoundary": {
     "title": "A little bump in the road",
@@ -162,7 +167,6 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "today": "Today",
     "searchPlaceholder": "Search missions or plans...",
     "todayMissions": "Today's Missions",
     "pendingCount_one": "{{count}} Pending",
@@ -391,11 +395,6 @@
     "deleteExpense": "Delete expense",
     "confirmDelete": "Are you sure you want to delete this expense?",
     "notFound": "Expense not found",
-    "partnerFallback": "your partner",
-    "me": "Me",
-    "meWithName": "Me ({{name}})",
-    "today": "Today",
-    "yesterday": "Yesterday",
     "openSearch": "Open expenses search",
     "searchExpensesPlaceholder": "Search expenses...",
     "searchLoading": "Searching expenses...",
@@ -489,7 +488,12 @@
     "editAssignment": "Edit point assignment",
     "saveAssignment": "Save assignment",
     "assignmentUpdated": "Assignment updated successfully",
-    "currentAssignment": "Current point assignment"
+    "currentAssignment": "Current point assignment",
+    "helpingOutMessage": "You're helping {{name}}! By default, the points will go to them, but you can change it below if you prefer.",
+    "teamEffort": "TEAM EFFORT",
+    "pointDistribution": "Distribution",
+    "whoGetsPoints": "Who should receive the points?",
+    "splitPoints": "Split points between both"
   },
   "partner": {
     "title": "Connect with Partner",

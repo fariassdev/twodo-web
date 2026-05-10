@@ -66,6 +66,8 @@ export default function AssignmentSelector({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="max-w-md mx-auto w-full px-6 pt-6 pb-24">
+          {children && <div className="mb-8">{children}</div>}
+
           {/* Integrated Selection Visualization */}
           <div className="mb-10 bg-primary/5 border border-primary/10 rounded-2xl p-4">
              <div className="flex justify-between items-center mb-3">
@@ -97,8 +99,6 @@ export default function AssignmentSelector({
           <p className="text-xs font-black text-surface-2/30 uppercase tracking-[0.2em] mb-8 text-center">
             {t('taskCompletion.whoGetsPoints', 'Who should receive the points?')}
           </p>
-
-          {children && <div className="mb-10">{children}</div>}
 
           <div className="space-y-6">
             {/* Team Work Option - Full Width */}

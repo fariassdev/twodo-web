@@ -15,7 +15,12 @@
   },
   "common": {
     "saving": "...",
-    "hourSuffix": "h"
+    "hourSuffix": "h",
+    "partnerFallback": "tu pareja",
+    "me": "Yo",
+    "meWithName": "Yo ({{name}})",
+    "today": "Hoy",
+    "yesterday": "Ayer"
   },
   "runtimeBoundary": {
     "title": "Un pequeño bache en el camino",
@@ -389,11 +394,6 @@
     "deleteExpense": "Eliminar gasto",
     "confirmDelete": "¿Seguro que quieres eliminar este gasto?",
     "notFound": "Gasto no encontrado",
-    "partnerFallback": "tu pareja",
-    "me": "Yo",
-    "meWithName": "Yo ({{name}})",
-    "today": "Hoy",
-    "yesterday": "Ayer",
     "openSearch": "Abrir buscador de gastos",
     "searchExpensesPlaceholder": "Buscar gastos...",
     "searchLoading": "Buscando gastos...",
@@ -487,7 +487,12 @@
     "editAssignment": "Editar asignación de puntos",
     "saveAssignment": "Guardar asignación",
     "assignmentUpdated": "Asignación actualizada correctamente",
-    "currentAssignment": "Asignación actual de puntos"
+    "currentAssignment": "Asignación actual de puntos",
+    "helpingOutMessage": "¡Estás ayudando a {{name}}! Por defecto los puntos irán para tu pareja, pero puedes cambiarlos más abajo si quieres.",
+    "teamEffort": "ESFUERZO EN EQUIPO",
+    "pointDistribution": "Distribución",
+    "whoGetsPoints": "¿Quién debería recibir los puntos?",
+    "splitPoints": "Divide los puntos entre ambos"
   },
   "partner": {
     "title": "Conectar con pareja",

@@ -3,7 +3,7 @@ import { subDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery } from '../../../lib/queryHooks';
+import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
 import type { Task } from '../../../lib/types';
 import TaskAvatars from '../TaskAvatars';
 import EmptyTodayState from './EmptyTodayState';
@@ -23,6 +23,7 @@ export default function TodayTasksWidget() {
   const overdueTasksQuery = useOverdueTasksQuery();
   const taskCountQuery = useTaskCountQuery();
   const completeTaskMutation = useCompleteTaskMutation();
+  const { profileId } = useAuthScope();
   const { data: profiles = [] } = useProfilesQuery();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
@@ -78,14 +79,25 @@ export default function TodayTasksWidget() {
   const handleComplete = async (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
     try {
+      const task = tasks.find((t) => t.id === taskId) ?? allOverdueTasks.find((t) => t.id === taskId);
+      
+      // If it's an individual task assigned to someone else, go to assignment screen
+      if (task && (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') && task.assigned_to !== profileId) {
+        navigate({
+          to: '/task/$taskId/assignment',
+          params: { taskId },
+        });
+        return;
+      }
+
       await completeTaskMutation.mutateAsync({ taskId });
-      const completedTask = tasks.find((task) => task.id === taskId) ?? allOverdueTasks.find((task) => task.id === taskId) ?? null;
+      const completedTask = task ?? null;
       setLastCompletedTask(completedTask);
       
       const assignmentText =
         completedTask?.assignment_type === 'team_work'
           ? t('taskCompletion.teamWork')
-          : completedTask?.assignment_type === 'individual'
+          : completedTask?.assignment_type === 'individual' || completedTask?.assignment_type === 'strict_rotation'
             ? t('taskCompletion.individual')
             : t('taskCompletion.anyone');
 
@@ -165,8 +177,8 @@ export default function TodayTasksWidget() {
               {isTeamWork 
                 ? t('dashboard.completedByBoth') 
                 : task.assignment_type === 'anyone'
-                  ? t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('expenses.partnerFallback') })
-                  : t('dashboard.completedBy', { name: task.assigned_profile?.name || t('expenses.partnerFallback') })
+                  ? t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('common.partnerFallback') })
+                  : t('dashboard.completedBy', { name: task.assigned_profile?.name || t('common.partnerFallback') })
               }
             </div>
           )}

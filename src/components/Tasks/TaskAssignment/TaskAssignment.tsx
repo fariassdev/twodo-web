@@ -8,6 +8,7 @@ import {
   useTaskCompletionsQuery,
   useCompleteTaskMutation,
   useUpdateTaskCompletionAssignmentMutation,
+  useAuthScope,
 } from '../../../lib/queryHooks';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import FullPageLoading from '../../ui/FullPageLoading';
@@ -92,6 +93,8 @@ export default function TaskAssignment() {
     }
   };
 
+  const { profileId } = useAuthScope();
+
   if (taskQuery.isPending || profilesQuery.isPending || (task?.status === 'completed' && taskCompletionsQuery.isPending)) {
     return <FullPageLoading message={t('loading')} />;
   }
@@ -103,6 +106,8 @@ export default function TaskAssignment() {
   if (!selectedAssignment) return null;
 
   const isCompleted = task.status === 'completed';
+  const isHelpingOut = !isCompleted && (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') && task.assigned_to !== profileId;
+  const assignedProfile = profiles.find(p => p.id === task.assigned_to);
 
   return (
     <AssignmentSelector
@@ -116,6 +121,25 @@ export default function TaskAssignment() {
       onConfirm={handleConfirm}
       onCancel={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
       loading={completeTaskMutation.isPending || updateTaskCompletionAssignmentMutation.isPending}
-    />
+    >
+      {isHelpingOut && (
+        <div className="relative bg-surface-1/50 backdrop-blur-sm border border-primary/10 rounded-[2rem] p-5 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm overflow-hidden group">
+          {/* Decorative background element */}
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors duration-1000" />
+          
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 shadow-inner">
+            <span className="material-symbols-outlined text-primary filled-icon text-2xl">volunteer_activism</span>
+          </div>
+          <div className="flex flex-col justify-center flex-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/50 mb-1">
+              {t('taskCompletion.teamEffort', 'Team Effort')}
+            </span>
+            <p className="text-sm font-semibold text-surface-2 leading-relaxed">
+              {t('taskCompletion.helpingOutMessage', { name: assignedProfile?.name || t('common.partnerFallback') })}
+            </p>
+          </div>
+        </div>
+      )}
+    </AssignmentSelector>
   );
 }
