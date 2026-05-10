@@ -89,15 +89,15 @@ export default function ExpensesList({
           <ListRow
             as="article"
             key={`settlement-${item.id}`}
-            className="group pr-6"
+            className="group p-3 gap-3 border-success/20 bg-success/[0.03]"
             variant="subtle"
           >
-            <IconBox className="bg-primary/15 text-primary" size="lg" tone="custom">
-              <span className="material-symbols-outlined !text-2xl">payments</span>
+            <IconBox className="bg-success/10 text-success rounded-xl" size="sm" tone="custom">
+              <span className="material-symbols-outlined !text-[20px]">verified</span>
             </IconBox>
 
             <div className="flex-1 min-w-0">
-              <h3 className="truncate text-xl font-bold tracking-tight text-surface-2">
+              <h3 className="truncate text-base font-bold tracking-tight text-surface-2">
                 {t('expenses.settleUp')}
               </h3>
               <p className="text-sm font-medium text-surface-2/60">
@@ -109,10 +109,11 @@ export default function ExpensesList({
             </div>
 
             <div className="text-right flex flex-col items-end">
-              <p className="text-xl font-extrabold tracking-tight text-primary">
-                {centsToCurrency(settlement.amount_cents, locale)}
+              <p className="text-lg font-bold tracking-tight text-surface-2 flex items-baseline gap-1">
+                <span>{centsToCurrency(settlement.amount_cents, locale).replace(/[^\d.,]/g, '')}</span>
+                <span className="text-[13px] font-medium text-surface-2/30">€</span>
               </p>
-              <p className="text-[10px] font-black uppercase tracking-[0.05em] text-primary/80">
+              <p className="text-[9px] font-bold uppercase tracking-[0.05em] text-success">
                 {t('expenses.settlement.feedStatus')}
               </p>
             </div>

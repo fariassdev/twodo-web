@@ -419,7 +419,7 @@
     "balance": {
       "theyOweYou": "{{name}} owes you",
       "youOwe": "You owe {{name}}",
-      "settled": "You're all settled up 🎉",
+      "settled": "You're all settled up",
       "settledSubtitle": "Enjoy the peace of mind"
     },
     "settlement": {
@@ -427,12 +427,16 @@
       "closeSheet": "Close settlement sheet",
       "confirmTransfer": "Confirm you transferred {{amount}} to {{name}}.",
       "confirmReceipt": "Confirm you received {{amount}} from {{name}}.",
+      "amountToSettle": "Amount to settle",
       "noteOptional": "Optional note",
       "notePlaceholder": "e.g. Bank transfer March",
       "confirmButton": "Confirm settlement",
       "onlyDebtorHint": "Only the member who owes can confirm a settlement.",
       "paidTo": "{{from}} paid {{to}}",
-      "feedStatus": "Settled"
+      "feedStatus": "Settled",
+      "successTitle": "Settled!",
+      "successSubtitle": "Your accounts are up to date.",
+      "successWatermark": "DONE"
     }
   },
   "taskDetails": {

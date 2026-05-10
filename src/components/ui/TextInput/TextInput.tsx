@@ -10,6 +10,7 @@ const wrapperVariants = cva('flex items-center gap-3 transition-all', {
       elevated: 'rounded-xl border border-primary/10 bg-surface-1 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       soft: 'rounded-lg border border-primary/20 bg-primary/5 px-4 has-[:focus]:ring-1 has-[:focus]:ring-primary',
       chip: 'rounded-full border border-primary/25 bg-surface-1/75 px-3 has-[:focus]:ring-1 has-[:focus]:ring-primary',
+      editorial: 'border-b border-dashed border-primary/30 bg-transparent px-0 rounded-none has-[:focus]:border-primary/80 transition-colors mx-auto max-w-[260px] w-full',
     },
     size: {
       sm: 'h-11',
@@ -30,6 +31,7 @@ const inputVariants = cva('w-full bg-transparent text-surface-2 placeholder:text
       base: 'text-base font-normal',
       strong: 'text-base font-semibold',
       display: 'text-6xl font-black tracking-tight',
+      editorial: 'text-center text-primary text-sm font-medium italic',
     },
   },
   defaultVariants: {
@@ -50,6 +52,8 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
     const internalRef = React.useRef<HTMLInputElement>(null);
     
     React.useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
+
+    const typographyValue = typography || (variant === 'editorial' ? 'editorial' : 'base');
 
     const handleInputClick = () => {
       if (props.type === 'date' && internalRef.current) {
@@ -75,7 +79,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         {leading ? <span className="shrink-0 text-surface-2/60">{leading}</span> : null}
         <input
           ref={internalRef}
-          className={cn(inputVariants({ typography }), inputClassName)}
+          className={cn(inputVariants({ typography: typographyValue }), inputClassName)}
           id={id}
           {...props}
           onClick={(e) => {

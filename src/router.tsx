@@ -28,6 +28,7 @@ const ExpensesDashboard = React.lazy(() => import('./components/expenses/Expense
 const CreateExpense = React.lazy(() => import('./components/expenses/CreateExpense'));
 const ExpensesListPage = React.lazy(() => import('./components/expenses/ExpensesListPage'));
 const ExpenseDetails = React.lazy(() => import('./components/expenses/ExpenseDetails'));
+const SettleBalance = React.lazy(() => import('./components/expenses/SettleBalance'));
 const Login = React.lazy(() => import('./components/Auth/Login'));
 const Register = React.lazy(() => import('./components/Auth/Register'));
 const ForgotPassword = React.lazy(() => import('./components/Auth/ForgotPassword'));
@@ -288,6 +289,16 @@ export const mainLayoutRoute = createRoute({
   ),
 });
 
+export const fullscreenLayoutRoute = createRoute({
+  id: 'fullscreenLayout',
+  getParentRoute: () => privateGateRoute,
+  component: () => (
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <Outlet />
+    </div>
+  ),
+});
+
 export const dashboardRoute = createRoute({
   getParentRoute: () => mainLayoutRoute,
   path: '/',
@@ -466,7 +477,7 @@ export const createEntryRoute = createRoute({
 });
 
 export const createExpenseRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/expenses/new',
   component: () => (
     <RouteShell sectionName="expenses-new">
@@ -476,7 +487,7 @@ export const createExpenseRoute = createRoute({
 });
 
 export const expenseDetailsRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/expenses/$expenseId',
   validateSearch: (search: Record<string, unknown>): ExpenseDetailsSearch => ({
     from: readExpenseFromSearch(search?.from),
@@ -489,6 +500,16 @@ export const expenseDetailsRoute = createRoute({
   component: () => (
     <RouteShell sectionName="expense-details">
       <ExpenseDetails />
+    </RouteShell>
+  ),
+});
+
+export const settleBalanceRoute = createRoute({
+  getParentRoute: () => fullscreenLayoutRoute,
+  path: '/expenses/settle',
+  component: () => (
+    <RouteShell sectionName="settle-balance">
+      <SettleBalance />
     </RouteShell>
   ),
 });
@@ -512,8 +533,11 @@ const routeTree = rootRoute.addChildren([
       editEntryRoute,
       taskAssignmentRoute,
       createEntryRoute,
+    ]),
+    fullscreenLayoutRoute.addChildren([
       createExpenseRoute,
       expenseDetailsRoute,
+      settleBalanceRoute,
     ]),
   ]),
 ]);

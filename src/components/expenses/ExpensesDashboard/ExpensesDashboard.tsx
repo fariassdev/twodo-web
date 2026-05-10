@@ -1,53 +1,36 @@
-import React, { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import DataStatusBanner from '../../ui/DataStatusBanner';
 import ErrorBanner from '../../ui/ErrorBanner';
-import FormField from '../../ui/FormField';
-import Modal from '../../ui/Modal';
 import QueryErrorState from '../../ui/QueryErrorState';
-import TextInput from '../../ui/TextInput';
 import FullPageLoading from '../../ui/FullPageLoading';
+import SettlementSuccess from '../SettleBalance/SettlementSuccess';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
   useAuthScope,
-  useCreateSettlementMutation,
   useExpensesActivityFeedInfiniteQuery,
   useExpensesDashboardQuery,
 } from '../../../lib/queryHooks';
-import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
+import { cn } from '@/src/utils';
 
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
-  const { profileId } = useAuthScope();
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<SettlementFormValues>({
-    resolver: zodResolver(settlementFormSchema),
-    defaultValues: { note: '' },
-  });
+  const { profileId, profile } = useAuthScope();
+  const [showPreview, setShowPreview] = React.useState(false);
 
   const dashboardQuery = useExpensesDashboardQuery();
   const activityQuery = useExpensesActivityFeedInfiniteQuery(20);
-  const createSettlementMutation = useCreateSettlementMutation();
-
-  const [isSettlementSheetOpen, setSettlementSheetOpen] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const dashboardData = dashboardQuery.data;
   const balance = dashboardData?.balance;
@@ -69,24 +52,19 @@ export default function ExpensesDashboard() {
         ? t('expenses.balance.youOwe', { name: counterpartyName })
         : t('expenses.balance.settled');
 
-  const canSettle = balance?.direction === 'you_owe' && balance.amountCents > 0;
-
-  const handleConfirmSettlement = handleSubmit(async ({ note }) => {
-    if (!canSettle) return;
-
-    setActionError(null);
-    try {
-      await createSettlementMutation.mutateAsync({ note });
-      setSettlementSheetOpen(false);
-      reset({ note: '' });
-    } catch (error) {
-      console.error('Settlement error:', error);
-      setActionError(t('queryState.mutationError'));
-    }
-  });
-
   function retryQuery() {
     void Promise.all([dashboardQuery.refetch(), activityQuery.refetch()]);
+  }
+
+  if (showPreview) {
+    return (
+      <SettlementSuccess 
+        onDone={() => setShowPreview(false)} 
+        userAvatar={profile?.avatar_url}
+        partnerAvatar={balance?.counterpartyProfile?.avatar_url}
+        partnerName={counterpartyName}
+      />
+    );
   }
 
   if (dashboardQuery.isPending || activityQuery.isPending) {
@@ -100,52 +78,6 @@ export default function ExpensesDashboard() {
 
   return (
     <div>
-      <Modal
-        className="items-end justify-center pb-6"
-        onClose={() => setSettlementSheetOpen(false)}
-        open={isSettlementSheetOpen}
-        overlayAriaLabel={t('expenses.settlement.closeSheet')}
-        panelClassName="max-w-md"
-      >
-        <Card className="relative w-full bg-surface-1 shadow-2xl shadow-black/50" padding="lg" radius="3xl" variant="surface">
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-primary/40" />
-          <h2 className="text-xl font-bold text-surface-2">{t('expenses.settlement.title')}</h2>
-          <p className="mt-2 text-sm text-surface-2/80">
-            {balance?.direction === 'you_are_owed'
-              ? t('expenses.settlement.confirmReceipt', { amount: amountLabel, name: counterpartyName })
-              : t('expenses.settlement.confirmTransfer', { amount: amountLabel, name: counterpartyName })}
-          </p>
-
-          <FormField className="mt-4" label={t('expenses.settlement.noteOptional')} labelClassName="text-xs font-semibold uppercase tracking-wider text-surface-2/60">
-            <TextInput
-              maxLength={200}
-              placeholder={t('expenses.settlement.notePlaceholder')}
-              size="md"
-              type="text"
-              variant="soft"
-              {...register('note')}
-            />
-          </FormField>
-          {errors.note && <p className="mt-2 text-xs text-red-400">{t(errors.note.message!)}</p>}
-
-          <Button
-            className="mt-5 text-lg font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
-            disabled={createSettlementMutation.isPending}
-            onClick={handleConfirmSettlement}
-            fullWidth
-          >
-            {createSettlementMutation.isPending ? t('common.saving') : t('expenses.settlement.confirmButton')}
-          </Button>
-          <Button
-            className="mt-2 border-primary/20 text-sm font-semibold text-surface-2/60"
-            onClick={() => setSettlementSheetOpen(false)}
-            fullWidth
-            variant="subtle"
-          >
-            {t('cta.cancel')}
-          </Button>
-        </Card>
-      </Modal>
 
       <PageHeader
         title={t('expenses.dashboardTitle')}
@@ -166,46 +98,136 @@ export default function ExpensesDashboard() {
       <main className="mx-auto max-w-md w-full px-4 pt-5 pb-8">
         <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
 
-        {actionError ? <ErrorBanner className="mb-3" message={actionError} /> : null}
-
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-surface-1 p-7 shadow-lg shadow-black/10 border border-border-strong">
-          <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-10 -right-6 opacity-[0.07] pointer-events-none">
-            <span className="material-symbols-outlined !text-[12rem] select-none">
+        <section className="relative overflow-hidden rounded-xl bg-surface-1 p-8 shadow-card-lg border border-border-strong">
+          {/* Decorative background elements */}
+          <div className="absolute -right-8 -top-8 h-48 w-48 rounded-full bg-primary/15 blur-3xl z-0" />
+          <div className="absolute -bottom-6 -right-6 opacity-[0.05] pointer-events-none z-0">
+            <span className="material-symbols-outlined !text-[10rem] select-none">
               {balance?.direction === 'settled' ? 'check_circle' : 'account_balance_wallet'}
             </span>
           </div>
-
-          <div className="relative">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-primary/60">
+          
+          {/* Main Content Layer */}
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <header className="w-full flex items-center justify-start gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-surface-2/60 mb-2">
+              <motion.div 
+                animate={{ 
+                  backgroundColor: isFetching 
+                    ? 'rgba(73, 52, 33, 0.1)' 
+                    : (balance?.direction === 'settled' 
+                        ? 'var(--color-success)' 
+                        : (balance?.direction === 'you_are_owed' ? 'var(--color-success)' : 'var(--color-danger)')) 
+                }}
+                className={cn(
+                  "w-[7px] h-[7px] rounded-full shrink-0",
+                  isFetching && "animate-pulse"
+                )}
+              />
               {t('expenses.currentBalance')}
-            </p>
-            <h2 className={`mt-1 text-3xl font-extrabold leading-tight text-surface-2`}>
-              {balanceHeadline}
-            </h2>
+            </header>
 
-            <p className={`mt-2 text-4xl font-black ${balance?.direction === 'settled' ? 'text-surface-2/40' : 'text-primary'}`}>
-              {amountLabel}
-            </p>
+            <div className="flex flex-col items-center gap-2">
+              <AnimatePresence mode="wait">
+                <motion.h2 
+                  key={balanceHeadline}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-xl font-bold tracking-tight text-surface-2"
+                >
+                  {balance?.direction === 'settled' ? (
+                    <>
+                      {balanceHeadline}
+                      <motion.span 
+                        role="button"
+                        onClick={() => setShowPreview(true)}
+                        animate={{ 
+                          rotate: [0, 3, -3, 3, 0],
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{ 
+                          duration: 3, 
+                          repeat: Infinity,
+                          repeatDelay: 6,
+                          ease: "easeInOut"
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="cursor-pointer inline-block ml-1 select-none origin-center"
+                        title={t('expenses.settlement.successWatermark')}
+                      >
+                        🎉
+                      </motion.span>
+                    </>
+                  ) : (
+                    balanceHeadline
+                  )}
+                </motion.h2>
+              </AnimatePresence>
 
-            {balance?.direction !== 'settled' && (
-              <Button
-                className="mt-8 gap-3 text-xl font-bold text-background-dark shadow-lg shadow-primary/20"
-                onClick={() => setSettlementSheetOpen(true)}
-                fullWidth
-                size="lg"
-              >
-                <span className="material-symbols-outlined filled-icon">payments</span>
-                {t('expenses.settleDebt')}
-              </Button>
-            )}
-
-            {balance?.direction === 'settled' && (
-              <div className="mt-2 flex items-center gap-2 text-sm font-bold text-primary/80">
-                <span className="material-symbols-outlined !text-lg">done_all</span>
-                {t('expenses.balance.settledSubtitle')}
+              <div className="flex flex-col items-center justify-center py-2" aria-live="polite">
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    key={amountLabel}
+                    initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                    className="flex items-start leading-none gap-[0.5rem]"
+                  >
+                    <span className={cn(
+                      "font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums transition-colors italic",
+                      balance?.direction === 'settled' 
+                        ? 'text-surface-2/10' 
+                        : (balance?.direction === 'you_are_owed' ? 'text-success' : 'text-danger')
+                    )}>
+                      {balance?.direction === 'settled' ? '0' : amountLabel.replace(/[^\d.,]/g, '')}
+                    </span>
+                    <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem] transition-colors">
+                      €
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
               </div>
-            )}
+            </div>
+
+            <div className="mt-4 w-full flex flex-col items-center max-w-[280px]">
+              {balance?.direction !== 'settled' ? (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key="settle-button"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="w-full"
+                  >
+                    <Button
+                      className="gap-3 text-lg font-bold text-background-dark shadow-button bg-primary hover:bg-primary/90 transition-all active:scale-[0.98]"
+                      onClick={() => navigate({ to: '/expenses/settle' })}
+                      fullWidth
+                      size="lg"
+                    >
+                      <span className="material-symbols-outlined filled-icon text-[20px]">payments</span>
+                      {t('expenses.settleDebt')}
+                    </Button>
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    key="settled-badge"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-xs font-bold uppercase tracking-wider text-success"
+                  >
+                    <span className="material-symbols-outlined !text-[16px] filled-icon">verified</span>
+                    {t('expenses.balance.settledSubtitle')}
+                  </motion.div>
+                </AnimatePresence>
+              )}
+            </div>
           </div>
         </section>
 

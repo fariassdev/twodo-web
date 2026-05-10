@@ -417,7 +417,7 @@
     "balance": {
       "theyOweYou": "{{name}} te debe",
       "youOwe": "Debes a {{name}}",
-      "settled": "Estáis en paz 🎉",
+      "settled": "Estáis en paz",
       "settledSubtitle": "Disfruta de la tranquilidad"
     },
     "settlement": {
@@ -425,12 +425,16 @@
       "closeSheet": "Cerrar modal de liquidación",
       "confirmTransfer": "Confirma que transferiste {{amount}} a {{name}}.",
       "confirmReceipt": "Confirma que recibiste {{amount}} de {{name}}.",
+      "amountToSettle": "Importe a liquidar",
       "noteOptional": "Nota opcional",
       "notePlaceholder": "Ej. Bizum marzo",
       "confirmButton": "Confirmar liquidación",
       "onlyDebtorHint": "Solo quien debe puede confirmar una liquidación.",
       "paidTo": "{{from}} pagó a {{to}}",
-      "feedStatus": "Liquidado"
+      "feedStatus": "Liquidado",
+      "successTitle": "¡Liquidado!",
+      "successSubtitle": "Vuestras cuentas están al día.",
+      "successWatermark": "LISTO"
     }
   },
   "taskDetails": {
