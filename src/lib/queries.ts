@@ -490,6 +490,7 @@ async function resolveAssignmentRecipients(
   assignedTo: string | null;
   recipientIds: string[];
 }> {
+  // 1. Explicit Team Work
   if (assignmentOverride?.type === 'team_work') {
     const members = await getProfiles(scope.householdId);
     const recipientIds = members.map((member) => member.id);
@@ -500,6 +501,7 @@ async function resolveAssignmentRecipients(
     };
   }
 
+  // 2. Explicit Individual Override
   if (assignmentOverride?.type === 'individual') {
     const selectedProfileId = assignmentOverride.assignedTo?.[0] ?? task.assigned_to ?? scope.profileId;
     return {
@@ -509,15 +511,17 @@ async function resolveAssignmentRecipients(
     };
   }
 
+  // 3. Explicit Anyone Override
   if (assignmentOverride?.type === 'anyone') {
     const selectedRecipientId = assignmentOverride.assignedTo?.[0] ?? scope.profileId;
     return {
       assignmentType: 'anyone',
-      assignedTo: null,
+      assignedTo: selectedRecipientId,
       recipientIds: [selectedRecipientId],
     };
   }
 
+  // 4. Default Team Work (no override)
   if (task.assignment_type === 'team_work') {
     const members = await getProfiles(scope.householdId);
     const recipientIds = members.map((member) => member.id);
@@ -528,10 +532,22 @@ async function resolveAssignmentRecipients(
     };
   }
 
+  // 5. Default Anyone (no override)
+  if (task.assignment_type === 'anyone') {
+    return {
+      assignmentType: 'anyone',
+      assignedTo: scope.profileId,
+      recipientIds: [scope.profileId],
+    };
+  }
+
+  // 6. Default Individual / Strict Rotation (no override)
+  // Ensure points go to the assigned person by default, even if someone else clicks
+  const assignedId = task.assigned_to ?? scope.profileId;
   return {
     assignmentType: task.assignment_type as TaskAssignmentOverrideType | 'strict_rotation',
-    assignedTo: task.assigned_to,
-    recipientIds: [scope.profileId],
+    assignedTo: assignedId,
+    recipientIds: [assignedId],
   };
 }
 

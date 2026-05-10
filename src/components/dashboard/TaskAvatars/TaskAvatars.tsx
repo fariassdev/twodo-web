@@ -13,17 +13,14 @@ export default function TaskAvatars({ task, profiles, className = "ml-3", overla
   let avatarsToShow: Profile[] = [];
 
   if (isCompleted) {
+    // If team work or anyone, show both members if they exist
     if (task.assignment_type === 'team_work') {
-      // Show both members for teamwork
       avatarsToShow = profiles.slice(0, 2);
-    } else if (task.assignment_type === 'anyone') {
-      // Show executor for 'anyone' tasks
-      if (task.last_done_by_profile) avatarsToShow = [task.last_done_by_profile];
     } else if (task.assigned_profile) {
-      // Show assignee for individual/rotation tasks (the points earner)
+      // Show point earner
       avatarsToShow = [task.assigned_profile];
     } else if (task.last_done_by_profile) {
-      // Fallback
+      // Fallback for anyone tasks without assigned_to set (legacy data)
       avatarsToShow = [task.last_done_by_profile];
     }
   } else if (task.assignment_type === 'team_work' || task.assignment_type === 'anyone' || !task.assigned_profile) {

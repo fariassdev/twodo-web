@@ -176,9 +176,7 @@ export default function TodayTasksWidget() {
             <div className="text-xs text-primary/80 mt-1 font-medium italic">
               {isTeamWork 
                 ? t('dashboard.completedByBoth') 
-                : task.assignment_type === 'anyone'
-                  ? t('dashboard.completedBy', { name: task.last_done_by_profile?.name || t('common.partnerFallback') })
-                  : t('dashboard.completedBy', { name: task.assigned_profile?.name || t('common.partnerFallback') })
+                : t('dashboard.completedBy', { name: task.assigned_profile?.name || t('common.partnerFallback') })
               }
             </div>
           )}
