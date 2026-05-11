@@ -293,7 +293,7 @@ export const fullscreenLayoutRoute = createRoute({
   id: 'fullscreenLayout',
   getParentRoute: () => privateGateRoute,
   component: () => (
-    <div className="flex h-dvh flex-col overflow-hidden">
+    <div className="flex h-dvh flex-col overflow-y-auto custom-scrollbar bg-background-light">
       <Outlet />
     </div>
   ),
@@ -410,7 +410,7 @@ export const expensesListRoute = createRoute({
 
 
 export const taskAssignmentRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/task/$taskId/assignment',
   component: () => (
     <RouteShell sectionName="task-assignment">
@@ -420,7 +420,7 @@ export const taskAssignmentRoute = createRoute({
 });
 
 export const taskDetailsRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/task/$taskId',
   component: () => (
     <RouteShell sectionName="task-details">
@@ -430,7 +430,7 @@ export const taskDetailsRoute = createRoute({
 });
 
 export const editEntryRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/task/$taskId/edit',
   component: () => (
     <RouteShell sectionName="edit-entry">
@@ -447,7 +447,7 @@ interface CreateEntrySearch {
 }
 
 export const createEntryRoute = createRoute({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => fullscreenLayoutRoute,
   path: '/create',
   validateSearch: (search: Record<string, unknown>): CreateEntrySearch => {
     return {
@@ -520,12 +520,12 @@ const routeTree = rootRoute.addChildren([
       profileRoute,
       expensesDashboardRoute,
       expensesListRoute,
+    ]),
+    fullscreenLayoutRoute.addChildren([
       taskDetailsRoute,
       editEntryRoute,
       taskAssignmentRoute,
       createEntryRoute,
-    ]),
-    fullscreenLayoutRoute.addChildren([
       createExpenseRoute,
       expenseDetailsRoute,
       settleBalanceRoute,

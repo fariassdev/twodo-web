@@ -34,11 +34,14 @@ type MetaChipProps = {
   iconClassName?: string;
 };
 
-function MetaChip({ icon, label, iconClassName }: Readonly<MetaChipProps>): React.ReactElement {
+function SpecItem({ icon, label, value, colorClass = "text-primary" }: { icon: string, label: string, value: string, colorClass?: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-primary/10 bg-primary/5 px-3 py-1.5">
-      <span className={`material-symbols-outlined text-lg ${iconClassName ?? 'text-primary'}`}>{icon}</span>
-      <span className="text-sm font-medium text-surface-2">{label}</span>
+    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
+      <div className="flex items-center gap-1.5 opacity-40">
+        <span className={`material-symbols-outlined text-[14px] ${colorClass}`}>{icon}</span>
+        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+      </div>
+      <span className="text-sm font-bold text-surface-2 truncate">{value}</span>
     </div>
   );
 }
@@ -47,7 +50,7 @@ export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { householdId } = useAuthScope();
+  const { householdId, profileId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -67,7 +70,6 @@ export default function TaskDetails() {
   const postponeTaskMutation = usePostponeTaskMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
   const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
-  const updateTaskCompletionAssignmentMutation = useUpdateTaskCompletionAssignmentMutation();
 
   const loveNote = loveNoteQuery.data ?? null;
   const assignedProfile = assignedProfileQuery.data ?? null;
@@ -75,15 +77,7 @@ export default function TaskDetails() {
   const completions = taskCompletionsQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
-
-  const loading =
-    taskQuery.isPending ||
-    (Boolean(task) &&
-      (loveNoteQuery.isLoading ||
-        assignedProfileQuery.isLoading ||
-        lastDoneByProfileQuery.isLoading ||
-        taskCompletionsQuery.isLoading ||
-        profilesQuery.isLoading));
+  const loading = taskQuery.isPending || (Boolean(task) && profilesQuery.isLoading);
 
   const acting =
     completeTaskMutation.isPending ||
@@ -91,17 +85,8 @@ export default function TaskDetails() {
     deleteTaskMutation.isPending ||
     deleteTaskSeriesMutation.isPending;
 
-  const isStale =
-    taskQuery.isStale ||
-    loveNoteQuery.isStale ||
-    assignedProfileQuery.isStale ||
-    lastDoneByProfileQuery.isStale;
-
-  const isFetching =
-    taskQuery.isFetching ||
-    loveNoteQuery.isFetching ||
-    assignedProfileQuery.isFetching ||
-    lastDoneByProfileQuery.isFetching;
+  const isStale = taskQuery.isStale || loveNoteQuery.isStale;
+  const isFetching = taskQuery.isFetching || loveNoteQuery.isFetching;
 
   async function handlePostpone() {
     if (!task || acting) return;
@@ -110,7 +95,6 @@ export default function TaskDetails() {
       await postponeTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
-      console.error('Postpone error:', err);
       setActionError(t('queryState.mutationError'));
     }
   }
@@ -122,7 +106,6 @@ export default function TaskDetails() {
       await deleteTaskMutation.mutateAsync(task.id);
       navigate({ to: '/' });
     } catch (err) {
-      console.error('Delete error:', err);
       setActionError(t('queryState.mutationError'));
     }
   }
@@ -137,7 +120,6 @@ export default function TaskDetails() {
       });
       navigate({ to: '/' });
     } catch (err) {
-      console.error('Delete series error:', err);
       setActionError(t('queryState.mutationError'));
     }
   }
@@ -149,52 +131,18 @@ export default function TaskDetails() {
       await deleteTaskSeriesMutation.mutateAsync({ recurrenceId: task.recurrence_id });
       navigate({ to: '/' });
     } catch (err) {
-      console.error('Delete all error:', err);
       setActionError(t('queryState.mutationError'));
     }
   }
 
-  const statusLabels: Record<string, string> = {
-    pending: t('taskDetails.status.pending'),
-    completed: t('taskDetails.status.completed'),
-    postponed: t('taskDetails.status.postponed'),
-    expired: t('taskDetails.status.expired'),
-    overdue: t('taskDetails.status.overdue'),
-  };
-
-  const urgencyLabels: Record<string, string> = {
-    normal: t('entryForm.urgencyNormal'),
-    high: t('entryForm.urgencyHigh'),
-  };
-
-  const timeOfDayLabels: Record<string, string> = {
-    morning: t('entryForm.timeOfDayOptions.morning'),
-    afternoon: t('entryForm.timeOfDayOptions.afternoon'),
-    evening: t('entryForm.timeOfDayOptions.evening'),
-    anytime: t('entryForm.timeOfDayOptions.anytime'),
-  };
-
-  const categoryLabels: Record<string, string> = {
-    trash: t('entryForm.categories.trash'),
-    cleaning: t('entryForm.categories.cleaning'),
-    bathroom: t('entryForm.categories.bathroom'),
-    kitchen: t('entryForm.categories.kitchen'),
-    shopping: t('entryForm.categories.shopping'),
-    laundry: t('entryForm.categories.laundry'),
-    other: t('entryForm.categories.other'),
-  };
-
-  const frequencyLabels: Record<string, string> = {
-    daily: t('entryForm.frequencyOptions.daily'),
-    weekly: t('entryForm.frequencyOptions.weekly'),
-    monthly: t('entryForm.frequencyOptions.monthly'),
-  };
-
-  const assignmentLabels: Record<string, string> = {
-    strict_rotation: t('taskDetails.assignment.strictRotation'),
-    team_work: t('taskDetails.assignment.teamWork'),
-    anyone: t('taskDetails.assignment.anyone'),
-    individual: t('taskDetails.assignment.individual'),
+  const categoryIcons: Record<string, string> = {
+    trash: 'delete_outline',
+    cleaning: 'cleaning_services',
+    bathroom: 'bathtub',
+    kitchen: 'cooking',
+    shopping: 'shopping_basket',
+    laundry: 'local_laundry_service',
+    other: 'extension',
   };
 
   const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
@@ -205,34 +153,23 @@ export default function TaskDetails() {
     overdue: 'warning',
   };
 
-  if (loading) {
-    return <FullPageLoading message={t('loading')} />;
-  }
+  if (loading) return <FullPageLoading message={t('loading')} />;
 
   if (!task) {
-    if (taskQuery.isError) {
-      return (
-        <QueryErrorState
-          onRetry={() => {
-            if (!householdId) return;
-            void queryClient.refetchQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
-          }}
-        />
-      );
-    }
-
+    if (taskQuery.isError) return <QueryErrorState onRetry={() => void taskQuery.refetch()} />;
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
-        <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">
-          {t('cta.back')}
-        </Button>
+        <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">{t('cta.back')}</Button>
       </div>
     );
   }
 
+  const isCompleted = task.status === 'completed';
+  const pointsEarner = isCompleted ? assignedProfile : (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation' ? assignedProfile : null);
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background-light">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
@@ -240,64 +177,35 @@ export default function TaskDetails() {
             <p className="text-sm text-surface-2/60">{t('taskDetails.deleteRecurringDescription')}</p>
           </div>
           <div className="flex flex-col divide-y divide-border-subtle border-t border-border-subtle">
-            <Button className="justify-start" onClick={handleDeleteSingle} size="menu" variant="modalAction">
-              {t('taskDetails.deleteOnlyThis')}
-            </Button>
-            <Button className="justify-start" onClick={handleDeleteFollowing} size="menu" variant="modalAction">
-              {t('taskDetails.deleteThisAndFollowing')}
-            </Button>
-            <Button className="justify-start text-rose-500" onClick={handleDeleteAll} size="menu" variant="modalAction">
-              {t('taskDetails.deleteAll')}
-            </Button>
-            <Button className="justify-center bg-surface-1 text-surface-2/60" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">
-              {t('cta.cancel')}
-            </Button>
+            <Button className="justify-start" onClick={handleDeleteSingle} size="menu" variant="modalAction">{t('taskDetails.deleteOnlyThis')}</Button>
+            <Button className="justify-start" onClick={handleDeleteFollowing} size="menu" variant="modalAction">{t('taskDetails.deleteThisAndFollowing')}</Button>
+            <Button className="justify-start text-rose-500" onClick={handleDeleteAll} size="menu" variant="modalAction">{t('taskDetails.deleteAll')}</Button>
+            <Button className="justify-center bg-surface-1 text-surface-2/60" onClick={() => setDeleteModalOpen(false)} size="menu" variant="modalAction">{t('cta.cancel')}</Button>
           </div>
         </Card>
       </Modal>
 
-
       <PageHeader
-        title={task.title}
-        subtitle={task.type === 'event' ? t('taskDetails.eventDetail') : t('taskDetails.taskDetail')}
-        backAction={{
-          onClick: () => navigate({ to: '/' }),
-        }}
+        title=""
+        backAction={{ onClick: () => navigate({ to: '/' }) }}
         rightMenu={!task.deleted_at ? {
           ariaLabel: t('topBar.openMenu'),
           closeAriaLabel: t('topBar.closeMenu'),
           open: menuOpen,
           onOpenChange: setMenuOpen,
           items: [
-            {
-              id: 'edit-task',
-              icon: 'edit',
-              label: t('taskDetails.edit'),
-              onClick: () => {
-                navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } });
-              },
-            },
-            {
-              id: 'delete-task',
-              icon: 'delete',
-              label: t('taskDetails.delete'),
-              danger: true,
+            { id: 'edit', icon: 'edit', label: t('taskDetails.edit'), onClick: () => navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } }) },
+            { 
+              id: 'delete', 
+              icon: 'delete', 
+              label: t('taskDetails.delete'), 
+              danger: true, 
               separatorBefore: true,
               onClick: async () => {
-                if (task.recurrence_id) {
-                  setDeleteModalOpen(true);
-                  return;
-                }
-
+                if (task.recurrence_id) { setDeleteModalOpen(true); return; }
                 if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
                   setActionError(null);
-                  try {
-                    await deleteTaskMutation.mutateAsync(task.id);
-                    navigate({ to: '/' });
-                  } catch (error) {
-                    console.error('Delete error:', error);
-                    setActionError(t('queryState.mutationError'));
-                  }
+                  try { await deleteTaskMutation.mutateAsync(task.id); navigate({ to: '/' }); } catch { setActionError(t('queryState.mutationError')); }
                 }
               },
             },
@@ -305,153 +213,159 @@ export default function TaskDetails() {
         } : undefined}
       />
 
-      <main className="px-4 max-w-md mx-auto w-full pb-20">
-        <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
+      <main className="relative flex-1 px-6 pb-24">
+        {/* Category Hero Background Icon */}
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 opacity-[0.03] pointer-events-none">
+          <span className="material-symbols-outlined text-[300px]">{categoryIcons[task.category || 'other']}</span>
+        </div>
 
-        <div className="pt-4 pb-6">
-          {actionError ? <ErrorBanner className="mb-4" message={actionError} /> : null}
-
-          <div className="flex items-center gap-2 mb-2">
-            {task.deleted_at ? (
-              <Badge size="md" tone="danger">
-                {t('calendar.deletedBadge')}
-              </Badge>
-            ) : (
+        <div className="max-w-md mx-auto w-full">
+          <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
+          
+          <div className="mt-4 mb-8">
+            <div className="flex items-center gap-2 mb-4">
               <Badge size="md" tone={statusToneMap[task.status] ?? 'primary'}>
-                {statusLabels[task.status] || task.status}
+                {t(`taskDetails.status.${task.status}`)}
               </Badge>
-            )}
-            {assignedProfile && (
-              <span className="text-surface-2/60 text-xs font-medium">{t('taskDetails.assignedTo', { name: assignedProfile.name })}</span>
+              {task.priority === 'high' && (
+                <Badge size="md" tone="danger">{t('entryForm.urgencyHigh')}</Badge>
+              )}
+            </div>
+
+            <h1 className="text-4xl font-black text-surface-2 leading-[1.1] tracking-tight mb-2">
+              {task.title}
+            </h1>
+            
+            {task.date && (
+              <p className="text-primary font-bold capitalize">
+                {new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
             )}
           </div>
-          {task.date && (
-            <p className="text-primary text-sm font-medium mb-1 capitalize">
-              {new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-          )}
-          <h1 className="text-3xl font-bold leading-tight mb-4">{task.title}</h1>
 
-          <div className="flex flex-wrap gap-2">
-            {task.type === 'task' && (
-              <MetaChip
-                icon="priority_high"
-                iconClassName={task.priority === 'high' ? 'text-danger' : 'text-primary'}
-                label={urgencyLabels[task.priority] || task.priority}
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <SpecItem 
+              icon="stars" 
+              label={t('taskDetails.currentReward')} 
+              value={t('taskDetails.pointsReward', { points: task.points })} 
+            />
+            {task.effort_level && (
+              <SpecItem 
+                icon="fitness_center" 
+                label={t('taskDetails.effort')} 
+                value={t(`entryForm.effortLevels.${task.effort_level}`)} 
               />
             )}
-            {task.type === 'task' && task.effort_level && (
-              <MetaChip icon="fitness_center" label={t(`entryForm.effortLevels.${task.effort_level}` as const)} />
-            )}
-            {task.type === 'task' && task.time_of_day && (
-              <MetaChip icon="schedule" label={timeOfDayLabels[task.time_of_day] || task.time_of_day} />
-            )}
-            {task.type === 'task' && task.category && (
-              <MetaChip icon="category" label={categoryLabels[task.category] || task.category} />
+            {task.time_of_day && (
+              <SpecItem 
+                icon="schedule" 
+                label={t('taskDetails.time')} 
+                value={t(`entryForm.timeOfDayOptions.${task.time_of_day}`)} 
+              />
             )}
             {task.is_recurring && task.frequency && (
-              <MetaChip icon="repeat" label={frequencyLabels[task.frequency]} />
+              <SpecItem 
+                icon="repeat" 
+                label={t('taskDetails.frequency')} 
+                value={t(`entryForm.frequencyOptions.${task.frequency}`)} 
+              />
             )}
-            <MetaChip
-              icon={
-                task.assignment_type === 'team_work'
-                  ? 'groups'
-                  : task.assignment_type === 'anyone'
-                    ? 'groups_2'
-                    : task.assignment_type === 'individual'
-                      ? 'person'
-                      : 'sync_alt'
-              }
-              label={assignmentLabels[task.assignment_type]}
-            />
           </div>
 
           {task.description && (
-            <p className="text-surface-2 mt-4 leading-relaxed">{task.description}</p>
-          )}
-
-          {task.type === 'event' && task.location && (
-            <div className="flex items-center gap-2 mt-3 text-surface-2/60">
-              <span className="material-symbols-outlined text-primary text-sm">location_on</span>
-              <span className="text-sm">{task.location}</span>
+            <div className="mb-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block">{t('entryForm.description')}</span>
+              <p className="text-surface-2 leading-relaxed text-[15px]">{task.description}</p>
             </div>
           )}
 
-          {task.type === 'event' && (task.start_time || task.end_time) && (
-            <div className="flex items-center gap-2 mt-2 text-surface-2/60">
-              <span className="material-symbols-outlined text-primary text-sm">schedule</span>
-              <span className="text-sm">
-                {task.start_time?.slice(0, 5)}{t('common.hourSuffix')}{task.end_time ? ` - ${task.end_time.slice(0, 5)}${t('common.hourSuffix')}` : ''}
-              </span>
-            </div>
-          )}
-
-          {(task.status === 'pending' || task.status === 'overdue') && !task.deleted_at && (
-            <div className="flex flex-col gap-3 mt-6 mb-2">
-              <Button
-                className="justify-center shadow-lg shadow-primary/20"
-                fullWidth
-                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
-                disabled={acting}
-              >
-                <span className="material-symbols-outlined font-bold">check_circle</span>
-                {acting ? t('taskDetails.processing') : t('taskDetails.markCompleted')}
-              </Button>
-              <Button
-                className="justify-center"
-                fullWidth
-                onClick={handlePostpone}
-                disabled={acting}
-                variant="subtle"
-              >
-                {t('taskDetails.postpone')}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {loveNote && (
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="material-symbols-outlined text-primary filled-icon">favorite</span>
-              <h3 className="text-lg font-bold">{t('dashboard.loveNoteTitle')}</h3>
-            </div>
-            <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 italic text-primary leading-relaxed relative overflow-hidden">
-              <div className="absolute -right-4 -bottom-4 opacity-10">
-                <span className="material-symbols-outlined text-8xl">format_quote</span>
+          {/* Assignment Card */}
+          <div className="bg-surface-1/40 border border-border-subtle rounded-[2.5rem] p-6 mb-10">
+            <div className={`flex justify-between items-center ${task.assignment_type === 'strict_rotation' ? 'mb-6' : ''}`}>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/40 block mb-1">
+                  {isCompleted ? t('taskDetails.lastDoneBy') : t('taskDetails.assignedToTitle', 'Assigned To')}
+                </span>
+                <h3 className="text-xl font-black text-surface-2">
+                  {isCompleted 
+                    ? (assignedProfile?.name || t('common.partnerFallback')) 
+                    : (task.assignment_type === 'team_work' ? t('taskDetails.assignment.teamWork') : (assignedProfile?.name || t('taskDetails.assignment.anyone')))
+                  }
+                </h3>
               </div>
-              "{loveNote.content}"
+              <div className="flex -space-x-3">
+                {(task.assignment_type === 'team_work' 
+                  ? profiles.slice(0, 2) 
+                  : (isCompleted || task.assignment_type !== 'anyone' 
+                      ? [assignedProfile] 
+                      : profiles.slice(0, 2))
+                ).filter(Boolean).map((p) => (
+                  <div key={p!.id} className="w-10 h-10 rounded-full border-4 border-surface-1 overflow-hidden bg-primary/10">
+                    {p!.avatar_url ? <img src={p!.avatar_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-primary text-xs">{p!.name?.charAt(0)}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
+            
+            {task.assignment_type === 'strict_rotation' && (
+              <div className="flex items-center gap-2 py-3 px-4 bg-primary/5 rounded-2xl border border-primary/10">
+                <span className="material-symbols-outlined text-primary text-lg">sync_alt</span>
+                <span className="text-xs font-bold text-primary/80 tracking-tight uppercase">
+                  {t(`taskDetails.assignment.${task.assignment_type.replace(/_([a-z])/g, (_, p1) => p1.toUpperCase())}`)}
+                </span>
+              </div>
+            )}
           </div>
-        )}
 
-        <div className="space-y-4">
-          <SectionHeader>{t('taskDetails.assignmentDetails')}</SectionHeader>
-          <div className="bg-surface-1 rounded-xl border border-border-subtle divide-y divide-border-subtle">
-            <div className="p-4 flex justify-between items-center">
-              <span className="text-surface-2/60">{t('taskDetails.rotationType')}</span>
-              <span className="font-medium">{assignmentLabels[task.assignment_type]}</span>
+          {loveNote && (
+            <div className="relative mb-10 group">
+              <div className="absolute -left-2 -top-2 w-10 h-10 bg-primary/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative bg-primary/5 p-6 rounded-3xl border-2 border-dashed border-primary/20">
+                <span className="material-symbols-outlined text-primary text-2xl mb-2 filled-icon">favorite</span>
+                <p className="italic font-medium text-primary text-lg leading-relaxed">"{loveNote.content}"</p>
+              </div>
             </div>
-            <div className="p-4 flex justify-between items-center">
-              <span className="text-surface-2/60">{t('taskDetails.lastDoneBy')}</span>
-              <span className="font-medium">{lastDoneByProfile?.name || t('taskDetails.none')}</span>
-            </div>
-            <div className="p-4 flex justify-between items-center">
-              <span className="text-surface-2/60">{t('taskDetails.currentReward')}</span>
-              <span className="font-medium text-primary">{t('taskDetails.pointsReward', { points: task.points })}</span>
-            </div>
-          </div>
-
-          {task.status === 'completed' && (
-            <Button
-              className="text-sm font-semibold"
-              fullWidth
-                onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
-              variant="subtle"
-            >
-              {t('taskCompletion.editAssignment')}
-            </Button>
           )}
+
+          {actionError && <ErrorBanner className="mb-6" message={actionError} />}
+
+          {/* Fixed Bottom Action Bar */}
+          <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background-light via-background-light to-transparent pt-12 z-20 pointer-events-none">
+            <div className="max-w-md mx-auto w-full flex gap-3 pointer-events-auto">
+              {!isCompleted && !task.deleted_at && (
+                <>
+                  <Button 
+                    className="flex-1 justify-center shadow-button h-14 rounded-2xl group" 
+                    onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
+                    disabled={acting}
+                  >
+                    <span className="material-symbols-outlined font-bold group-active:scale-125 transition-transform">check_circle</span>
+                    {t('taskDetails.markCompleted')}
+                  </Button>
+                  <Button 
+                    variant="surface" 
+                    className="h-14 w-14 p-0 justify-center rounded-2xl shrink-0" 
+                    onClick={handlePostpone}
+                    disabled={acting}
+                    ariaLabel={t('taskDetails.postpone')}
+                  >
+                    <span className="material-symbols-outlined">update</span>
+                  </Button>
+                </>
+              )}
+              {isCompleted && (
+                <Button 
+                  fullWidth 
+                  variant="subtle" 
+                  className="h-14 rounded-2xl" 
+                  onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
+                >
+                  <span className="material-symbols-outlined">edit_note</span>
+                  {t('taskCompletion.editAssignment')}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
