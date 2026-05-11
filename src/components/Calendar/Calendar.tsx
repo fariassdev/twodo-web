@@ -19,6 +19,7 @@ import { cn } from '../../utils';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
+import { ContextMenuItem } from '../ui/ContextMenu/ContextMenuItem';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -26,63 +27,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-interface FilterItemProps {
-  label: string;
-  description: string;
-  icon: string;
-  isActive: boolean;
-  onClick: () => void;
-  activeColor: string;
-  disabled?: boolean;
-  className?: string;
-}
 
-function FilterItem({
-  label,
-  description,
-  icon,
-  isActive,
-  onClick,
-  activeColor,
-  disabled,
-  className,
-}: FilterItemProps) {
-  return (
-    <button
-      className={cn(
-        'group flex w-full items-start gap-3 px-4 py-3 text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
-        isActive ? 'bg-primary/5' : 'hover:bg-hover',
-        className
-      )}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      <div className={cn(
-        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all',
-        isActive ? cn('bg-surface-1 shadow-sm', activeColor) : 'bg-surface-2/5 text-surface-2/40'
-      )}>
-        <span className={cn('material-symbols-outlined text-[20px]', isActive && 'filled-icon')}>{icon}</span>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <span className={cn('text-sm font-bold transition-colors', isActive ? 'text-surface-2' : 'text-surface-2/70')}>
-          {label}
-        </span>
-        <span className="text-[11px] leading-tight text-surface-2/40">
-          {description}
-        </span>
-      </div>
-      <div className="ml-auto flex items-center self-center pl-2">
-        <div className={cn(
-          'h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center',
-          isActive ? 'border-primary bg-primary' : 'border-surface-2/20'
-        )}>
-          {isActive && <span className="material-symbols-outlined text-[14px] font-bold text-background-dark">check</span>}
-        </div>
-      </div>
-    </button>
-  );
-}
 
 export default function Calendar() {
   const { t, i18n } = useTranslation();
@@ -407,7 +352,7 @@ export default function Calendar() {
                 </span>
               </div>
 
-              <FilterItem
+              <ContextMenuItem
                 activeColor="text-primary"
                 description={t('calendar.showTasksDesc')}
                 icon="task_alt"
@@ -422,7 +367,7 @@ export default function Calendar() {
                 }}
               />
 
-              <FilterItem
+              <ContextMenuItem
                 activeColor="text-primary"
                 description={t('calendar.showDailyTasksDesc')}
                 disabled={!showTasks}
@@ -432,7 +377,7 @@ export default function Calendar() {
                 onClick={() => setShowDailyTasks(!showDailyTasks)}
               />
 
-              <FilterItem
+              <ContextMenuItem
                 activeColor="text-primary"
                 description={t('calendar.showEventsDesc')}
                 icon="calendar_today"
@@ -443,7 +388,7 @@ export default function Calendar() {
 
               <div className="mx-4 my-2 h-px bg-border-subtle/50" />
 
-              <FilterItem
+              <ContextMenuItem
                 activeColor="text-primary"
                 description={t('calendar.showDeletedDesc')}
                 icon="history_toggle_off"

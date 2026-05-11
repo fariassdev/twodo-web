@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from '@tanstack/react-router';
 import Button from '../Button';
 import TwodoLogo from '../TwodoLogo';
 import { useProfilesQuery } from '../../../lib/queryHooks';
 import { cn } from '../../../utils';
+import { ContextMenuItem } from '../ContextMenu/ContextMenuItem';
 
 export type PageHeaderMenuItem = {
   id: string;
@@ -15,6 +16,9 @@ export type PageHeaderMenuItem = {
   danger?: boolean;
   separatorBefore?: boolean;
   closeOnClick?: boolean;
+  description?: string;
+  isActive?: boolean;
+  activeColor?: string;
 };
 
 export type PageHeaderMenu = {
@@ -58,6 +62,7 @@ export default function PageHeader({
   const { data: profiles = [] } = useProfilesQuery();
 
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
   const menuOpen = rightMenu?.open ?? internalMenuOpen;
 
   const setMenuOpen = (open: boolean) => {
@@ -72,8 +77,17 @@ export default function PageHeader({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMenuOpen(false);
     };
+    const onPointerDown = (event: PointerEvent | MouseEvent | TouchEvent) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('pointerdown', onPointerDown);
+    };
   }, [menuOpen]);
 
   const avatarsVisible = showAvatars && !rightSlot && !rightMenu;
@@ -139,7 +153,7 @@ export default function PageHeader({
         {rightSlot}
 
         {rightMenu && (
-          <div className="relative flex-shrink-0">
+          <div className="relative flex-shrink-0" ref={menuContainerRef}>
             <Button
               variant="icon"
               size="icon"
@@ -151,13 +165,6 @@ export default function PageHeader({
             </Button>
 
             {menuOpen && (
-              <>
-                <button
-                  aria-label={rightMenu.closeAriaLabel || 'Close menu'}
-                  className={cn('fixed inset-0 z-40 cursor-default bg-transparent', rightMenu.overlayClassName)}
-                  onClick={() => setMenuOpen(false)}
-                  type="button"
-                />
                 <div
                   className={cn(
                     'absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 py-1 shadow-xl',
@@ -165,13 +172,15 @@ export default function PageHeader({
                   )}
                 >
                   {rightMenu.items.map((item) => (
-                    <React.Fragment key={item.id}>
+                    <Fragment key={item.id}>
                       {item.separatorBefore ? <div className="mx-3 h-px bg-border-subtle" /> : null}
-                      <button
-                        className={cn(
-                          'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50',
-                          item.danger ? 'text-danger' : 'text-surface-2',
-                        )}
+                      <ContextMenuItem
+                        label={item.label}
+                        description={item.description}
+                        icon={item.icon}
+                        danger={item.danger}
+                        isActive={item.isActive}
+                        activeColor={item.activeColor}
                         disabled={item.disabled}
                         onClick={() => {
                           if (item.closeOnClick !== false) {
@@ -179,16 +188,8 @@ export default function PageHeader({
                           }
                           item.onClick();
                         }}
-                        type="button"
-                      >
-                        {item.icon ? (
-                          <span className={cn('material-symbols-outlined text-[20px]', item.danger ? 'text-danger' : 'text-surface-2/60')}>
-                            {item.icon}
-                          </span>
-                        ) : null}
-                        <span>{item.label}</span>
-                      </button>
-                    </React.Fragment>
+                      />
+                    </Fragment>
                   ))}
                   {rightMenu.children && (
                     <div>
@@ -196,7 +197,6 @@ export default function PageHeader({
                     </div>
                   )}
                 </div>
-              </>
             )}
           </div>
         )}
