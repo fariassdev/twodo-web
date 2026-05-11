@@ -208,7 +208,7 @@ export default function TaskDetails() {
   const CategoryIcon = categoryIcons[task.category || 'other'];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background-light overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-background-light">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
