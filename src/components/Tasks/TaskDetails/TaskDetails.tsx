@@ -280,8 +280,14 @@ export default function TaskDetails() {
             </h1>
             
             {task.date && (
-              <p className="text-primary font-bold capitalize">
+              <p className="text-primary font-bold text-lg">
                 {new Date(task.date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            )}
+
+            {task.description && (
+              <p className="mt-4 text-surface-2/60 leading-relaxed font-medium max-w-[90%]">
+                {task.description}
               </p>
             )}
           </div>
@@ -315,15 +321,8 @@ export default function TaskDetails() {
             )}
           </div>
 
-          {task.description && (
-            <div className="mb-10">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block">{t('entryForm.description')}</span>
-              <p className="text-surface-2 leading-relaxed text-[15px]">{task.description}</p>
-            </div>
-          )}
-
           {/* Assignment Card */}
-          <div className="bg-surface-1/40 border border-border-subtle rounded-[2.5rem] p-6 mb-10">
+          <div className="bg-surface-1/40 border border-border-subtle rounded-2xl p-6 mb-10">
             <div className={`flex justify-between items-center ${task.assignment_type === 'strict_rotation' ? 'mb-6' : ''}`}>
               <div>
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/40 block mb-1">
