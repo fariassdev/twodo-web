@@ -1,7 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
 import {
-  useAuthScope,
   useCompleteTaskMutation,
   useDeleteTaskMutation,
   useDeleteTaskSeriesMutation,
@@ -9,11 +7,8 @@ import {
   usePostponeTaskMutation,
   useProfileQuery,
   useTaskByIdQuery,
-  useTaskCompletionsQuery,
-  useUpdateTaskCompletionAssignmentMutation,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
-import { queryKeys } from '../../../lib/queryKeys';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import DataStatusBanner from '../../ui/DataStatusBanner';
@@ -23,16 +18,11 @@ import Card from '../../ui/Card';
 import Badge from '../../ui/Badge';
 import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
-import SectionHeader from '../../ui/SectionHeader';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { useNavigate, useParams } from '@tanstack/react-router';
 
-type MetaChipProps = {
-  icon: string;
-  label: string;
-  iconClassName?: string;
-};
+
 
 function SpecItem({ icon, label, value, colorClass = "text-primary" }: { icon: string, label: string, value: string, colorClass?: string }) {
   return (
@@ -46,11 +36,27 @@ function SpecItem({ icon, label, value, colorClass = "text-primary" }: { icon: s
   );
 }
 
+const categoryIcons: Record<string, string> = {
+  trash: 'delete_outline',
+  cleaning: 'cleaning_services',
+  bathroom: 'bathtub',
+  kitchen: 'skillet',
+  shopping: 'shopping_basket',
+  laundry: 'local_laundry_service',
+  other: 'extension',
+};
+
+const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
+  pending: 'primary',
+  completed: 'success',
+  postponed: 'warning',
+  expired: 'neutral',
+  overdue: 'warning',
+};
+
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { householdId, profileId } = useAuthScope();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,12 +65,10 @@ export default function TaskDetails() {
 
   const taskQuery = useTaskByIdQuery(taskId);
   const task = taskQuery.data ?? null;
-  const taskCompletionsQuery = useTaskCompletionsQuery(task?.id);
   const profilesQuery = useProfilesQuery();
 
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
   const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
-  const lastDoneByProfileQuery = useProfileQuery(task?.last_done_by ?? undefined);
 
   const completeTaskMutation = useCompleteTaskMutation();
   const postponeTaskMutation = usePostponeTaskMutation();
@@ -73,8 +77,6 @@ export default function TaskDetails() {
 
   const loveNote = loveNoteQuery.data ?? null;
   const assignedProfile = assignedProfileQuery.data ?? null;
-  const lastDoneByProfile = lastDoneByProfileQuery.data ?? null;
-  const completions = taskCompletionsQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];
 
   const loading = taskQuery.isPending || (Boolean(task) && profilesQuery.isLoading);
@@ -135,23 +137,41 @@ export default function TaskDetails() {
     }
   }
 
-  const categoryIcons: Record<string, string> = {
-    trash: 'delete_outline',
-    cleaning: 'cleaning_services',
-    bathroom: 'bathtub',
-    kitchen: 'cooking',
-    shopping: 'shopping_basket',
-    laundry: 'local_laundry_service',
-    other: 'extension',
+  const handleDeleteClick = async () => {
+    if (!task) return;
+    if (task.recurrence_id) {
+      setDeleteModalOpen(true);
+      return;
+    }
+    
+    if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
+      setActionError(null);
+      try {
+        await deleteTaskMutation.mutateAsync(task.id);
+        navigate({ to: '/' });
+      } catch {
+        setActionError(t('queryState.mutationError'));
+      }
+    }
   };
 
-  const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
-    pending: 'primary',
-    completed: 'success',
-    postponed: 'warning',
-    expired: 'neutral',
-    overdue: 'warning',
-  };
+  const isCompleted = task?.status === 'completed';
+
+  const assignmentText = useMemo(() => {
+    if (!task) return '';
+    if (isCompleted) return assignedProfile?.name || t('common.partnerFallback');
+    if (task.assignment_type === 'team_work') return t('taskDetails.assignment.teamWork');
+    return assignedProfile?.name || t('taskDetails.assignment.anyone');
+  }, [task, isCompleted, assignedProfile, t]);
+
+  const assignmentAvatars = useMemo(() => {
+    if (!task) return [];
+    if (task.assignment_type === 'team_work') return profiles.slice(0, 2);
+    if (isCompleted || task.assignment_type !== 'anyone') return [assignedProfile];
+    return profiles.slice(0, 2);
+  }, [task, isCompleted, assignedProfile, profiles]);
+
+
 
   if (loading) return <FullPageLoading message={t('loading')} />;
 
@@ -165,11 +185,10 @@ export default function TaskDetails() {
     );
   }
 
-  const isCompleted = task.status === 'completed';
-  const pointsEarner = isCompleted ? assignedProfile : (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation' ? assignedProfile : null);
+
 
   return (
-    <div className="flex flex-col min-h-screen bg-background-light">
+    <div className="flex flex-col min-h-screen bg-background-light overflow-hidden">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
         <Card className="overflow-hidden" padding="none" radius="2xl" variant="modal">
           <div className="p-6 pb-4">
@@ -201,13 +220,7 @@ export default function TaskDetails() {
               label: t('taskDetails.delete'), 
               danger: true, 
               separatorBefore: true,
-              onClick: async () => {
-                if (task.recurrence_id) { setDeleteModalOpen(true); return; }
-                if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-                  setActionError(null);
-                  try { await deleteTaskMutation.mutateAsync(task.id); navigate({ to: '/' }); } catch { setActionError(t('queryState.mutationError')); }
-                }
-              },
+              onClick: handleDeleteClick,
             },
           ],
         } : undefined}
@@ -215,11 +228,11 @@ export default function TaskDetails() {
 
       <main className="relative flex-1 px-6 pb-24">
         {/* Category Hero Background Icon */}
-        <div className="absolute top-0 right-0 -mr-12 -mt-12 opacity-[0.03] pointer-events-none">
-          <span className="material-symbols-outlined text-[300px]">{categoryIcons[task.category || 'other']}</span>
+        <div className="absolute top-[-20px] right-[-40px] opacity-[0.05] pointer-events-none select-none z-0 -rotate-12">
+          <span className="material-symbols-outlined text-[320px] leading-none">{categoryIcons[task.category || 'other']}</span>
         </div>
-
-        <div className="max-w-md mx-auto w-full">
+        
+        <div className="relative z-10 max-w-md mx-auto w-full">
           <DataStatusBanner isOffline={!isOnline} isStale={isStale} isFetching={isFetching} />
           
           <div className="mt-4 mb-8">
@@ -287,21 +300,13 @@ export default function TaskDetails() {
                   {isCompleted ? t('taskDetails.lastDoneBy') : t('taskDetails.assignedToTitle', 'Assigned To')}
                 </span>
                 <h3 className="text-xl font-black text-surface-2">
-                  {isCompleted 
-                    ? (assignedProfile?.name || t('common.partnerFallback')) 
-                    : (task.assignment_type === 'team_work' ? t('taskDetails.assignment.teamWork') : (assignedProfile?.name || t('taskDetails.assignment.anyone')))
-                  }
+                  {assignmentText}
                 </h3>
               </div>
               <div className="flex -space-x-3">
-                {(task.assignment_type === 'team_work' 
-                  ? profiles.slice(0, 2) 
-                  : (isCompleted || task.assignment_type !== 'anyone' 
-                      ? [assignedProfile] 
-                      : profiles.slice(0, 2))
-                ).filter(Boolean).map((p) => (
-                  <div key={p!.id} className="w-10 h-10 rounded-full border-4 border-surface-1 overflow-hidden bg-primary/10">
-                    {p!.avatar_url ? <img src={p!.avatar_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-primary text-xs">{p!.name?.charAt(0)}</div>}
+                {assignmentAvatars.filter(Boolean).map((p) => (
+                  <div key={p?.id} className="w-10 h-10 rounded-full border-4 border-surface-1 overflow-hidden bg-primary/10">
+                    {p?.avatar_url ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-primary text-xs">{p?.name?.charAt(0)}</div>}
                   </div>
                 ))}
               </div>
@@ -343,11 +348,11 @@ export default function TaskDetails() {
                     {t('taskDetails.markCompleted')}
                   </Button>
                   <Button 
-                    variant="surface" 
+                    variant="subtle" 
                     className="h-14 w-14 p-0 justify-center rounded-2xl shrink-0" 
                     onClick={handlePostpone}
                     disabled={acting}
-                    ariaLabel={t('taskDetails.postpone')}
+                    aria-label={t('taskDetails.postpone')}
                   >
                     <span className="material-symbols-outlined">update</span>
                   </Button>
