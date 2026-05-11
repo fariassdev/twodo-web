@@ -38,7 +38,7 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
 
 
@@ -75,6 +75,7 @@ const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger'
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const router = useRouter();
   const isOnline = useOnlineStatus();
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -227,7 +228,7 @@ export default function TaskDetails() {
       <PageHeader
         title={t('taskDetails.taskDetails')}
         subtitle={t('taskDetails.tasks')}
-        backAction={{ onClick: () => navigate({ to: '/' }) }}
+        backAction={{ onClick: () => router.history.back() }}
         rightMenu={!task.deleted_at ? {
           ariaLabel: t('topBar.openMenu'),
           closeAriaLabel: t('topBar.closeMenu'),
