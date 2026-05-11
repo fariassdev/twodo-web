@@ -10,6 +10,8 @@
   "cta": {
     "add": "Añadir",
     "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
     "cancel": "Cancelar",
     "back": "Volver"
   },
@@ -361,6 +363,7 @@
     "dashboardTitle": "Cuentas comunes",
     "allExpenses": "Todos los gastos",
     "expenseDetail": "Detalle de gasto",
+    "editExpense": "Editar gasto",
     "newExpense": "Nuevo gasto",
     "recentExpenses": "Gastos recientes",
     "viewAll": "Ver todos",
@@ -389,9 +392,6 @@
       "noteMaxLength": "La nota debe tener 200 caracteres o menos."
     },
     "date": "Fecha",
-    "editExpense": "Editar gasto",
-    "saveExpense": "Guardar gasto",
-    "deleteExpense": "Eliminar gasto",
     "confirmDelete": "¿Seguro que quieres eliminar este gasto?",
     "notFound": "Gasto no encontrado",
     "openSearch": "Abrir buscador de gastos",
@@ -458,9 +458,7 @@
     "deleteOnlyThis": "Solo este evento",
     "deleteThisAndFollowing": "Este y los siguientes",
     "deleteAll": "Todos los eventos",
-    "edit": "Editar",
     "confirmDeleteSingle": "¿Seguro que quieres eliminar esta tarea?",
-    "delete": "Eliminar",
     "eventDetails": "Detalles del evento",
     "taskDetails": "Detalles de la tarea",
     "events": "Eventos",

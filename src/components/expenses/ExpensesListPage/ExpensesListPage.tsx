@@ -166,7 +166,7 @@ export default function ExpensesListPage() {
   );
 
   const detailSearchFromList = useMemo(
-    () => ({ from: 'list' as const, ...listSearchParams }),
+    () => ({ from: 'search' as const, ...listSearchParams }),
     [listSearchParams],
   );
 

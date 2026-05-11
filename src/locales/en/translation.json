@@ -10,6 +10,8 @@
   "cta": {
     "add": "Add",
     "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
     "cancel": "Cancel",
     "back": "Back"
   },
@@ -362,6 +364,7 @@
     "dashboardTitle": "Shared finances",
     "allExpenses": "All expenses",
     "expenseDetail": "Expense details",
+    "editExpense": "Edit expense",
     "newExpense": "New expense",
     "recentExpenses": "Recent expenses",
     "viewAll": "View all",
@@ -390,9 +393,6 @@
       "noteMaxLength": "Note must be 200 characters or less."
     },
     "date": "Date",
-    "editExpense": "Edit expense",
-    "saveExpense": "Save expense",
-    "deleteExpense": "Delete expense",
     "confirmDelete": "Are you sure you want to delete this expense?",
     "notFound": "Expense not found",
     "openSearch": "Open expenses search",

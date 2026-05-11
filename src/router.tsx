@@ -26,6 +26,7 @@ const EditEntry = React.lazy(() => import('./components/Tasks/EditEntry'));
 const CreateEntry = React.lazy(() => import('./components/Tasks/CreateEntry'));
 const ExpensesDashboard = React.lazy(() => import('./components/expenses/ExpensesDashboard'));
 const CreateExpense = React.lazy(() => import('./components/expenses/CreateExpense'));
+const EditExpense = React.lazy(() => import('./components/expenses/EditExpense'));
 const ExpensesListPage = React.lazy(() => import('./components/expenses/ExpensesListPage'));
 const ExpenseDetails = React.lazy(() => import('./components/expenses/ExpenseDetails'));
 const SettleBalance = React.lazy(() => import('./components/expenses/SettleBalance'));
@@ -349,6 +350,8 @@ export const profileRoute = createRoute({
   ),
 });
 
+export type NavigationOrigin = 'dashboard' | 'search' | 'calendar';
+
 export interface ExpensesListSearch {
   q?: string;
   categoryId?: string;
@@ -358,11 +361,11 @@ export interface ExpensesListSearch {
 }
 
 export interface ExpenseDetailsSearch extends ExpensesListSearch {
-  from?: 'dashboard' | 'list';
+  from?: NavigationOrigin;
 }
 
 export interface TaskDetailsSearch {
-  from?: 'dashboard' | 'calendar';
+  from?: NavigationOrigin;
 }
 
 function readSearchValue(value: unknown): string | undefined {
@@ -378,7 +381,7 @@ function readDateSearchValue(value: unknown): string | undefined {
 }
 
 function readExpenseFromSearch(value: unknown): ExpenseDetailsSearch['from'] {
-  if (value === 'dashboard' || value === 'list') {
+  if (value === 'dashboard' || value === 'search' || value === 'calendar') {
     return value;
   }
 
@@ -484,6 +487,24 @@ export const createExpenseRoute = createRoute({
   ),
 });
 
+export const editExpenseRoute = createRoute({
+  getParentRoute: () => fullscreenLayoutRoute,
+  path: '/expenses/$expenseId/edit',
+  validateSearch: (search: Record<string, unknown>): ExpenseDetailsSearch => ({
+    from: readExpenseFromSearch(search?.from),
+    q: readSearchValue(search?.q),
+    categoryId: readSearchValue(search?.categoryId),
+    paidByProfileId: readSearchValue(search?.paidByProfileId),
+    fromDate: readDateSearchValue(search?.fromDate),
+    toDate: readDateSearchValue(search?.toDate),
+  }),
+  component: () => (
+    <RouteShell sectionName="expenses-edit">
+      <EditExpense />
+    </RouteShell>
+  ),
+});
+
 export const expenseDetailsRoute = createRoute({
   getParentRoute: () => fullscreenLayoutRoute,
   path: '/expenses/$expenseId',
@@ -534,6 +555,7 @@ const routeTree = rootRoute.addChildren([
       taskAssignmentRoute,
       createEntryRoute,
       createExpenseRoute,
+      editExpenseRoute,
       expenseDetailsRoute,
       settleBalanceRoute,
     ]),
