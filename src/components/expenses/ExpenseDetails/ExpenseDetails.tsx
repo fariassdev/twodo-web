@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { Check, Trash2, Calendar, Tag, CreditCard, Users } from 'lucide-react';
+import { Check, Trash2, Calendar, Tag, CreditCard, Users, Edit3, Banknote } from 'lucide-react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import ErrorBanner from '../../ui/ErrorBanner';
@@ -13,6 +13,7 @@ import { NumericInput } from '../../ui/NumericInput';
 import TextInput from '../../ui/TextInput';
 import FullPageLoading from '../../ui/FullPageLoading';
 import ScrollContainer from '../../ui/ScrollContainer/ScrollContainer';
+import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 import {
   useAuthScope,
   useDeleteExpenseMutation,
@@ -24,6 +25,18 @@ import {
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 import { cn } from '../../../utils';
 import type { ExpenseDetailsSearch, ExpensesListSearch } from '../../../router';
+
+function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
+  return (
+    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
+      <div className="flex items-center gap-1.5 opacity-40">
+        <Icon size={14} className={colorClass} />
+        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+      </div>
+      <span className="text-sm font-bold text-surface-2 truncate">{value}</span>
+    </div>
+  );
+}
 
 function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2);
@@ -176,15 +189,31 @@ export default function ExpenseDetails() {
         subtitle={t('nav.expenses')}
         backAction={{ onClick: goBackToExpenses }}
         rightSlot={!isEditing && (
-          <Button
-            aria-label={t('expenses.deleteExpense')}
-            className="text-surface-2/30 hover:text-danger transition-colors"
-            onClick={handleDelete}
-            size="icon"
-            variant="ghost"
-          >
-            <Trash2 className="w-5 h-5" />
-          </Button>
+          <ContextMenu
+            ariaLabel={t('topBar.openMenu')}
+            items={[
+              { 
+                type: 'action', 
+                id: 'edit', 
+                icon: 'edit', 
+                label: t('cta.edit'), 
+                onClick: () => {
+                  setActionError(null);
+                  loadForm();
+                  setIsEditing(true);
+                } 
+              },
+              { type: 'divider', id: 'div1' },
+              { 
+                type: 'action',
+                id: 'delete', 
+                icon: 'delete_outline', 
+                label: t('cta.delete'), 
+                danger: true, 
+                onClick: handleDelete,
+              },
+            ]}
+          />
         )}
       />
 
@@ -338,67 +367,50 @@ export default function ExpenseDetails() {
               </FormField>
             </div>
           ) : (
-            <div className="space-y-4 animate-in fade-in duration-500">
-              <div className="bg-surface-1/40 border border-border-subtle rounded-[32px] overflow-hidden">
-                <div className="flex items-center gap-4 px-6 py-5 border-b border-border-subtle/50">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-0.5">{t('expenses.paidBy')}</p>
-                    <p className="text-sm font-bold text-surface-2">
-                      {expense.paid_by_profile_id === profileId
-                        ? t('common.meWithName', { name: expense.paid_by_profile?.name ?? t('common.me') })
-                        : expense.paid_by_profile?.name}
-                    </p>
-                  </div>
-                </div>
+            <div className="relative animate-in fade-in duration-500">
+              {/* Category Hero Background Icon */}
+              <div className="absolute top-[-60px] right-[-40px] opacity-[0.03] pointer-events-none select-none z-0 -rotate-12">
+                <span className="material-symbols-outlined text-[320px] font-light">
+                  {expense.category?.icon || 'payments'}
+                </span>
+              </div>
 
-                <div className="flex items-center gap-4 px-6 py-5 border-b border-border-subtle/50">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Tag className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-0.5">{t('expenses.category')}</p>
-                    <p className="text-sm font-bold text-surface-2">{categoryLabel}</p>
-                  </div>
-                  <span className="material-symbols-outlined text-surface-2/20 text-xl">{expense.category?.icon}</span>
-                </div>
-
-                <div className="flex items-center gap-4 px-6 py-5 border-b border-border-subtle/50">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <CreditCard className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-0.5">{t('expenses.splitTitle')}</p>
-                    <p className="text-sm font-bold text-surface-2">{t('expenses.splitShared')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 px-6 py-5">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-0.5">{t('expenses.date')}</p>
-                    <p className="text-sm font-bold text-surface-2">
-                      {new Date(`${expense.expense_date}T12:00:00`).toLocaleDateString(i18n.language, {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                </div>
+              <div className="relative z-10 grid grid-cols-2 gap-3">
+                <SpecItem 
+                  icon={Users} 
+                  label={t('expenses.paidBy')} 
+                  value={expense.paid_by_profile_id === profileId
+                    ? t('common.meWithName', { name: expense.paid_by_profile?.name ?? t('common.me') })
+                    : expense.paid_by_profile?.name || ''} 
+                />
+                <SpecItem 
+                  icon={Tag} 
+                  label={t('expenses.category')} 
+                  value={categoryLabel} 
+                />
+                <SpecItem 
+                  icon={Calendar} 
+                  label={t('expenses.date')} 
+                  value={new Date(`${expense.expense_date}T12:00:00`).toLocaleDateString(i18n.language, {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })} 
+                />
+                <SpecItem 
+                  icon={Banknote} 
+                  label={t('expenses.splitTitle')} 
+                  value={t('expenses.splitShared')} 
+                />
               </div>
             </div>
           )}
         </main>
       </div>
 
-      <div className="shrink-0 p-4 pb-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
-        <div className="max-w-md mx-auto w-full">
-          {isEditing ? (
+      {isEditing && (
+        <div className="shrink-0 p-4 pb-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-border-subtle shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
+          <div className="max-w-md mx-auto w-full">
             <div className="grid grid-cols-2 gap-4">
               <Button
                 className="h-16 rounded-2xl font-bold border-border-subtle"
@@ -417,22 +429,9 @@ export default function ExpenseDetails() {
                 {updateExpenseMutation.isPending ? t('common.saving') : t('cta.save')}
               </Button>
             </div>
-          ) : (
-            <Button
-              className="h-16 shadow-glow-primary text-lg rounded-2xl font-bold"
-              fullWidth
-              onClick={() => {
-                setActionError(null);
-                loadForm();
-                setIsEditing(true);
-              }}
-              variant="primary"
-            >
-              {t('expenses.editExpense')}
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
