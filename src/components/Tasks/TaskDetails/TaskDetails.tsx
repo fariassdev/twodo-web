@@ -179,9 +179,10 @@ export default function TaskDetails() {
 
   const assignmentText = useMemo(() => {
     if (!task) return '';
-    if (isCompleted) return assignedProfile?.name || t('common.partnerFallback');
-    if (task.assignment_type === 'team_work') return t('taskDetails.assignment.teamWork');
-    return assignedProfile?.name || t('taskDetails.assignment.anyone');
+    if (task.assignment_type === 'team_work') {
+      return isCompleted ? t('dashboard.completedByBoth') : t('taskDetails.assignment.teamWork');
+    }
+    return assignedProfile?.name || (isCompleted ? t('common.partnerFallback') : t('taskDetails.assignment.anyone'));
   }, [task, isCompleted, assignedProfile, t]);
 
   const assignmentAvatars = useMemo(() => {
