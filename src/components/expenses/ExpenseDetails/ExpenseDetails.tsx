@@ -50,9 +50,7 @@ export default function ExpenseDetails() {
   }, [expense, i18n.language]);
 
   const goBackToExpenses = () => {
-    if (search.from === 'dashboard') {
-      navigate({ to: '/expenses' });
-    } else {
+    if (search.from === 'search') {
       navigate({
         to: '/expenses/list',
         search: {
@@ -63,6 +61,8 @@ export default function ExpenseDetails() {
           toDate: search.toDate,
         },
       });
+    } else {
+      navigate({ to: '/expenses' });
     }
   };
 
