@@ -225,7 +225,8 @@ export default function TaskDetails() {
       </Modal>
 
       <PageHeader
-        title=""
+        title={t('taskDetails.taskDetails')}
+        subtitle={t('taskDetails.tasks')}
         backAction={{ onClick: () => navigate({ to: '/' }) }}
         rightMenu={!task.deleted_at ? {
           ariaLabel: t('topBar.openMenu'),
@@ -246,7 +247,7 @@ export default function TaskDetails() {
         } : undefined}
       />
 
-      <main className="relative flex-1 px-6 pb-24">
+      <main className="relative flex-1 px-6 pb-24 overflow-x-hidden">
         {/* Category Hero Background Icon */}
         <div className="absolute top-[-20px] right-[-40px] opacity-[0.03] pointer-events-none select-none z-0 -rotate-12">
           <CategoryIcon size={320} strokeWidth={1} />
