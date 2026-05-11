@@ -4,7 +4,6 @@ import {
   useDeleteTaskMutation,
   useDeleteTaskSeriesMutation,
   useLoveNoteForTaskQuery,
-  usePostponeTaskMutation,
   useProfileQuery,
   useTaskByIdQuery,
   useProfilesQuery,
@@ -18,7 +17,6 @@ import {
   Dumbbell,
   Clock,
   Repeat,
-  History,
   CheckCircle2,
   RefreshCw,
   Heart,
@@ -69,7 +67,6 @@ const categoryIcons: Record<string, any> = {
 const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
   pending: 'primary',
   completed: 'success',
-  postponed: 'warning',
   expired: 'neutral',
   overdue: 'warning',
 };
@@ -91,7 +88,6 @@ export default function TaskDetails() {
   const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
 
   const completeTaskMutation = useCompleteTaskMutation();
-  const postponeTaskMutation = usePostponeTaskMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
   const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
 
@@ -103,23 +99,11 @@ export default function TaskDetails() {
 
   const acting =
     completeTaskMutation.isPending ||
-    postponeTaskMutation.isPending ||
     deleteTaskMutation.isPending ||
     deleteTaskSeriesMutation.isPending;
 
   const isStale = taskQuery.isStale || loveNoteQuery.isStale;
   const isFetching = taskQuery.isFetching || loveNoteQuery.isFetching;
-
-  async function handlePostpone() {
-    if (!task || acting) return;
-    setActionError(null);
-    try {
-      await postponeTaskMutation.mutateAsync(task.id);
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
-    }
-  }
 
   async function handleDeleteSingle() {
     if (!task) return;
@@ -373,25 +357,14 @@ export default function TaskDetails() {
           <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background-light via-background-light to-transparent pt-12 z-20 pointer-events-none">
             <div className="max-w-md mx-auto w-full flex gap-3 pointer-events-auto">
               {!isCompleted && !task.deleted_at && (
-                <>
-                  <Button 
-                    className="flex-1 justify-center shadow-button h-14 rounded-2xl group" 
-                    onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
-                    disabled={acting}
-                  >
-                    <CheckCircle2 size={24} className="group-active:scale-125 transition-transform" />
-                    {t('taskDetails.markCompleted')}
-                  </Button>
-                  <Button 
-                    variant="subtle" 
-                    className="h-14 w-14 p-0 justify-center rounded-2xl shrink-0" 
-                    onClick={handlePostpone}
-                    disabled={acting}
-                    aria-label={t('taskDetails.postpone')}
-                  >
-                    <History size={24} />
-                  </Button>
-                </>
+                <Button 
+                  className="flex-1 justify-center shadow-button h-14 rounded-2xl group" 
+                  onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
+                  disabled={acting}
+                >
+                  <CheckCircle2 size={24} className="group-active:scale-125 transition-transform" />
+                  {t('taskDetails.markCompleted')}
+                </Button>
               )}
               {isCompleted && (
                 <Button 

@@ -520,10 +520,6 @@ export default function Calendar() {
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-success/20 flex items-center justify-center">
                                   <span className="material-symbols-outlined text-success filled-icon text-[24px]">check_circle</span>
                                 </div>
-                              ) : task.status === 'postponed' ? (
-                                <div className="w-10 h-10 shrink-0 rounded-xl bg-warning/20 flex items-center justify-center">
-                                  <span className="material-symbols-outlined text-warning filled-icon text-[24px]">more_horiz</span>
-                                </div>
                               ) : (
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center">
                                   <div className="w-5 h-5 rounded-full border-[2.5px] border-primary"></div>
