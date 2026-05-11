@@ -581,7 +581,7 @@ export default function Calendar() {
                           return (
                             <div
                               key={task.id}
-                              onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+                              onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id }, search: { from: 'calendar' } })}
                               className={`flex items-center gap-3 p-3 bg-surface-2/5 rounded-2xl border border-primary/5 hover:border-primary/20 hover:bg-hover transition-all cursor-pointer ${isDeleted ? 'opacity-50 grayscale' : ''}`}
                             >
                               {task.status === 'completed' ? (

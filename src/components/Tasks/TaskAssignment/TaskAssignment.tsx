@@ -86,7 +86,7 @@ export default function TaskAssignment() {
       }
       
       // Go back to task details
-      void navigate({ to: '/task/$taskId', params: { taskId: task.id } });
+      void navigate({ to: '/task/$taskId', params: { taskId: task.id }, replace: true });
     } catch (error) {
       console.error('Assignment error:', error);
       toast.error(t('queryState.mutationError'));
@@ -119,7 +119,7 @@ export default function TaskAssignment() {
       confirmLabel={isCompleted ? t('taskCompletion.saveAssignment') : t('taskCompletion.confirmAssignment')}
       subtitle={task.title}
       onConfirm={handleConfirm}
-      onCancel={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+      onCancel={() => window.history.back()}
       loading={completeTaskMutation.isPending || updateTaskCompletionAssignmentMutation.isPending}
     >
       {isHelpingOut && (
