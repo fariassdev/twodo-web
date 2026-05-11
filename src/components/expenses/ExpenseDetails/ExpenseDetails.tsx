@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { Check, Trash2, Calendar, Tag, CreditCard, Users, Edit3, Banknote } from 'lucide-react';
+import { Check, Tag, Banknote } from 'lucide-react';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import ErrorBanner from '../../ui/ErrorBanner';
@@ -228,63 +228,73 @@ export default function ExpenseDetails() {
         <main className="relative z-10 mx-auto max-w-md">
           {actionError ? <ErrorBanner className="mb-6" message={actionError} /> : null}
 
-          {/* Hero Section (View/Edit) */}
-          <FormField
-            label={t('expenses.amount')}
-            labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
-            className="relative mb-2 pt-2"
-            error={isEditing && errors.amountInput && t(errors.amountInput.message!)}
-            errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
-          >
-            <div className="relative">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/5 blur-3xl z-0" />
-              
-              <div className="relative z-10 flex flex-col items-center justify-center">
-                <div className="flex items-start leading-none gap-[0.5rem]">
-                  {isEditing ? (
-                    <Controller
-                      name="amountInput"
-                      control={control}
-                      render={({ field }) => (
-                        <NumericInput
-                          {...field}
-                          autoFocus
-                          className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
-                          placeholder="0.00"
-                        />
-                      )}
-                    />
-                  ) : (
-                    <span className="font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 italic">
-                      {centsToInput(expense.amount_cents)}
-                    </span>
-                  )}
-                  <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem]">
-                    €
-                  </span>
+          {isEditing ? (
+            <>
+              <FormField
+                label={t('expenses.amount')}
+                labelClassName="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/30 mb-2 block text-center"
+                className="relative mb-2 pt-2"
+                error={errors.amountInput && t(errors.amountInput.message!)}
+                errorClassName="mt-6 text-xs font-bold text-danger uppercase tracking-wider text-center"
+              >
+                <div className="relative">
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary/5 blur-3xl z-0" />
+                  
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    <div className="flex items-start leading-none gap-[0.5rem]">
+                      <Controller
+                        name="amountInput"
+                        control={control}
+                        render={({ field }) => (
+                          <NumericInput
+                            {...field}
+                            autoFocus
+                            className="w-full min-w-[120px] max-w-[280px] bg-transparent text-center font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 focus:outline-none italic"
+                            placeholder="0.00"
+                          />
+                        )}
+                      />
+                      <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                        €
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </FormField>
+              </FormField>
 
-          <FormField
-            className="mt-0 mb-10 relative w-full text-center px-4"
-            error={isEditing && errors.description && t(errors.description.message!)}
-            errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
-          >
-            {isEditing ? (
-              <TextInput
-                {...register('description')}
-                placeholder={t('expenses.descriptionPlaceholder')}
-                type="text"
-                variant="editorial"
-              />
-            ) : (
-              <span className="text-primary text-sm font-medium italic">
+              <FormField
+                className="mt-0 mb-10 relative w-full text-center px-4"
+                error={errors.description && t(errors.description.message!)}
+                errorClassName="mt-2 text-[10px] font-bold text-danger uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1 duration-300"
+              >
+                <TextInput
+                  {...register('description')}
+                  placeholder={t('expenses.descriptionPlaceholder')}
+                  type="text"
+                  variant="editorial"
+                />
+              </FormField>
+            </>
+          ) : (
+            <div className="mt-4 mb-8">
+              <div className="flex items-center gap-[0.5rem] leading-none mb-2">
+                <span className="font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 italic">
+                  {centsToInput(expense.amount_cents)}
+                </span>
+                <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem]">
+                  €
+                </span>
+              </div>
+
+              <p className="text-primary font-bold text-lg">
+                {new Date(expense.expense_date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+
+              <p className="mt-4 text-surface-2/60 leading-relaxed font-medium max-w-[90%]">
                 {expense.description || categoryLabel}
-              </span>
-            )}
-          </FormField>
+              </p>
+            </div>
+          )}
 
           {isEditing ? (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -375,33 +385,42 @@ export default function ExpenseDetails() {
             </div>
           ) : (
             <div className="animate-in fade-in duration-500">
-              <div className="grid grid-cols-2 gap-3">
-                <SpecItem 
-                  icon={Users} 
-                  label={t('expenses.paidBy')} 
-                  value={expense.paid_by_profile_id === profileId
-                    ? t('common.meWithName', { name: expense.paid_by_profile?.name ?? t('common.me') })
-                    : expense.paid_by_profile?.name || ''} 
-                />
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 <SpecItem 
                   icon={Tag} 
                   label={t('expenses.category')} 
                   value={categoryLabel} 
                 />
                 <SpecItem 
-                  icon={Calendar} 
-                  label={t('expenses.date')} 
-                  value={new Date(`${expense.expense_date}T12:00:00`).toLocaleDateString(i18n.language, {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })} 
-                />
-                <SpecItem 
                   icon={Banknote} 
                   label={t('expenses.splitTitle')} 
                   value={t('expenses.splitShared')} 
                 />
+              </div>
+
+              {/* Paid By Card */}
+              <div className="bg-surface-1/40 border border-border-subtle rounded-2xl p-6 mb-10">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-surface-2/40 block mb-1">
+                      {t('expenses.paidBy')}
+                    </span>
+                    <h3 className="text-xl font-black text-surface-2">
+                      {expense.paid_by_profile_id === profileId
+                        ? t('common.meWithName', { name: expense.paid_by_profile?.name ?? t('common.me') })
+                        : expense.paid_by_profile?.name || ''}
+                    </h3>
+                  </div>
+                  <div className="w-10 h-10 rounded-full border-4 border-surface-1 overflow-hidden bg-primary/10">
+                    {expense.paid_by_profile?.avatar_url ? (
+                      <img src={expense.paid_by_profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-bold text-primary text-xs">
+                        {expense.paid_by_profile?.name?.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
