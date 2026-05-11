@@ -46,7 +46,7 @@ import { TaskDetailsSearch } from '@/src/router';
 function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
   return (
     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
-      <div className="flex items-center gap-1.5 opacity-80">
+      <div className="flex items-center gap-1.5 opacity-40">
         <Icon size={14} className={colorClass} />
         <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
       </div>
