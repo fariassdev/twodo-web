@@ -19,6 +19,7 @@ import { cn } from '../../utils';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
+import { ContextMenu } from '../ui/ContextMenu/ContextMenu';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -26,63 +27,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-interface FilterItemProps {
-  label: string;
-  description: string;
-  icon: string;
-  isActive: boolean;
-  onClick: () => void;
-  activeColor: string;
-  disabled?: boolean;
-  className?: string;
-}
 
-function FilterItem({
-  label,
-  description,
-  icon,
-  isActive,
-  onClick,
-  activeColor,
-  disabled,
-  className,
-}: FilterItemProps) {
-  return (
-    <button
-      className={cn(
-        'group flex w-full items-start gap-3 px-4 py-3 text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
-        isActive ? 'bg-primary/5' : 'hover:bg-hover',
-        className
-      )}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      <div className={cn(
-        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all',
-        isActive ? cn('bg-surface-1 shadow-sm', activeColor) : 'bg-surface-2/5 text-surface-2/40'
-      )}>
-        <span className={cn('material-symbols-outlined text-[20px]', isActive && 'filled-icon')}>{icon}</span>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <span className={cn('text-sm font-bold transition-colors', isActive ? 'text-surface-2' : 'text-surface-2/70')}>
-          {label}
-        </span>
-        <span className="text-[11px] leading-tight text-surface-2/40">
-          {description}
-        </span>
-      </div>
-      <div className="ml-auto flex items-center self-center pl-2">
-        <div className={cn(
-          'h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center',
-          isActive ? 'border-primary bg-primary' : 'border-surface-2/20'
-        )}>
-          {isActive && <span className="material-symbols-outlined text-[14px] font-bold text-background-dark">check</span>}
-        </div>
-      </div>
-    </button>
-  );
-}
 
 export default function Calendar() {
   const { t, i18n } = useTranslation();
@@ -103,8 +48,6 @@ export default function Calendar() {
   const [isSheetDragging, setIsSheetDragging] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const calendarRef = useRef<HTMLDivElement>(null);
   const [calendarHeight, setCalendarHeight] = useState(480);
 
@@ -392,68 +335,60 @@ export default function Calendar() {
       <PageHeader
         title={t('calendar.title')}
         subtitle={t('nav.calendar')}
-        rightMenu={{
-          ariaLabel: t('calendar.viewSettings'),
-          closeAriaLabel: t('topBar.closeMenu'),
-          open: menuOpen,
-          onOpenChange: setMenuOpen,
-          menuClassName: "w-72",
-          items: [],
-          children: (
-            <div className="flex flex-col gap-1 pb-1">
-              <div className="px-4 py-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-surface-2/30">
-                  {t('calendar.viewSettings')}
-                </span>
-              </div>
-
-              <FilterItem
-                activeColor="text-primary"
-                description={t('calendar.showTasksDesc')}
-                icon="task_alt"
-                isActive={showTasks}
-                label={t('calendar.showTasks')}
-                onClick={() => {
-                  const newValue = !showTasks;
-                  setShowTasks(newValue);
-                  if (!newValue) {
-                    setShowDailyTasks(false);
-                  }
-                }}
-              />
-
-              <FilterItem
-                activeColor="text-primary"
-                description={t('calendar.showDailyTasksDesc')}
-                disabled={!showTasks}
-                icon="cached"
-                isActive={showDailyTasks}
-                label={t('calendar.showDailyTasks')}
-                onClick={() => setShowDailyTasks(!showDailyTasks)}
-              />
-
-              <FilterItem
-                activeColor="text-primary"
-                description={t('calendar.showEventsDesc')}
-                icon="calendar_today"
-                isActive={showEvents}
-                label={t('calendar.showEvents')}
-                onClick={() => setShowEvents(!showEvents)}
-              />
-
-              <div className="mx-4 my-2 h-px bg-border-subtle/50" />
-
-              <FilterItem
-                activeColor="text-primary"
-                description={t('calendar.showDeletedDesc')}
-                icon="history_toggle_off"
-                isActive={showDeleted}
-                label={t('calendar.showDeleted')}
-                onClick={() => setShowDeleted(!showDeleted)}
-              />
-            </div>
-          ),
-        }}
+        rightSlot={
+          <ContextMenu
+            ariaLabel={t('calendar.viewSettings')}
+            menuClassName="w-72"
+            items={[
+              { type: 'header', id: 'h1', label: t('calendar.viewSettings') },
+              {
+                type: 'checkbox',
+                id: 'showTasks',
+                label: t('calendar.showTasks'),
+                description: t('calendar.showTasksDesc'),
+                icon: 'task_alt',
+                checked: showTasks,
+                closeOnClick: false,
+                onCheckedChange: (checked) => {
+                  setShowTasks(checked);
+                  if (!checked) setShowDailyTasks(false);
+                }
+              },
+              {
+                type: 'checkbox',
+                id: 'showDailyTasks',
+                label: t('calendar.showDailyTasks'),
+                description: t('calendar.showDailyTasksDesc'),
+                icon: 'cached',
+                checked: showDailyTasks,
+                disabled: !showTasks,
+                closeOnClick: false,
+                onCheckedChange: setShowDailyTasks
+              },
+              {
+                type: 'checkbox',
+                id: 'showEvents',
+                label: t('calendar.showEvents'),
+                description: t('calendar.showEventsDesc'),
+                icon: 'calendar_today',
+                checked: showEvents,
+                closeOnClick: false,
+                onCheckedChange: setShowEvents
+              },
+              { type: 'divider', id: 'd1' },
+              {
+                type: 'checkbox',
+                id: 'showDeleted',
+                label: t('calendar.showDeleted'),
+                description: t('calendar.showDeletedDesc'),
+                icon: 'history_toggle_off',
+                checked: showDeleted,
+                closeOnClick: false,
+                onCheckedChange: setShowDeleted
+              }
+            ]}
+          />
+        }
       />
 
       <div className="flex items-center justify-between px-6 py-2 max-w-md mx-auto w-full">
@@ -515,9 +450,6 @@ export default function Calendar() {
       <div className="fixed inset-x-0 bottom-[66px] z-20 pointer-events-none">
         <div 
           className="mx-auto w-full max-w-md pointer-events-auto"
-          onPointerDown={() => {
-            if (menuOpen) setMenuOpen(false);
-          }}
         >
           <div
             className={`rounded-t-2xl border border-border-subtle bg-surface-1 transition-[height] ${isSheetDragging ? 'duration-75' : 'duration-250'} ease-out`}

@@ -40,6 +40,7 @@ import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
+import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 
 
 
@@ -79,7 +80,6 @@ export default function TaskDetails() {
   const isOnline = useOnlineStatus();
   const { from } = useSearch({ strict: false }) as Partial<TaskDetailsSearch>;
   const { taskId } = useParams({ strict: false }) as { taskId: string };
-  const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -237,23 +237,29 @@ export default function TaskDetails() {
         title={t('taskDetails.taskDetails')}
         subtitle={t('taskDetails.tasks')}
         backAction={{ onClick: handleBack }}
-        rightMenu={!task.deleted_at ? {
-          ariaLabel: t('topBar.openMenu'),
-          closeAriaLabel: t('topBar.closeMenu'),
-          open: menuOpen,
-          onOpenChange: setMenuOpen,
-          items: [
-            { id: 'edit', icon: 'edit', label: t('taskDetails.edit'), onClick: () => navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } }) },
-            { 
-              id: 'delete', 
-              icon: 'delete_outline', 
-              label: t('taskDetails.delete'), 
-              danger: true, 
-              separatorBefore: true,
-              onClick: handleDeleteClick,
-            },
-          ],
-        } : undefined}
+        rightSlot={!task.deleted_at ? (
+          <ContextMenu
+            ariaLabel={t('topBar.openMenu')}
+            items={[
+              { 
+                type: 'action', 
+                id: 'edit', 
+                icon: 'edit', 
+                label: t('taskDetails.edit'), 
+                onClick: () => navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } }) 
+              },
+              { type: 'divider', id: 'div1' },
+              { 
+                type: 'action',
+                id: 'delete', 
+                icon: 'delete_outline', 
+                label: t('taskDetails.delete'), 
+                danger: true, 
+                onClick: handleDeleteClick,
+              },
+            ]}
+          />
+        ) : undefined}
       />
 
       <main className="relative flex-1 px-6 pb-24 overflow-x-hidden">
