@@ -217,8 +217,15 @@ export default function ExpenseDetails() {
         )}
       />
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-12 pt-6">
-        <main className="mx-auto max-w-md">
+      <div className="relative flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-6 pb-12 pt-6">
+        {!isEditing && (
+          <div className="absolute top-[-20px] right-[-40px] opacity-[0.03] pointer-events-none select-none z-0 -rotate-12">
+            <span className="material-symbols-outlined text-[320px] font-light">
+              {expense.category?.icon || 'payments'}
+            </span>
+          </div>
+        )}
+        <main className="relative z-10 mx-auto max-w-md">
           {actionError ? <ErrorBanner className="mb-6" message={actionError} /> : null}
 
           {/* Hero Section (View/Edit) */}
@@ -367,15 +374,8 @@ export default function ExpenseDetails() {
               </FormField>
             </div>
           ) : (
-            <div className="relative animate-in fade-in duration-500">
-              {/* Category Hero Background Icon */}
-              <div className="absolute top-[-60px] right-[-40px] opacity-[0.03] pointer-events-none select-none z-0 -rotate-12">
-                <span className="material-symbols-outlined text-[320px] font-light">
-                  {expense.category?.icon || 'payments'}
-                </span>
-              </div>
-
-              <div className="relative z-10 grid grid-cols-2 gap-3">
+            <div className="animate-in fade-in duration-500">
+              <div className="grid grid-cols-2 gap-3">
                 <SpecItem 
                   icon={Users} 
                   label={t('expenses.paidBy')} 

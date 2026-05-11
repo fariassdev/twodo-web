@@ -245,7 +245,7 @@ export default function TaskDetails() {
                 type: 'action', 
                 id: 'edit', 
                 icon: 'edit', 
-                label: t('taskDetails.edit'), 
+                label: t('cta.edit'), 
                 onClick: () => navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } }) 
               },
               { type: 'divider', id: 'div1' },
@@ -253,7 +253,7 @@ export default function TaskDetails() {
                 type: 'action',
                 id: 'delete', 
                 icon: 'delete_outline', 
-                label: t('taskDetails.delete'), 
+                label: t('cta.delete'), 
                 danger: true, 
                 onClick: handleDeleteClick,
               },
