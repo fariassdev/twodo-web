@@ -9,6 +9,24 @@ import {
   useTaskByIdQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
+import { 
+  Trash2, 
+  CookingPot, 
+  ShoppingBasket, 
+  Shirt, 
+  Star,
+  Dumbbell,
+  Clock,
+  Repeat,
+  History,
+  CheckCircle2,
+  RefreshCw,
+  Heart,
+  SquarePen,
+  CalendarHeart,
+  Toilet,
+  Sparkles,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import DataStatusBanner from '../../ui/DataStatusBanner';
@@ -24,11 +42,11 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 
 
 
-function SpecItem({ icon, label, value, colorClass = "text-primary" }: { icon: string, label: string, value: string, colorClass?: string }) {
+function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
   return (
     <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
-      <div className="flex items-center gap-1.5 opacity-40">
-        <span className={`material-symbols-outlined text-[14px] ${colorClass}`}>{icon}</span>
+      <div className="flex items-center gap-1.5 opacity-80">
+        <Icon size={14} className={colorClass} />
         <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
       </div>
       <span className="text-sm font-bold text-surface-2 truncate">{value}</span>
@@ -36,14 +54,14 @@ function SpecItem({ icon, label, value, colorClass = "text-primary" }: { icon: s
   );
 }
 
-const categoryIcons: Record<string, string> = {
-  trash: 'delete_outline',
-  cleaning: 'cleaning_services',
-  bathroom: 'bathtub',
-  kitchen: 'skillet',
-  shopping: 'shopping_basket',
-  laundry: 'local_laundry_service',
-  other: 'extension',
+const categoryIcons: Record<string, any> = {
+  trash: Trash2,
+  cleaning: Sparkles,
+  bathroom: Toilet,
+  kitchen: CookingPot,
+  shopping: ShoppingBasket,
+  laundry: Shirt,
+  other: CalendarHeart,
 };
 
 const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'neutral'> = {
@@ -187,6 +205,8 @@ export default function TaskDetails() {
 
 
 
+  const CategoryIcon = categoryIcons[task.category || 'other'];
+
   return (
     <div className="flex flex-col min-h-screen bg-background-light overflow-hidden">
       <Modal open={deleteModalOpen} overlayAriaLabel={t('cta.cancel')} onClose={() => setDeleteModalOpen(false)}>
@@ -216,7 +236,7 @@ export default function TaskDetails() {
             { id: 'edit', icon: 'edit', label: t('taskDetails.edit'), onClick: () => navigate({ to: '/task/$taskId/edit', params: { taskId: task.id } }) },
             { 
               id: 'delete', 
-              icon: 'delete', 
+              icon: 'delete_outline', 
               label: t('taskDetails.delete'), 
               danger: true, 
               separatorBefore: true,
@@ -228,8 +248,8 @@ export default function TaskDetails() {
 
       <main className="relative flex-1 px-6 pb-24">
         {/* Category Hero Background Icon */}
-        <div className="absolute top-[-20px] right-[-40px] opacity-[0.05] pointer-events-none select-none z-0 -rotate-12">
-          <span className="material-symbols-outlined text-[320px] leading-none">{categoryIcons[task.category || 'other']}</span>
+        <div className="absolute top-[-20px] right-[-40px] opacity-[0.03] pointer-events-none select-none z-0 -rotate-12">
+          <CategoryIcon size={320} strokeWidth={1} />
         </div>
         
         <div className="relative z-10 max-w-md mx-auto w-full">
@@ -258,27 +278,27 @@ export default function TaskDetails() {
 
           <div className="grid grid-cols-2 gap-3 mb-8">
             <SpecItem 
-              icon="stars" 
+              icon={Star} 
               label={t('taskDetails.currentReward')} 
               value={t('taskDetails.pointsReward', { points: task.points })} 
             />
             {task.effort_level && (
               <SpecItem 
-                icon="fitness_center" 
+                icon={Dumbbell} 
                 label={t('taskDetails.effort')} 
                 value={t(`entryForm.effortLevels.${task.effort_level}`)} 
               />
             )}
             {task.time_of_day && (
               <SpecItem 
-                icon="schedule" 
+                icon={Clock} 
                 label={t('taskDetails.time')} 
                 value={t(`entryForm.timeOfDayOptions.${task.time_of_day}`)} 
               />
             )}
             {task.is_recurring && task.frequency && (
               <SpecItem 
-                icon="repeat" 
+                icon={Repeat} 
                 label={t('taskDetails.frequency')} 
                 value={t(`entryForm.frequencyOptions.${task.frequency}`)} 
               />
@@ -314,7 +334,7 @@ export default function TaskDetails() {
             
             {task.assignment_type === 'strict_rotation' && (
               <div className="flex items-center gap-2 py-3 px-4 bg-primary/5 rounded-2xl border border-primary/10">
-                <span className="material-symbols-outlined text-primary text-lg">sync_alt</span>
+                <RefreshCw size={18} className="text-primary" />
                 <span className="text-xs font-bold text-primary/80 tracking-tight uppercase">
                   {t(`taskDetails.assignment.${task.assignment_type.replace(/_([a-z])/g, (_, p1) => p1.toUpperCase())}`)}
                 </span>
@@ -326,7 +346,7 @@ export default function TaskDetails() {
             <div className="relative mb-10 group">
               <div className="absolute -left-2 -top-2 w-10 h-10 bg-primary/20 rounded-full blur-xl animate-pulse" />
               <div className="relative bg-primary/5 p-6 rounded-3xl border-2 border-dashed border-primary/20">
-                <span className="material-symbols-outlined text-primary text-2xl mb-2 filled-icon">favorite</span>
+                <Heart size={24} className="text-primary mb-2 fill-primary/20" />
                 <p className="italic font-medium text-primary text-lg leading-relaxed">"{loveNote.content}"</p>
               </div>
             </div>
@@ -344,7 +364,7 @@ export default function TaskDetails() {
                     onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
                     disabled={acting}
                   >
-                    <span className="material-symbols-outlined font-bold group-active:scale-125 transition-transform">check_circle</span>
+                    <CheckCircle2 size={24} className="group-active:scale-125 transition-transform" />
                     {t('taskDetails.markCompleted')}
                   </Button>
                   <Button 
@@ -354,7 +374,7 @@ export default function TaskDetails() {
                     disabled={acting}
                     aria-label={t('taskDetails.postpone')}
                   >
-                    <span className="material-symbols-outlined">update</span>
+                    <History size={24} />
                   </Button>
                 </>
               )}
@@ -365,7 +385,7 @@ export default function TaskDetails() {
                   className="h-14 rounded-2xl" 
                   onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
                 >
-                  <span className="material-symbols-outlined">edit_note</span>
+                  <SquarePen size={24} />
                   {t('taskCompletion.editAssignment')}
                 </Button>
               )}
