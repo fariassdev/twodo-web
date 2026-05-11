@@ -262,7 +262,7 @@ export async function getTodaysTasks(householdId: string): Promise<Task[]> {
     .eq('household_id', householdId)
     .eq('date', today)
     .eq('type', 'task')
-    .in('status', ['pending', 'postponed', 'completed'])
+    .in('status', ['pending', 'completed'])
     .is('deleted_at', null)
     .order('priority', { ascending: true });
 
@@ -279,7 +279,7 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
     .eq('household_id', householdId)
     .eq('type', 'task')
     .lt('date', today)
-    .or(`status.in.(pending,postponed,overdue),and(status.eq.completed,updated_at.gte.${today})`)
+    .or(`status.in.(pending,overdue),and(status.eq.completed,updated_at.gte.${today})`)
     .is('deleted_at', null)
     .order('date', { ascending: true });
 
@@ -288,7 +288,7 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
   const filteredData = (data ?? []).filter(t => t.frequency !== 'daily');
 
   // Mark overdue tasks lazily
-  const toMarkOverdue = filteredData.filter(t => t.status === 'pending' || t.status === 'postponed');
+  const toMarkOverdue = filteredData.filter(t => t.status === 'pending');
   if (toMarkOverdue.length > 0) {
     const ids = toMarkOverdue.map(t => t.id);
     await supabase
@@ -341,7 +341,7 @@ export async function expireDailyTasks(householdId: string): Promise<void> {
     .eq('type', 'task')
     .eq('frequency', 'daily')
     .lt('date', today)
-    .in('status', ['pending', 'postponed'])
+    .in('status', ['pending'])
     .is('deleted_at', null);
 
   if (error) throw error;
@@ -790,19 +790,6 @@ export async function updateTaskCompletionAssignment(
   if (updateError) throw updateError;
 
   await replaceTaskCompletions(taskId, scope.householdId, task.points, assignment.recipientIds);
-}
-
-export async function postponeTask(taskId: string, householdId: string): Promise<void> {
-  const { error } = await supabase
-    .from('tasks')
-    .update({
-      status: 'postponed',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', taskId)
-    .eq('household_id', householdId);
-
-  if (error) throw error;
 }
 
 // Shopping

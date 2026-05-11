@@ -442,7 +442,6 @@
     "status": {
       "pending": "Pendiente",
       "completed": "Completada",
-      "postponed": "Pospuesta",
       "expired": "Expirada",
       "overdue": "Atrasada"
     },
@@ -467,7 +466,6 @@
     "assignedToTitle": "Asignado a",
     "processing": "Procesando...",
     "markCompleted": "Marcar como completada",
-    "postpone": "Posponer",
     "effort": "Esfuerzo",
     "time": "Horario",
     "frequency": "Frecuencia",

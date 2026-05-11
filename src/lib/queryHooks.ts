@@ -52,7 +52,6 @@ import {
   getUpcomingTasks,
   getWeeklyPulse,
   sendEmailInvite,
-  postponeTask,
   togglePurchased,
   updateTaskCompletionAssignment,
   updateProfile,
@@ -111,7 +110,7 @@ type LinkedScope = {
   profileId: string;
 };
 
-type TaskMutationType = 'complete' | 'postpone' | 'single' | 'series';
+type TaskMutationType = 'complete' | 'single' | 'series';
 
 const signedOutContext: AuthContext = {
   status: 'signed_out',
@@ -243,7 +242,7 @@ async function invalidateTaskMutationGraph(
     ]);
   }
 
-  if (type === 'complete' || type === 'postpone') {
+  if (type === 'complete') {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.overdue(householdId) }),
@@ -1169,90 +1168,6 @@ export function useUpdateTaskCompletionAssignmentMutation() {
           queryKey: queryKeys.taskDetail.completions(context.taskId, context.householdId),
         }),
       ]);
-    },
-  });
-}
-
-export function usePostponeTaskMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (taskId: string) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
-      return postponeTask(taskId, householdId);
-    },
-    onMutate: async (taskId) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
-
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.today(householdId) });
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.detail(taskId, householdId) });
-      await queryClient.cancelQueries({ queryKey: queryKeys.taskDetail.byId(taskId, householdId) });
-
-      const previousToday = queryClient.getQueryData<Task[]>(queryKeys.tasks.today(householdId));
-      const previousDetail = queryClient.getQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId));
-      const previousTaskDetail = queryClient.getQueryData<Task | null>(
-        queryKeys.taskDetail.byId(taskId, householdId),
-      );
-
-      const taskDate =
-        previousDetail?.date ??
-        previousTaskDetail?.date ??
-        findTaskInCache(queryClient, householdId, taskId)?.date ??
-        null;
-
-      queryClient.setQueryData<Task[]>(queryKeys.tasks.today(householdId), (current) =>
-        (current ?? []).map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                status: 'postponed',
-              }
-            : task,
-        ),
-      );
-
-      queryClient.setQueryData<Task | null>(queryKeys.tasks.detail(taskId, householdId), (current) =>
-        current
-          ? {
-              ...current,
-              status: 'postponed',
-            }
-          : current,
-      );
-
-      queryClient.setQueryData<Task | null>(queryKeys.taskDetail.byId(taskId, householdId), (current) =>
-        current
-          ? {
-              ...current,
-              status: 'postponed',
-            }
-          : current,
-      );
-
-      return { householdId, taskDate, previousToday, previousDetail, previousTaskDetail };
-    },
-    onError: (_error, taskId, context) => {
-      if (!context) return;
-
-      queryClient.setQueryData(queryKeys.tasks.today(context.householdId), context.previousToday);
-      queryClient.setQueryData(
-        queryKeys.tasks.detail(taskId, context.householdId),
-        context.previousDetail,
-      );
-      queryClient.setQueryData(
-        queryKeys.taskDetail.byId(taskId, context.householdId),
-        context.previousTaskDetail,
-      );
-    },
-    onSuccess: async (_data, taskId, context) => {
-      if (!context) return;
-
-      await invalidateTaskMutationGraph(queryClient, {
-        householdId: context.householdId,
-        type: 'postpone',
-        taskId,
-        taskDate: context.taskDate,
-      });
     },
   });
 }

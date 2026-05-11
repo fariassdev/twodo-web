@@ -443,7 +443,6 @@
     "status": {
       "pending": "Pending",
       "completed": "Completed",
-      "postponed": "Postponed",
       "expired": "Expired",
       "overdue": "Overdue"
     },
@@ -470,7 +469,6 @@
     "assignedToTitle": "Assigned to",
     "processing": "Processing...",
     "markCompleted": "Mark as completed",
-    "postpone": "Postpone",
     "effort": "Effort",
     "time": "Schedule",
     "frequency": "Frequency",
