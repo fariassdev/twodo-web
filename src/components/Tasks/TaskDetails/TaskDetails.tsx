@@ -38,7 +38,7 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import { useNavigate, useParams, useRouter, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
 
 
