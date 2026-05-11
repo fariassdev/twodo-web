@@ -98,7 +98,7 @@ export function ContextMenu({ items, trigger, ariaLabel = 'Open menu', menuClass
             }
 
             if (item.type === 'divider') {
-              return <div key={item.id} className="mx-4 my-2 h-px bg-border-subtle/50" />;
+              return <div key={item.id} className="mx-1.5 h-px bg-border-subtle/50" />;
             }
 
             const isCheckbox = item.type === 'checkbox';
