@@ -130,7 +130,7 @@ export default function TodayTasksWidget() {
         as="div"
         completed={isCompleted}
         key={task.id}
-        onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+        onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id }, search: { from: 'dashboard' } })}
         className="mb-3 shadow-sm"
         interactive
       >

@@ -361,6 +361,10 @@ export interface ExpenseDetailsSearch extends ExpensesListSearch {
   from?: 'dashboard' | 'list';
 }
 
+export interface TaskDetailsSearch {
+  from?: 'dashboard' | 'calendar';
+}
+
 function readSearchValue(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmedValue = value.trim();
@@ -422,6 +426,9 @@ export const taskAssignmentRoute = createRoute({
 export const taskDetailsRoute = createRoute({
   getParentRoute: () => fullscreenLayoutRoute,
   path: '/task/$taskId',
+  validateSearch: (search: Record<string, unknown>): TaskDetailsSearch => ({
+    from: (search?.from === 'dashboard' || search?.from === 'calendar') ? (search.from as TaskDetailsSearch['from']) : undefined,
+  }),
   component: () => (
     <RouteShell sectionName="task-details">
       <TaskDetails />

@@ -69,7 +69,7 @@ export default function UpcomingTasksWidget() {
                     <ListRow
                       as="div"
                       key={task.id}
-                      onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id } })}
+                      onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id }, search: { from: 'dashboard' } })}
                       className="justify-between overflow-hidden p-4 hover:bg-hover transition-colors shadow-sm"
                       interactive
                       variant="default"

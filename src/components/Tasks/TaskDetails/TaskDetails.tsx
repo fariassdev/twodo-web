@@ -38,7 +38,8 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import Modal from '../../ui/Modal';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
+import { useNavigate, useParams, useRouter, useSearch } from '@tanstack/react-router';
+import { TaskDetailsSearch } from '@/src/router';
 
 
 
@@ -75,8 +76,8 @@ const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger'
 export default function TaskDetails() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const router = useRouter();
   const isOnline = useOnlineStatus();
+  const { from } = useSearch({ strict: false }) as Partial<TaskDetailsSearch>;
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -204,9 +205,15 @@ export default function TaskDetails() {
     );
   }
 
-
-
   const CategoryIcon = categoryIcons[task.category || 'other'];
+
+  const handleBack = () => {
+    if (from === 'calendar') {
+      return navigate({ to: '/calendar' });
+    }
+    
+    return navigate({ to: '/' });
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background-light">
@@ -228,7 +235,7 @@ export default function TaskDetails() {
       <PageHeader
         title={t('taskDetails.taskDetails')}
         subtitle={t('taskDetails.tasks')}
-        backAction={{ onClick: () => router.history.back() }}
+        backAction={{ onClick: handleBack }}
         rightMenu={!task.deleted_at ? {
           ariaLabel: t('topBar.openMenu'),
           closeAriaLabel: t('topBar.closeMenu'),
