@@ -3,7 +3,8 @@ import { subDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
+import { useDashboardTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
+import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
 import EmptyTodayState from './EmptyTodayState';
@@ -18,8 +19,7 @@ const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const todaysTasksQuery = useTodaysTasksQuery();
-  const overdueTasksQuery = useOverdueTasksQuery();
+  const dashboardTasksQuery = useDashboardTasksQuery();
   const taskCountQuery = useTaskCountQuery();
   const completeTaskMutation = useCompleteTaskMutation();
   const { profileId } = useAuthScope();
@@ -28,10 +28,23 @@ export default function TodayTasksWidget() {
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
   const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
-  const tasks = todaysTasksQuery.data ?? [];
-  const allOverdueTasks = overdueTasksQuery.data ?? [];
-
-  const overdueTasks = overdueTasksQuery.data ?? [];
+  const todayStr = getLocalDateString();
+  const allTasks = dashboardTasksQuery.data ?? [];
+  
+  const tasks = useMemo(() => 
+    allTasks.filter(t => t.date === todayStr && t.type === 'task'), 
+    [allTasks, todayStr]
+  );
+  
+  const overdueTasks = useMemo(() => 
+    allTasks.filter(t => 
+      t.date && 
+      t.date < todayStr && 
+      t.type === 'task' && 
+      (t.status === 'past_due' || (t.status === 'completed' && t.updated_at >= todayStr))
+    ), 
+    [allTasks, todayStr]
+  );
 
   const sortedOverdueTasks = useMemo(() => {
     return [...overdueTasks].sort((a, b) => {
@@ -75,7 +88,7 @@ export default function TodayTasksWidget() {
   const handleComplete = async (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
     try {
-      const task = tasks.find((t) => t.id === taskId) ?? allOverdueTasks.find((t) => t.id === taskId);
+      const task = allTasks.find((t) => t.id === taskId);
       
       // If it's an individual task assigned to someone else, go to assignment screen
       if (task && (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') && task.assigned_to !== profileId) {

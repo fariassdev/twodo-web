@@ -8,6 +8,7 @@ import {
   type QueryKey,
 } from '@tanstack/react-query';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { subDays, addDays } from 'date-fns';
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   acceptHouseholdInvite,
@@ -35,7 +36,7 @@ import {
   getLatestLoveNote,
   getLoveNoteForTask,
   getOrCreateHouseholdInvite,
-  getOverdueTasks,
+  getTasksInRange,
   getBalanceScore,
   getPointsBreakdown,
   getProfileById,
@@ -46,9 +47,6 @@ import {
   getTaskCompletions,
   getTaskCount,
   getTaskCatalog,
-  getTasksForMonth,
-  getTodaysTasks,
-  getUpcomingTasks,
   getWeeklyPulse,
   sendEmailInvite,
   togglePurchased,
@@ -97,7 +95,8 @@ import type {
   TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
-import type { Task } from '../models/Task';
+import { getLocalDateString } from '../utils';
+import { normalizeTask, type Task } from '../models/Task';
 
 type AuthCredentials = {
   email: string;
@@ -234,18 +233,8 @@ async function invalidateTaskMutationGraph(
     return;
   }
 
-  if (type === 'single') {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.upcoming(householdId) }),
-    ]);
-  }
-
-  if (type === 'complete') {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.today(householdId) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.overdue(householdId) }),
-    ]);
+  if (type === 'single' || type === 'complete') {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.dashboard(householdId) });
   }
 
   if (taskId) {
@@ -611,22 +600,24 @@ export function useProfileQuery(profileId: string | undefined) {
   });
 }
 
-export function useTodaysTasksQuery() {
+export function useDashboardTasksQuery() {
   const householdId = useCurrentHouseholdId();
 
   return useQuery<Task[]>({
-    queryKey: householdId ? queryKeys.tasks.today(householdId) : disabledKey('tasks', 'today'),
-    queryFn: () => getTodaysTasks(householdId!),
-    enabled: Boolean(householdId),
-  });
-}
+    queryKey: householdId ? queryKeys.tasks.dashboard(householdId) : disabledKey('tasks', 'dashboard'),
+    queryFn: async () => {
+      const today = new Date();
+      const startDate = getLocalDateString(subDays(today, 7));
+      const endDate = getLocalDateString(addDays(today, 1));
 
-export function useOverdueTasksQuery() {
-  const householdId = useCurrentHouseholdId();
+      const rawTasks = await getTasksInRange({
+        householdId: householdId!,
+        startDate,
+        endDate,
+      });
 
-  return useQuery<Task[]>({
-    queryKey: householdId ? queryKeys.tasks.overdue(householdId) : disabledKey('tasks', 'overdue'),
-    queryFn: () => getOverdueTasks(householdId as string),
+      return rawTasks.map(task => normalizeTask(task));
+    },
     enabled: Boolean(householdId),
   });
 }
@@ -649,15 +640,6 @@ export function useTaskCountQuery() {
   });
 }
 
-export function useUpcomingTasksQuery(daysLimit: number = 7) {
-  const householdId = useCurrentHouseholdId();
-
-  return useQuery<Task[]>({
-    queryKey: householdId ? queryKeys.tasks.upcoming(householdId, daysLimit) : disabledKey('tasks', 'upcoming'),
-    queryFn: () => getUpcomingTasks(householdId as string, daysLimit),
-    enabled: Boolean(householdId),
-  });
-}
 
 export function useTaskByIdQuery(taskId: string | undefined) {
   const queryClient = useQueryClient();
@@ -668,7 +650,10 @@ export function useTaskByIdQuery(taskId: string | undefined) {
       taskId && householdId
         ? queryKeys.tasks.detail(taskId, householdId)
         : ['tasks', 'detail', 'disabled', taskId ?? 'none'],
-    queryFn: () => getTaskById(taskId as string, householdId as string),
+    queryFn: async () => {
+      const rawTask = await getTaskById(taskId as string, householdId as string);
+      return rawTask ? normalizeTask(rawTask) : null;
+    },
     enabled: Boolean(taskId && householdId),
     initialData:
       taskId && householdId
@@ -698,7 +683,29 @@ export function useTasksForMonthQuery(year: number, month: number, includeDelete
       householdId
         ? queryKeys.calendar.month(year, month, includeDeleted, householdId)
         : ['calendar', 'month', 'disabled', year, month, includeDeleted],
-    queryFn: () => getTasksForMonth(year, month, includeDeleted, householdId as string),
+    queryFn: async () => {
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const endDate = month === 11
+        ? `${year + 1}-01-01`
+        : `${year}-${String(month + 2).padStart(2, '0')}-01`;
+
+      // Adjust endDate to be the last day of the month for lte or keep lt logic
+      // getTasksInRange uses lte, so we should probably use the actual last day
+      // or just adjust endDate to be the last day.
+      // Current lt logic: lt('date', '2026-06-01') is same as lte('date', '2026-05-31')
+      
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const actualEndDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      const rawTasks = await getTasksInRange({
+        householdId: householdId!,
+        startDate,
+        endDate: actualEndDate,
+        includeDeleted,
+      });
+
+      return rawTasks.map(task => normalizeTask(task));
+    },
     enabled: Boolean(householdId),
     placeholderData: keepPreviousData,
   });
@@ -712,9 +719,21 @@ export function usePrefetchMonthTasks() {
     (year: number, month: number, includeDeleted: boolean) => {
       if (!householdId) return Promise.resolve(undefined);
 
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const actualEndDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
       return queryClient.prefetchQuery({
         queryKey: queryKeys.calendar.month(year, month, includeDeleted, householdId),
-        queryFn: () => getTasksForMonth(year, month, includeDeleted, householdId),
+        queryFn: async () => {
+          const rawTasks = await getTasksInRange({
+            householdId,
+            startDate,
+            endDate: actualEndDate,
+            includeDeleted,
+          });
+          return rawTasks.map(task => normalizeTask(task));
+        },
       });
     },
     [householdId, queryClient],

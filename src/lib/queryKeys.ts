@@ -14,6 +14,7 @@ export const queryKeys = {
     today: (householdId: string) => ['tasks', 'today', householdId] as const,
     overdue: (householdId: string) => ['tasks', 'overdue', householdId] as const,
     upcoming: (householdId: string, daysLimit?: number) => ['tasks', 'upcoming', householdId, daysLimit] as const,
+    dashboard: (householdId: string) => ['tasks', 'dashboard', householdId] as const,
     count: (householdId: string) => ['tasks', 'count', householdId] as const,
     month: (year: number, month: number, includeDeleted: boolean, householdId: string) =>
       ['tasks', 'month', year, month, includeDeleted ? 'withDeleted' : 'active', householdId] as const,

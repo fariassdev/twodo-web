@@ -253,66 +253,33 @@ export async function getTaskCount(householdId: string): Promise<number> {
   return count ?? 0;
 }
 
-export async function getTodaysTasks(householdId: string): Promise<Task[]> {
-  const today = getLocalDateString();
+export async function getTasksInRange(params: {
+  householdId: string;
+  startDate: string;
+  endDate: string;
+  includeDeleted?: boolean;
+}): Promise<Task[]> {
+  const { householdId, startDate, endDate, includeDeleted = false } = params;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('tasks')
     .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
-    .eq('date', today)
-    .eq('type', 'task')
-    .in('status', ['pending', 'completed'])
-    .is('deleted_at', null)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true })
+    .order('start_time', { ascending: true })
     .order('priority', { ascending: true });
 
-  if (error) throw error;
-  return (data ?? []).map(task => normalizeTask(task));
-}
+  if (!includeDeleted) {
+    query = query.is('deleted_at', null);
+  }
 
-export async function getOverdueTasks(householdId: string): Promise<Task[]> {
-  const today = getLocalDateString();
-
-  const { data, error } = await supabase
-    .from('tasks')
-    .select(TASK_FULL_QUERY)
-    .eq('household_id', householdId)
-    .eq('type', 'task')
-    .lt('date', today)
-    .or(`status.eq.pending,and(status.eq.completed,updated_at.gte.${today})`)
-    .is('deleted_at', null)
-    .order('date', { ascending: true });
-
-  if (error) throw error;
-
-  return (data ?? [])
-    .map(task => normalizeTask(task))
-    .filter(task => task.status === 'past_due' || (task.status === 'completed' && task.date && task.date < today));
-}
-
-export async function getUpcomingTasks(householdId: string, daysLimit: number = 7): Promise<Task[]> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // start of today
-  const endDate = new Date(today);
-  endDate.setDate(endDate.getDate() + daysLimit);
-
-  const todayStr = getLocalDateString(today);
-  const endDateStr = getLocalDateString(endDate);
-
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(*)')
-    .eq('household_id', householdId)
-    .eq('type', 'task')
-    .eq('status', 'pending')
-    .gte('date', todayStr)
-    .lte('date', endDateStr)
-    .is('deleted_at', null)
-    .order('date', { ascending: true });
-
+  const { data, error } = await query;
   if (error) throw error;
   
-  return (data ?? []).map(task => normalizeTask(task));
+  // Return raw data, normalization will happen in queryHooks
+  return (data ?? []) as unknown as Task[];
 }
 
 
@@ -357,37 +324,9 @@ export async function getTaskById(id: string, householdId: string): Promise<Task
     throw error;
   }
 
-  return task ? normalizeTask(task) : null;
+  return task as unknown as Task | null;
 }
 
-export async function getTasksForMonth(
-  year: number,
-  month: number,
-  includeDeleted = false,
-  householdId: string,
-): Promise<Task[]> {
-  const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-  const endDate = month === 11
-    ? `${year + 1}-01-01`
-    : `${year}-${String(month + 2).padStart(2, '0')}-01`;
-
-  let query = supabase
-    .from('tasks')
-    .select('*')
-    .eq('household_id', householdId)
-    .gte('date', startDate)
-    .lt('date', endDate)
-    .order('date', { ascending: true })
-    .order('start_time', { ascending: true });
-
-  if (!includeDeleted) {
-    query = query.is('deleted_at', null);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data.map(task => normalizeTask(task));
-}
 
 export interface CreateTaskInput {
   title: string;

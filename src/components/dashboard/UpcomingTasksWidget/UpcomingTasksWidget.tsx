@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
-import { useUpcomingTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
+import { useDashboardTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
@@ -15,14 +15,17 @@ export default function UpcomingTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   
-  // Fetch today and tomorrow
-  const { data: upcomingTasks = [], isPending } = useUpcomingTasksQuery(1);
+  // Fetch dashboard tasks (includes today, tomorrow, and past pending)
+  const dashboardTasksQuery = useDashboardTasksQuery();
   const { data: profiles = [] } = useProfilesQuery();
 
   const tomorrowStr = getLocalDateString(addDays(new Date(), 1));
-  const tomorrowTasks = upcomingTasks.filter((task) => task.date === tomorrowStr);
+  const tomorrowTasks = useMemo(() => 
+    (dashboardTasksQuery.data ?? []).filter((task) => task.date === tomorrowStr && task.type === 'task'),
+    [dashboardTasksQuery.data, tomorrowStr]
+  );
 
-  if (isPending || tomorrowTasks.length === 0) return null;
+  if (dashboardTasksQuery.isPending || tomorrowTasks.length === 0) return null;
 
   // Group by moment of the day
   const groups: Record<string, Task[]> = {
