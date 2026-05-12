@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
 import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
-import type { Task } from '../../../lib/types';
+import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
 import EmptyTodayState from './EmptyTodayState';
 import { toast } from '../../ui/Snackbar';
@@ -12,7 +12,6 @@ import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import ListRow from '../../ui/ListRow';
 import SectionHeader from '../../ui/SectionHeader';
-import { getLocalDateString } from '../../../utils';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -32,10 +31,7 @@ export default function TodayTasksWidget() {
   const tasks = todaysTasksQuery.data ?? [];
   const allOverdueTasks = overdueTasksQuery.data ?? [];
 
-  const overdueTasks = useMemo(() => {
-    const sevenDaysAgo = getLocalDateString(subDays(new Date(), 7));
-    return allOverdueTasks.filter(task => task.date && task.date >= sevenDaysAgo);
-  }, [allOverdueTasks]);
+  const overdueTasks = overdueTasksQuery.data ?? [];
 
   const sortedOverdueTasks = useMemo(() => {
     return [...overdueTasks].sort((a, b) => {
@@ -121,6 +117,7 @@ export default function TodayTasksWidget() {
 
   const renderTask = (task: Task) => {
     const isCompleted = task.status === 'completed';
+    const isExpired = task.status === 'expired';
     const showSize = task.effort_level === 'L' || task.effort_level === 'XL';
     const isHighPriority = task.priority === 'high';
     const isTeamWork = task.assignment_type === 'team_work';
@@ -129,6 +126,7 @@ export default function TodayTasksWidget() {
       <ListRow
         as="div"
         completed={isCompleted}
+        disabled={isExpired}
         key={task.id}
         onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id }, search: { from: 'dashboard' } })}
         className="mb-3 shadow-sm"
@@ -146,7 +144,7 @@ export default function TodayTasksWidget() {
               : 'rounded-full border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
-            if (isCompleted) {
+            if (isCompleted || isExpired) {
               e.stopPropagation();
             } else {
               handleComplete(e, task.id);
@@ -160,7 +158,7 @@ export default function TodayTasksWidget() {
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
-            isCompleted ? 'line-through opacity-40' : ''
+            isCompleted || isExpired ? 'line-through opacity-40' : ''
           }`}>
             {task.title}
             {isHighPriority && !isCompleted && (
@@ -244,7 +242,7 @@ export default function TodayTasksWidget() {
                 size="sm"
                 tone="neutral"
               >
-                {overdueTasks.filter(t => t.status !== 'completed').length}
+                {overdueTasks.filter(t => t.status === 'past_due').length}
               </Badge>
               {isPendingExpanded ? (
                 <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />

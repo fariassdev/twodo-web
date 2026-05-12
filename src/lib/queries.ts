@@ -12,10 +12,10 @@ import type {
   Profile,
   ShoppingItem,
   Settlement,
-  Task,
   TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
+import { normalizeTask, type Task } from '../models/Task';
 import { getLocalDateString } from '../utils';
 import { EFFORT_POINTS, type EffortLevel } from '../constants';
 
@@ -267,7 +267,7 @@ export async function getTodaysTasks(householdId: string): Promise<Task[]> {
     .order('priority', { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(task => normalizeTask(task));
 }
 
 export async function getOverdueTasks(householdId: string): Promise<Task[]> {
@@ -279,31 +279,15 @@ export async function getOverdueTasks(householdId: string): Promise<Task[]> {
     .eq('household_id', householdId)
     .eq('type', 'task')
     .lt('date', today)
-    .or(`status.in.(pending,overdue),and(status.eq.completed,updated_at.gte.${today})`)
+    .or(`status.eq.pending,and(status.eq.completed,updated_at.gte.${today})`)
     .is('deleted_at', null)
     .order('date', { ascending: true });
 
   if (error) throw error;
 
-  const filteredData = (data ?? []).filter(t => t.frequency !== 'daily');
-
-  // Mark overdue tasks lazily
-  const toMarkOverdue = filteredData.filter(t => t.status === 'pending');
-  if (toMarkOverdue.length > 0) {
-    const ids = toMarkOverdue.map(t => t.id);
-    await supabase
-      .from('tasks')
-      .update({ status: 'overdue', updated_at: new Date().toISOString() })
-      .in('id', ids)
-      .eq('household_id', householdId);
-
-    // Return with updated status
-    return filteredData.map(t =>
-      ids.includes(t.id) ? { ...t, status: 'overdue' } : t
-    );
-  }
-
-  return filteredData;
+  return (data ?? [])
+    .map(task => normalizeTask(task))
+    .filter(task => task.status === 'past_due' || (task.status === 'completed' && task.date && task.date < today));
 }
 
 export async function getUpcomingTasks(householdId: string, daysLimit: number = 7): Promise<Task[]> {
@@ -320,7 +304,7 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
     .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(*)')
     .eq('household_id', householdId)
     .eq('type', 'task')
-    .neq('status', 'completed')
+    .eq('status', 'pending')
     .gte('date', todayStr)
     .lte('date', endDateStr)
     .is('deleted_at', null)
@@ -328,24 +312,9 @@ export async function getUpcomingTasks(householdId: string, daysLimit: number = 
 
   if (error) throw error;
   
-  return (data ?? []).filter(task => task.frequency !== 'daily');
+  return (data ?? []).map(task => normalizeTask(task));
 }
 
-export async function expireDailyTasks(householdId: string): Promise<void> {
-  const today = getLocalDateString();
-
-  const { error } = await supabase
-    .from('tasks')
-    .update({ status: 'expired', updated_at: new Date().toISOString() })
-    .eq('household_id', householdId)
-    .eq('type', 'task')
-    .eq('frequency', 'daily')
-    .lt('date', today)
-    .in('status', ['pending'])
-    .is('deleted_at', null);
-
-  if (error) throw error;
-}
 
 export async function getTaskCatalog(): Promise<TaskCatalogItem[]> {
   const { data, error } = await supabase
@@ -372,24 +341,23 @@ export async function getUpcomingEvents(householdId: string): Promise<Task[]> {
     .limit(10);
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(task => normalizeTask(task));
 }
 
 export async function getTaskById(id: string, householdId: string): Promise<Task | null> {
-  const { data, error } = await supabase
+  const { data: task, error } = await supabase
     .from('tasks')
     .select(TASK_FULL_QUERY)
     .eq('household_id', householdId)
     .eq('id', id)
-    .maybeSingle()
-    .overrideTypes<Task | null, { merge: false }>();
+    .maybeSingle();
 
   if (error) {
     if (isNotFoundError(error)) return null;
     throw error;
   }
 
-  return data;
+  return task ? normalizeTask(task) : null;
 }
 
 export async function getTasksForMonth(
@@ -418,7 +386,7 @@ export async function getTasksForMonth(
 
   const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+  return data.map(task => normalizeTask(task));
 }
 
 export interface CreateTaskInput {
@@ -585,7 +553,7 @@ export async function createTask(input: CreateTaskInput, scope: MutationScope): 
     ? EFFORT_POINTS[input.effort_level]
     : (input.points ?? 10);
 
-  const { data, error } = await supabase
+  const { data: createdTask, error } = await supabase
     .from('tasks')
     .insert({
       ...input,
@@ -599,7 +567,7 @@ export async function createTask(input: CreateTaskInput, scope: MutationScope): 
     .single();
 
   if (error) throw error;
-  return data;
+  return normalizeTask(createdTask);
 }
 
 export async function createTasks(inputs: CreateTaskInput[], scope: MutationScope): Promise<Task[]> {
@@ -626,13 +594,13 @@ export async function createTasks(inputs: CreateTaskInput[], scope: MutationScop
     .select();
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(task => normalizeTask(task));
 }
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
 
 export async function updateTask(taskId: string, input: UpdateTaskInput, householdId: string): Promise<Task> {
-  const { data, error } = await supabase
+  const { data: updatedTask, error } = await supabase
     .from('tasks')
     .update({
       ...input,
@@ -644,7 +612,7 @@ export async function updateTask(taskId: string, input: UpdateTaskInput, househo
     .single();
 
   if (error) throw error;
-  return data;
+  return normalizeTask(updatedTask);
 }
 
 export async function deleteTask(taskId: string, householdId: string): Promise<void> {

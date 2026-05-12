@@ -1,5 +1,6 @@
 import React from 'react';
-import type { Task, Profile } from '../../../lib/types';
+import type { Profile } from '../../../lib/types';
+import type { Task } from '../../../models/Task';
 
 interface TaskAvatarsProps {
   task: Task;

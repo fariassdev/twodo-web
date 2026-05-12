@@ -444,7 +444,11 @@
       "pending": "Pending",
       "completed": "Completed",
       "expired": "Expired",
-      "overdue": "Overdue"
+      "past_due": "Past due"
+    },
+    "expiration": {
+      "daily": "This task has expired. You can only complete daily tasks from today or yesterday.",
+      "others": "This task has expired. You can only complete tasks from the last 7 days."
     },
     "assignment": {
       "strictRotation": "Strict rotation",

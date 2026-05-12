@@ -19,11 +19,16 @@ const listRowVariants = cva('relative flex items-center gap-4 border p-4 transit
       true: 'border-transparent bg-transparent opacity-60',
       false: '',
     },
+    disabled: {
+      true: 'opacity-40 grayscale pointer-events-none',
+      false: '',
+    },
   },
   defaultVariants: {
     variant: 'default',
     interactive: false,
     completed: false,
+    disabled: false,
   },
 });
 
@@ -38,9 +43,10 @@ export default function ListRow({
   variant,
   interactive,
   completed,
+  disabled,
   ...props
 }: Readonly<ListRowProps>): React.ReactElement {
   const Component = as;
 
-  return <Component className={cn(listRowVariants({ variant, interactive, completed }), className)} {...props} />;
+  return <Component className={cn(listRowVariants({ variant, interactive, completed, disabled }), className)} {...props} />;
 }

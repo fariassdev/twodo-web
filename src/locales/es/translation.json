@@ -443,7 +443,11 @@
       "pending": "Pendiente",
       "completed": "Completada",
       "expired": "Expirada",
-      "overdue": "Atrasada"
+      "past_due": "Atrasada"
+    },
+    "expiration": {
+      "daily": "Esta tarea diaria ha expirado. Solo puedes completar tareas de hoy o ayer.",
+      "others": "Esta tarea ha expirado. Solo puedes completar tareas de los últimos 7 días."
     },
     "assignment": {
       "strictRotation": "Rotación estricta",

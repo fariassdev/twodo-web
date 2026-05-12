@@ -5,7 +5,7 @@ import { addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
 import { useUpcomingTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
-import type { Task } from '../../../lib/types';
+import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
 import ListRow from '../../ui/ListRow';
 import Badge from '../../ui/Badge';

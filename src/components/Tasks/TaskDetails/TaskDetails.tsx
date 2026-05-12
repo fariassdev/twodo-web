@@ -68,7 +68,7 @@ const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger'
   pending: 'primary',
   completed: 'success',
   expired: 'neutral',
-  overdue: 'warning',
+  past_due: 'warning',
 };
 
 export default function TaskDetails() {
@@ -351,6 +351,17 @@ export default function TaskDetails() {
             </div>
           )}
 
+          {task.status === 'expired' && (
+            <div className="mb-10 p-6 rounded-3xl bg-surface-1 border border-border-subtle flex gap-4 items-start shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-surface-2/5 flex items-center justify-center shrink-0">
+                <Clock size={20} className="text-surface-2/40" />
+              </div>
+              <p className="text-sm text-surface-2/60 leading-relaxed font-medium">
+                {t(`taskDetails.expiration.${task.frequency === 'daily' ? 'daily' : 'others'}`)}
+              </p>
+            </div>
+          )}
+
           {actionError && <ErrorBanner className="mb-6" message={actionError} />}
 
           {/* Fixed Bottom Action Bar */}
@@ -360,7 +371,7 @@ export default function TaskDetails() {
                 <Button 
                   className="flex-1 justify-center shadow-button h-14 rounded-2xl group" 
                   onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
-                  disabled={acting}
+                  disabled={acting || task.status === 'expired'}
                 >
                   <CheckCircle2 size={24} className="group-active:scale-125 transition-transform" />
                   {t('taskDetails.markCompleted')}

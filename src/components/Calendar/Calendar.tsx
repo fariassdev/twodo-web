@@ -7,7 +7,8 @@ import {
   useTasksForMonthQuery,
 } from '../../lib/queryHooks';
 import { queryKeys } from '../../lib/queryKeys';
-import type { Profile, Task } from '../../lib/types';
+import type { Profile } from '../../lib/types';
+import type { Task } from '../../models/Task';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
@@ -519,6 +520,14 @@ export default function Calendar() {
                               {task.status === 'completed' ? (
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-success/20 flex items-center justify-center">
                                   <span className="material-symbols-outlined text-success filled-icon text-[24px]">check_circle</span>
+                                </div>
+                              ) : task.status === 'expired' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-surface-2/10 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-surface-2/40 text-[24px]">history</span>
+                                </div>
+                              ) : task.status === 'past_due' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-warning/20 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-warning text-[24px]">history_toggle_off</span>
                                 </div>
                               ) : (
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center">

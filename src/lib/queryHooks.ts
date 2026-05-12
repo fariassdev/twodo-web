@@ -23,7 +23,6 @@ import {
   deleteTask,
   deleteTaskSeries,
   deleteTasksAfter,
-  expireDailyTasks,
   getExpenseBalanceSnapshot,
   getExpenseById,
   getExpensesActivityFeedPage,
@@ -95,10 +94,10 @@ import type {
   LoveNote,
   Profile,
   ShoppingItem,
-  Task,
   TaskCompletionWithProfile,
   TaskCatalogItem,
 } from './types';
+import type { Task } from '../models/Task';
 
 type AuthCredentials = {
   email: string;
@@ -617,11 +616,7 @@ export function useTodaysTasksQuery() {
 
   return useQuery<Task[]>({
     queryKey: householdId ? queryKeys.tasks.today(householdId) : disabledKey('tasks', 'today'),
-    queryFn: async () => {
-      // Lazily expire daily tasks from past days on each load
-      await expireDailyTasks(householdId as string);
-      return getTodaysTasks(householdId as string);
-    },
+    queryFn: () => getTodaysTasks(householdId!),
     enabled: Boolean(householdId),
   });
 }
