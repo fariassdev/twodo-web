@@ -3,29 +3,25 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  useTaskByIdQuery,
   useProfilesQuery,
-  useTaskCompletionsQuery,
-  useCompleteTaskMutation,
-  useUpdateTaskCompletionAssignmentMutation,
   useAuthScope,
 } from '../../../lib/queryHooks';
+import { useTaskById, useTaskCompletions, useTaskActions } from '../../../api/hooks';
+import { TaskAssignmentOverrideType } from '../../../api/mutations/tasks';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import FullPageLoading from '../../ui/FullPageLoading';
 import QueryErrorState from '../../ui/QueryErrorState';
-import type { TaskAssignmentOverrideType } from '../../../lib/queries';
 
 export default function TaskAssignment() {
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const taskQuery = useTaskByIdQuery(taskId);
+  const taskQuery = useTaskById(taskId);
   const profilesQuery = useProfilesQuery();
-  const taskCompletionsQuery = useTaskCompletionsQuery(taskId);
+  const taskCompletionsQuery = useTaskCompletions(taskId);
 
-  const completeTaskMutation = useCompleteTaskMutation();
-  const updateTaskCompletionAssignmentMutation = useUpdateTaskCompletionAssignmentMutation();
+  const { completeTask, updateTaskCompletionAssignment, isLoading: acting } = useTaskActions();
 
   const task = taskQuery.data;
   const profiles = profilesQuery.data ?? [];
@@ -68,19 +64,12 @@ export default function TaskAssignment() {
         : (task.assignment_type === 'anyone' ? 'anyone' : 'individual');
 
       if (isCompleted) {
-        await updateTaskCompletionAssignmentMutation.mutateAsync({
-          taskId: task.id,
-          assignmentType: finalType,
-          assignedTo: assignedTo,
-        });
+        await updateTaskCompletionAssignment(task.id, finalType, assignedTo);
         toast.success(t('taskCompletion.assignmentUpdated'));
       } else {
-        await completeTaskMutation.mutateAsync({
-          taskId: task.id,
-          assignmentOverride: {
-            type: finalType,
-            assignedTo: assignedTo,
-          },
+        await completeTask(task.id, {
+          type: finalType,
+          assignedTo: assignedTo,
         });
         toast.success(t('taskCompletion.completed'));
       }
@@ -120,7 +109,7 @@ export default function TaskAssignment() {
       subtitle={task.title}
       onConfirm={handleConfirm}
       onCancel={() => window.history.back()}
-      loading={completeTaskMutation.isPending || updateTaskCompletionAssignmentMutation.isPending}
+      loading={acting}
     >
       {isHelpingOut && (
         <div className="relative bg-surface-1/50 backdrop-blur-sm border border-primary/10 rounded-[2rem] p-5 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm overflow-hidden group">

@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAuthScope,
-  usePrefetchMonthTasks,
   useProfilesQuery,
-  useTasksForMonthQuery,
 } from '../../lib/queryHooks';
+import { useTasksForMonth, usePrefetchMonthTasks } from '../../api/hooks';
 import { queryKeys } from '../../lib/queryKeys';
 import type { Profile } from '../../lib/types';
 import type { Task } from '../../models/Task';
@@ -85,12 +84,12 @@ export default function Calendar() {
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
   const profilesQuery = useProfilesQuery();
-  const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
+  const monthTasksQuery = useTasksForMonth(year, month, showDeleted);
   const prefetchMonthTasks = usePrefetchMonthTasks();
 
   const selectedYear = selectedDate.getFullYear();
   const selectedMonth = selectedDate.getMonth();
-  const selectedMonthTasksQuery = useTasksForMonthQuery(selectedYear, selectedMonth, showDeleted);
+  const selectedMonthTasksQuery = useTasksForMonth(selectedYear, selectedMonth, showDeleted);
 
   const monthTasks = monthTasksQuery.data ?? [];
   const selectedMonthTasks = selectedMonthTasksQuery.data ?? [];

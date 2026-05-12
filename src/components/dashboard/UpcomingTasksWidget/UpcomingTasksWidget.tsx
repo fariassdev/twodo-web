@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
-import { useDashboardTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
+import { useTasksDashboard } from '../../../api/hooks';
+import { useProfilesQuery } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
@@ -16,7 +17,7 @@ export default function UpcomingTasksWidget() {
   const navigate = useNavigate();
   
   // Fetch dashboard tasks (includes today, tomorrow, and past pending)
-  const dashboardTasksQuery = useDashboardTasksQuery();
+  const dashboardTasksQuery = useTasksDashboard();
   const { data: profiles = [] } = useProfilesQuery();
 
   const tomorrowStr = getLocalDateString(addDays(new Date(), 1));

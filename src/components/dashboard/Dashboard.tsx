@@ -9,7 +9,7 @@ import UpcomingTasksWidget from './UpcomingTasksWidget';
 import Button from '../ui/Button';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { useDashboardTasksQuery } from '../../lib/queryHooks';
+import { useTasksDashboard } from '../../api/hooks';
 import { getLocalDateString } from '../../utils';
 
 export default function Dashboard() {
@@ -17,7 +17,7 @@ export default function Dashboard() {
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
-  const dashboardTasksQuery = useDashboardTasksQuery();
+  const dashboardTasksQuery = useTasksDashboard();
   const allTasks = dashboardTasksQuery.data ?? [];
   const todayStr = getLocalDateString();
 

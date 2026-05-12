@@ -1,13 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import {
-  useCompleteTaskMutation,
-  useDeleteTaskMutation,
-  useDeleteTaskSeriesMutation,
   useLoveNoteForTaskQuery,
   useProfileQuery,
-  useTaskByIdQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
+import { useTaskById, useTaskActions } from '../../../api/hooks';
 import { 
   Trash2, 
   CookingPot, 
@@ -80,27 +77,20 @@ export default function TaskDetails() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const taskQuery = useTaskByIdQuery(taskId);
+  const taskQuery = useTaskById(taskId);
   const task = taskQuery.data ?? null;
   const profilesQuery = useProfilesQuery();
 
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
   const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
 
-  const completeTaskMutation = useCompleteTaskMutation();
-  const deleteTaskMutation = useDeleteTaskMutation();
-  const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
+  const { completeTask, deleteTask, deleteTaskSeries, isLoading: acting } = useTaskActions();
 
   const loveNote = loveNoteQuery.data ?? null;
   const assignedProfile = assignedProfileQuery.data ?? null;
   const profiles = profilesQuery.data ?? [];
 
   const loading = taskQuery.isPending || (Boolean(task) && profilesQuery.isLoading);
-
-  const acting =
-    completeTaskMutation.isPending ||
-    deleteTaskMutation.isPending ||
-    deleteTaskSeriesMutation.isPending;
 
   const isStale = taskQuery.isStale || loveNoteQuery.isStale;
   const isFetching = taskQuery.isFetching || loveNoteQuery.isFetching;
@@ -109,7 +99,7 @@ export default function TaskDetails() {
     if (!task) return;
     setActionError(null);
     try {
-      await deleteTaskMutation.mutateAsync(task.id);
+      await deleteTask(task.id);
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -120,10 +110,7 @@ export default function TaskDetails() {
     if (!task || !task.recurrence_id) return;
     setActionError(null);
     try {
-      await deleteTaskSeriesMutation.mutateAsync({
-        recurrenceId: task.recurrence_id,
-        fromDate: task.date || undefined,
-      });
+      await deleteTaskSeries(task.recurrence_id, task.date || undefined);
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -134,7 +121,7 @@ export default function TaskDetails() {
     if (!task || !task.recurrence_id) return;
     setActionError(null);
     try {
-      await deleteTaskSeriesMutation.mutateAsync({ recurrenceId: task.recurrence_id });
+      await deleteTaskSeries(task.recurrence_id);
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -151,7 +138,7 @@ export default function TaskDetails() {
     if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
       setActionError(null);
       try {
-        await deleteTaskMutation.mutateAsync(task.id);
+        await deleteTask(task.id);
         navigate({ to: '/' });
       } catch {
         setActionError(t('queryState.mutationError'));

@@ -3,7 +3,8 @@ import { subDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useDashboardTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
+import { useTasksDashboard, useTaskCount, useTaskActions } from '../../../api/hooks';
+import { useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../models/Task';
 import TaskAvatars from '../TaskAvatars';
@@ -19,9 +20,9 @@ const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const dashboardTasksQuery = useDashboardTasksQuery();
-  const taskCountQuery = useTaskCountQuery();
-  const completeTaskMutation = useCompleteTaskMutation();
+  const dashboardTasksQuery = useTasksDashboard();
+  const taskCountQuery = useTaskCount();
+  const { completeTask } = useTaskActions();
   const { profileId } = useAuthScope();
   const { data: profiles = [] } = useProfilesQuery();
 
@@ -99,7 +100,7 @@ export default function TodayTasksWidget() {
         return;
       }
 
-      await completeTaskMutation.mutateAsync({ taskId });
+      await completeTask(taskId);
       const completedTask = task ?? null;
       setLastCompletedTask(completedTask);
       

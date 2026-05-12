@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  useCreateTasksMutation,
-  useDeleteTasksAfterMutation,
+  useTaskActions,
+  useTaskById,
+} from '../../../api/hooks';
+import {
   useProfilesQuery,
-  useTaskByIdQuery,
-  useUpdateTaskMutation,
 } from '../../../lib/queryHooks';
-import type { UpdateTaskInput, CreateTaskInput } from '../../../lib/queries';
+import type { UpdateTaskInput, CreateTaskInput } from '../../../api/mutations/tasks';
 import type { Task, Profile } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
@@ -95,16 +95,10 @@ export default function EditEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const taskQuery = useTaskByIdQuery(taskId);
-  const updateTaskMutation = useUpdateTaskMutation();
-  const deleteTasksAfterMutation = useDeleteTasksAfterMutation();
-  const createTasksMutation = useCreateTasksMutation();
+  const taskQuery = useTaskById(taskId);
+  const { updateTask, createTasks, deleteTasksAfter, isLoading: saving } = useTaskActions();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const saving =
-    updateTaskMutation.isPending ||
-    deleteTasksAfterMutation.isPending ||
-    createTasksMutation.isPending;
   const loading = profilesQuery.isPending || taskQuery.isPending;
 
   useEffect(() => {
@@ -204,13 +198,10 @@ export default function EditEntry() {
         end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
       };
 
-      await updateTaskMutation.mutateAsync({ taskId, input });
+      await updateTask(taskId, input);
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
-        await deleteTasksAfterMutation.mutateAsync({
-          recurrenceId: originalTask.recurrence_id,
-          date: originalTask.date,
-        });
+        await deleteTasksAfter(originalTask.recurrence_id, originalTask.date);
 
         if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];
@@ -266,7 +257,7 @@ export default function EditEntry() {
           }
 
           if (newTasks.length > 0) {
-            await createTasksMutation.mutateAsync(newTasks);
+            await createTasks(newTasks);
           }
         }
       }

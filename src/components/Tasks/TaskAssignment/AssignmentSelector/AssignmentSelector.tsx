@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Profile } from '../../../../lib/types';
-import type { TaskAssignmentOverrideType } from '../../../../lib/queries';
+import type { TaskAssignmentOverrideType } from '../../../../api';
 import Button from '../../../ui/Button';
 import PageHeader from '../../../ui/PageHeader';
 

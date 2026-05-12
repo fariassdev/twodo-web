@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateTasksMutation, useProfilesQuery, useTaskCatalogQuery } from '../../../lib/queryHooks';
-import type { CreateTaskInput } from '../../../lib/queries';
+import { useTaskActions, useTaskCatalog } from '../../../api/hooks';
+import { useProfilesQuery } from '../../../lib/queryHooks';
+import type { CreateTaskInput } from '../../../api/mutations/tasks';
 import type { Profile, TaskCatalogItem } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
@@ -109,12 +110,11 @@ export default function CreateEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const catalogQuery = useTaskCatalogQuery();
-  const createTasksMutation = useCreateTasksMutation();
+  const catalogQuery = useTaskCatalog();
+  const { createTasks, isLoading: saving } = useTaskActions();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
   const catalog: TaskCatalogItem[] = catalogQuery.data ?? [];
-  const saving = createTasksMutation.isPending;
 
   // Group catalog by category
   const catalogByCategory = useMemo((): Record<string, TaskCatalogItem[]> => {
@@ -249,7 +249,7 @@ export default function CreateEntry() {
         });
       }
 
-      const createdTasks = await createTasksMutation.mutateAsync(inputs);
+      const createdTasks = await createTasks(inputs);
       const firstTask = createdTasks[0];
       if (firstTask) {
         navigate({ to: '/task/$taskId', params: { taskId: firstTask.id } });
