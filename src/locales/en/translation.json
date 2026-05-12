@@ -160,9 +160,6 @@
     "filterAssignee": "Assignee",
     "statusAll": "All",
     "typeAll": "All",
-    "assigneeAll": "Anyone",
-    "assigneeShared": "Shared",
-    "assigneeUnassigned": "Unassigned",
     "clearFilters": "Clear",
     "sheetHandleAriaLabel": "Drag to expand or collapse the day list",
     "deletedBadge": "Deleted"

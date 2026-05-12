@@ -158,9 +158,6 @@
     "filterStatus": "Estado",
     "filterAssignee": "Persona",
     "statusAll": "Todos",
-    "assigneeAll": "Cualquiera",
-    "assigneeShared": "Compartido",
-    "assigneeUnassigned": "Sin asignar",
     "clearFilters": "Limpiar",
     "sheetHandleAriaLabel": "Arrastrar para expandir o contraer la lista del día",
     "deletedBadge": "Eliminada"

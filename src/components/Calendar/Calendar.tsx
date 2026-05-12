@@ -103,18 +103,6 @@ export default function Calendar() {
   const isFetching =
     monthTasksQuery.isFetching || profilesQuery.isFetching;
 
-  function getAssigneeSortLabel(task: Task): string {
-    if (task.assignment_type === 'team_work' || task.assignment_type === 'anyone') {
-      return t('calendar.assigneeShared');
-    }
-
-    if (!task.assigned_to) {
-      return t('calendar.assigneeUnassigned');
-    }
-
-    return profileNameMap.get(task.assigned_to) ?? t('calendar.assigneeUnassigned');
-  }
-
   const tasksByBlock = useMemo(() => {
     const filtered = selectedMonthTasks
       .filter((task) => task.date === selectedStr)
