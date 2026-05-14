@@ -1,7 +1,7 @@
 import { supabase } from '../client';
 import { SupabaseError } from '../errors';
 import { fetchTaskById } from '../queries/tasks';
-import { getProfiles } from '../../lib/queries';
+import { fetchProfiles as getProfiles } from '../queries/profiles';
 import { EFFORT_POINTS } from '../../constants';
 import type { AuthScope } from '../../context/AuthContext';
 import type {

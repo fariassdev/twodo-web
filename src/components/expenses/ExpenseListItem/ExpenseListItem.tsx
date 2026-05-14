@@ -1,13 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ExpenseWithDetails } from '../../../lib/types';
+import type { Expense } from '../../../domain/expense';
 import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
 import { cn } from '@/src/utils';
 
 type ExpenseListItemProps = {
-  expense: ExpenseWithDetails;
+  expense: Expense;
   locale: string;
   currentProfileId: string | null;
   showWhenLabel?: boolean;

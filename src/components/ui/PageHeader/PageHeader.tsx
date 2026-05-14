@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from '@tanstack/react-router';
 import Button from '../Button';
 import TwodoLogo from '../TwodoLogo';
-import { useProfilesQuery } from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import { cn } from '../../../utils';
 
 interface PageHeaderProps {
@@ -30,7 +30,7 @@ export default function PageHeader({
 }: PageHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: profiles = [] } = useProfilesQuery();
+  const { data: profiles = [] } = useProfiles();
 
   const avatarsVisible = showAvatars && !rightSlot;
 

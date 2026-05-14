@@ -6,12 +6,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  useCreateHouseholdAndInviteMutation,
-  useGetOrCreateHouseholdInviteMutation,
-  useAcceptHouseholdInviteMutation,
-  useInviteInfoQuery,
-  useSendEmailInviteMutation,
-} from '../../lib/queryHooks';
+  useCreateHouseholdAndInvite,
+  useGetOrCreateHouseholdInvite,
+  useAcceptHouseholdInvite,
+  useInviteInfo,
+  useSendEmailInvite,
+} from '../../api/invites';
 import { useCurrentProfile, useLogout } from '../../api/auth';
 import type { HouseholdInviteResult } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
@@ -79,17 +79,17 @@ export default function ConnectPartner() {
   const manualCode = watchManualCode('code');
   const emailInput = watchEmail('email');
 
-  const createMutation = useCreateHouseholdAndInviteMutation();
-  const getOrCreateInviteMutation = useGetOrCreateHouseholdInviteMutation();
-  const acceptMutation = useAcceptHouseholdInviteMutation();
-  const sendEmailMutation = useSendEmailInviteMutation();
-  const inviteInfoQuery = useInviteInfoQuery(pendingCode);
-  const creatorInviteInfoPollingQuery = useInviteInfoQuery(
+  const createMutation = useCreateHouseholdAndInvite();
+  const getOrCreateInviteMutation = useGetOrCreateHouseholdInvite();
+  const acceptMutation = useAcceptHouseholdInvite();
+  const sendEmailMutation = useSendEmailInvite();
+  const inviteInfoQuery = useInviteInfo(pendingCode);
+  const creatorInviteInfoPollingQuery = useInviteInfo(
     view === 'invite-created' && inviteData?.invite_code ? inviteData.invite_code : null,
     {
       enabled: view === 'invite-created' && Boolean(inviteData?.invite_code),
       refetchInterval: 5000,
-    },
+    }
   );
 
   // Check for stored invite code from /join route

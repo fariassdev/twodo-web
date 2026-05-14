@@ -5,8 +5,6 @@
 
 // Queries
 export {
-  useProfiles,
-  useProfile,
   useCurrentProfile,
 } from './queries';
 

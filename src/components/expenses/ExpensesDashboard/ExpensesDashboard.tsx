@@ -14,9 +14,9 @@ import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
-  useExpensesActivityFeedInfiniteQuery,
-  useExpensesDashboardQuery,
-} from '../../../lib/queryHooks';
+  useExpensesFeed,
+  useExpenseBalanceSnapshot,
+} from '../../../api/expenses';
 import { cn } from '@/src/utils';
 import { useCurrentProfile } from '@/src/api/auth';
 
@@ -28,18 +28,17 @@ export default function ExpensesDashboard() {
   const { data: currentProfile } = useCurrentProfile();
   const [showPreview, setShowPreview] = React.useState(false);
 
-  const dashboardQuery = useExpensesDashboardQuery();
-  const activityQuery = useExpensesActivityFeedInfiniteQuery(20);
+  const balanceQuery = useExpenseBalanceSnapshot();
+  const activityQuery = useExpensesFeed(20);
 
-  const dashboardData = dashboardQuery.data;
-  const balance = dashboardData?.balance;
+  const balance = balanceQuery.data;
   const activityItems = useMemo(
     () => activityQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [activityQuery.data],
   );
 
-  const isFetching = dashboardQuery.isFetching || activityQuery.isFetching;
-  const isStale = dashboardQuery.isStale || activityQuery.isStale;
+  const isFetching = balanceQuery.isFetching || activityQuery.isFetching;
+  const isStale = balanceQuery.isStale || activityQuery.isStale;
 
   const amountLabel = centsToCurrency(balance?.amountCents ?? 0, i18n.language);
   const counterpartyName = balance?.counterpartyProfile?.name ?? t('common.partnerFallback');
@@ -52,7 +51,7 @@ export default function ExpensesDashboard() {
         : t('expenses.balance.settled');
 
   function retryQuery() {
-    void Promise.all([dashboardQuery.refetch(), activityQuery.refetch()]);
+    void Promise.all([balanceQuery.refetch(), activityQuery.refetch()]);
   }
 
   if (showPreview) {
@@ -66,12 +65,12 @@ export default function ExpensesDashboard() {
     );
   }
 
-  if (dashboardQuery.isPending || activityQuery.isPending) {
+  if (balanceQuery.isPending || activityQuery.isPending) {
     return <FullPageLoading message={t('loading')} />;
   }
 
 
-  if ((dashboardQuery.isError && !dashboardData) || (activityQuery.isError && activityItems.length === 0)) {
+  if ((balanceQuery.isError && !balance) || (activityQuery.isError && activityItems.length === 0)) {
     return <QueryErrorState onRetry={retryQuery} />;
   }
 

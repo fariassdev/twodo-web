@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { startOfWeek, subDays, startOfYear, endOfDay } from 'date-fns';
-import { useProfilesQuery, useBalanceScoreQuery } from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
+import { useBalanceScore } from '../../../api/metrics';
 import { cn } from '../../../utils';
 import { useAuthScope } from '@/src/context/AuthContext';
 
@@ -31,7 +32,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { profileId } = useAuthScope();
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const profiles = profilesQuery.data ?? [];
   
   const [filter, setFilter] = useState<TimeFilter>('thisWeek');
@@ -53,7 +54,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
     };
   }, [filter]);
 
-  const { data: balanceData, isPending, isFetching } = useBalanceScoreQuery(startDate, endDate);
+  const { data: balanceData, isPending, isFetching } = useBalanceScore(startDate, endDate);
   
   const scoreData = balanceData?.score || {};
   const completedTasks = balanceData?.taskCount || 0;
@@ -122,7 +123,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
     }
   }, [finalPercentage, total, profileId, profiles.length, memberA, memberB, t]);
 
-  const isLoading = isPending || profilesQuery.isPending;
+  const isLoading = isPending || profilesQuery.isLoading;
   const themeColorVar = `var(--color-${colorTheme})`;
 
   const trendConfig = useMemo(() => {

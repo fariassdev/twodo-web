@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
 import { useTasksInRange, useTaskCount, useCompleteTask } from '../../../api/tasks';
-import { useProfilesQuery } from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
@@ -31,7 +31,7 @@ export default function TodayTasksWidget() {
   const totalCount = taskCountQuery.data ?? 0;
   const completeTaskMutation = useCompleteTask();
   const { profileId } = useAuthScope();
-  const { data: profiles = [] } = useProfilesQuery();
+  const { data: profiles = [] } = useProfiles();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
 

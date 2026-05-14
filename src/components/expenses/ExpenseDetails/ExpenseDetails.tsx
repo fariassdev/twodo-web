@@ -7,9 +7,9 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 import {
-  useDeleteExpenseMutation,
-  useExpenseByIdQuery,
-} from '../../../lib/queryHooks';
+  useDeleteExpense,
+  useExpense,
+} from '../../../api/expenses';
 import type { ExpenseDetailsSearch } from '../../../router';
 import { useAuthScope } from '@/src/context/AuthContext';
 
@@ -36,8 +36,8 @@ export default function ExpenseDetails() {
   const search = useSearch({ strict: false }) as Partial<ExpenseDetailsSearch>;
   const { profileId } = useAuthScope();
 
-  const expenseQuery = useExpenseByIdQuery(expenseId);
-  const deleteExpenseMutation = useDeleteExpenseMutation();
+  const expenseQuery = useExpense(expenseId);
+  const deleteExpenseMutation = useDeleteExpense();
 
   const [actionError, setActionError] = useState<string | null>(null);
 

@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  useLoveNoteForTaskQuery,
-} from '../../../lib/queryHooks';
+import { useLoveNoteForTask } from '../../../api/love-notes';
 import { useTask, useDeleteTask, useDeleteTaskSeries, useCompleteTask } from '../../../api/tasks';
 import { 
   Trash2, 
@@ -34,7 +32,7 @@ import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
-import { useProfiles } from '@/src/api/auth';
+import { useProfiles } from '@/src/api/profiles';
 
 
 
@@ -80,7 +78,7 @@ export default function TaskDetails() {
   const task = taskQuery.data ?? null;
   const profilesQuery = useProfiles();
 
-  const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
+  const loveNoteQuery = useLoveNoteForTask(task?.id);
 
   const deleteTaskMutation = useDeleteTask();
   const deleteTaskSeriesMutation = useDeleteTaskSeries();

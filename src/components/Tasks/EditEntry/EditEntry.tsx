@@ -7,12 +7,10 @@ import {
   useCreateTasks,
   useDeleteTasksAfter,
 } from '../../../api/tasks';
-import {
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import type { UpdateTaskInput, CreateTaskInput } from '../../../domain/types';
 import type { Task } from '../../../domain/task';
-import type { Profile } from '../../../lib/types';
+import type { Profile } from '../../../domain/profile';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
@@ -97,7 +95,7 @@ export default function EditEntry() {
     }
   }, [startTime]);
 
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const taskQuery = useTask({ id: taskId });
   const editTask = taskQuery.data ?? null;
   const updateTaskMutation = useUpdateTask();
@@ -106,7 +104,7 @@ export default function EditEntry() {
   const saving = updateTaskMutation.isPending || createTasksMutation.isPending || deleteTasksAfterMutation.isPending;
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const loading = profilesQuery.isPending || taskQuery.isLoading;
+  const loading = profilesQuery.isLoading || taskQuery.isLoading;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {

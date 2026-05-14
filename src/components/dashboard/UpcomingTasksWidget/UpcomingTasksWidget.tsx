@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { subDays, addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
 import { useTasksInRange } from '../../../api/tasks';
-import { useProfilesQuery } from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
@@ -22,7 +22,7 @@ export default function UpcomingTasksWidget() {
     endDate: getLocalDateString(addDays(today, 1)),
   });
   const allTasks = tasksQuery.data ?? [];
-  const { data: profiles = [] } = useProfilesQuery();
+  const { data: profiles = [] } = useProfiles();
 
   const tomorrowStr = getLocalDateString(addDays(today, 1));
   const tomorrowTasks = useMemo(() => 

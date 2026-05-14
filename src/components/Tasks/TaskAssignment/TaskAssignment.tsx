@@ -2,9 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import {
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import { useTask, useTaskCompletions, useCompleteTask, useUpdateCompletionAssignment } from '../../../api/tasks';
 import type { AssignmentOverrideType } from '../../../domain/types';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
@@ -20,7 +18,7 @@ export default function TaskAssignment() {
 
   const taskQuery = useTask({ id: taskId });
   const task = taskQuery.data ?? null;
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const completionsQuery = useTaskCompletions(taskId);
   const completions = completionsQuery.data ?? [];
 

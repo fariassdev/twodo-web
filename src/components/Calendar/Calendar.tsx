@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  useProfilesQuery,
-} from '../../lib/queryHooks';
+import { useProfiles, profileKeys } from '../../api/profiles';
 import { useTasksInRange, taskKeys } from '../../api/tasks';
 import { queryKeys } from '../../lib/queryKeys';
-import type { Profile } from '../../lib/types';
+import type { Profile } from '../../domain/profile';
 import type { Task } from '../../domain/task';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
@@ -90,7 +88,7 @@ export default function Calendar() {
     return { startDate, endDate };
   }
 
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const monthTasksQuery = useTasksInRange({
     ...getMonthDateRange(year, month),
     includeDeleted: showDeleted,
@@ -326,7 +324,7 @@ export default function Calendar() {
 
           void Promise.all([
             queryClient.refetchQueries({ queryKey: taskKeys.all(householdId) }),
-            queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
+            queryClient.refetchQueries({ queryKey: profileKeys.all(householdId!) }),
           ]);
         }}
       />

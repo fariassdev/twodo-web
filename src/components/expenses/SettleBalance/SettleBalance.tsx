@@ -15,10 +15,10 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import SettlementSuccess from './SettlementSuccess';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
-    useCreateSettlementMutation,
-  useExpensesDashboardQuery,
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+  useCreateSettlement,
+  useExpenseBalanceSnapshot,
+} from '../../../api/expenses';
+import { useProfiles } from '../../../api/profiles';
 import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
 import { useAuthScope } from '@/src/context/AuthContext';
 
@@ -115,13 +115,13 @@ export default function SettleBalance() {
     defaultValues: { note: '' },
   });
 
-  const dashboardQuery = useExpensesDashboardQuery();
-  const profilesQuery = useProfilesQuery();
-  const createSettlementMutation = useCreateSettlementMutation();
+  const dashboardQuery = useExpenseBalanceSnapshot();
+  const profilesQuery = useProfiles();
+  const createSettlementMutation = useCreateSettlement();
 
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const balance = dashboardQuery.data?.balance;
+  const balance = dashboardQuery.data;
   const amountLabel = centsToCurrency(balance?.amountCents ?? 0, i18n.language);
   const counterpartyName = balance?.counterpartyProfile?.name ?? t('common.partnerFallback');
 

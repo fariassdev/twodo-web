@@ -1,18 +1,7 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { getLocalDateString } from '../utils';
-import type { RawTask, RawProfile } from '../supabase/queries/tasks';
-
-// ── Profile normalization ──────────────────────────────────────────────────────
-
-export function normalizeProfile(raw: RawProfile) {
-  return {
-    id: raw.id,
-    name: raw.name,
-    avatar_url: raw.avatar_url,
-  };
-}
-
-export type NormalizedProfile = ReturnType<typeof normalizeProfile>;
+import { normalizeProfile } from './profile';
+import type { RawTask } from '../supabase/queries/tasks';
 
 // ── Task normalization ─────────────────────────────────────────────────────────
 
@@ -26,7 +15,7 @@ export type TaskStatus = 'pending' | 'completed' | 'expired' | 'past_due';
  * Field naming follows the existing convention in models/Task.ts
  * to avoid breaking all existing component consumers.
  */
-export function normalizeTask(raw: RawTask) {
+export const normalizeTask = (raw: RawTask) => {
   const today = getLocalDateString();
 
   let status: TaskStatus = 'pending';
@@ -87,7 +76,7 @@ export function normalizeTask(raw: RawTask) {
     updated_at: raw.updated_at,
     deleted_at: raw.deleted_at,
   };
-}
+};
 
 /**
  * Task type is inferred from normalizeTask — never manually defined.

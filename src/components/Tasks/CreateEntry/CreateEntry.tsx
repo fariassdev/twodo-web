@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateTasks, useTaskCatalog } from '../../../api/tasks';
-import { useProfilesQuery } from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
 import type { CreateTaskInput } from '../../../domain/types';
-import type { Profile, TaskCatalogItem } from '../../../lib/types';
+import type { Profile } from '../../../domain/profile';
+import type { TaskCatalogItem } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import { entryFormSchema, EFFORT_LEVELS, EFFORT_POINTS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay, type TaskCategory } from '../../../helpers/schemas';
@@ -109,7 +110,7 @@ export default function CreateEntry() {
     }
   }, [startTime]);
 
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const catalogQuery = useTaskCatalog();
   const catalog = catalogQuery.data ?? [];
   const createTasksMutation = useCreateTasks();

@@ -3,12 +3,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  useProfilesQuery,
-  useUpdateProfileMutation,
-} from '../../lib/queryHooks';
+import { useProfiles, useUpdateProfile } from '../../api/profiles';
 import { useCurrentProfile, useLogout } from '../../api/auth';
-import type { Profile } from '../../lib/types';
+import type { Profile } from '../../domain/profile';
 import PageHeader from '../ui/PageHeader';
 import FullPageLoading from '../ui/FullPageLoading';
 import Button from '../ui/Button';
@@ -20,15 +17,15 @@ import { toast } from '../ui/Snackbar';
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
   const currentProfileQuery = useCurrentProfile();
-  const updateProfileMutation = useUpdateProfileMutation();
+  const updateProfileMutation = useUpdateProfile();
   const logoutMutation = useLogout();
 
   const profileOptions: Profile[] = profilesQuery.data ?? [];
   const profile = currentProfileQuery.data ?? null;
   const currentProfileId = profile?.id;
-  const loading = !currentProfileId || profilesQuery.isPending || currentProfileQuery.isLoading;
+  const loading = !currentProfileId || profilesQuery.isLoading || currentProfileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
   const {

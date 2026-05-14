@@ -5,15 +5,15 @@ import PageHeader from '../../ui/PageHeader';
 import ErrorBanner from '../../ui/ErrorBanner';
 import ExpenseForm from '../ExpenseForm';
 import {
-  useCreateExpenseMutation,
-} from '../../../lib/queryHooks';
+  useCreateExpense,
+} from '../../../api/expenses';
 import { type ExpenseFormValues } from '../../../helpers/schemas';
 import { parseAmountToCents } from '../../../utils';
 
 export default function CreateExpense() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const createExpenseMutation = useCreateExpenseMutation();
+  const createExpenseMutation = useCreateExpense();
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -24,11 +24,11 @@ export default function CreateExpense() {
     setActionError(null);
     try {
       const created = await createExpenseMutation.mutateAsync({
-        amountCents: parsedAmountCents,
-        categoryId: values.categoryId,
-        paidByProfileId: values.paidByProfileId,
+        amount_cents: parsedAmountCents,
+        category_id: values.categoryId,
+        paid_by_profile_id: values.paidByProfileId,
         description: values.description,
-        expenseDate: values.expenseDate,
+        expense_date: values.expenseDate,
       });
 
       navigate({ to: '/expenses/$expenseId', params: { expenseId: created.id } });

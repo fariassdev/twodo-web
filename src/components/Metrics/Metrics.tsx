@@ -1,12 +1,13 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useProfiles } from '../../api/profiles';
 import {
-  useEquityBalanceQuery,
-  usePointsBreakdownQuery,
-  useProfilesQuery,
-  useWeeklyPulseQuery,
-} from '../../lib/queryHooks';
-import { queryKeys } from '../../lib/queryKeys';
+  useEquityBalance,
+  usePointsBreakdown,
+  useWeeklyPulse,
+  metricKeys,
+} from '../../api/metrics';
+import { profileKeys } from '../../api/profiles';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
@@ -22,19 +23,19 @@ export default function Metrics() {
   const { householdId } = useAuthScope();
   const isOnline = useOnlineStatus();
 
-  const profilesQuery = useProfilesQuery();
-  const balanceQuery = useEquityBalanceQuery(profilesQuery.data);
-  const pulseQuery = useWeeklyPulseQuery();
-  const pointsQuery = usePointsBreakdownQuery(profilesQuery.data);
+  const profilesQuery = useProfiles();
+  const balanceQuery = useEquityBalance();
+  const pulseQuery = useWeeklyPulse();
+  const pointsQuery = usePointsBreakdown();
 
   const balance = balanceQuery.data ?? null;
   const pulse = pulseQuery.data ?? null;
   const points = pointsQuery.data ?? [];
   const loading =
-    profilesQuery.isPending ||
-    balanceQuery.isPending ||
-    pulseQuery.isPending ||
-    pointsQuery.isPending;
+    profilesQuery.isLoading ||
+    balanceQuery.isLoading ||
+    pulseQuery.isLoading ||
+    pointsQuery.isLoading;
   const hasQueryError =
     profilesQuery.isError ||
     balanceQuery.isError ||
@@ -63,10 +64,10 @@ export default function Metrics() {
           if (!householdId) return;
 
           void Promise.all([
-            queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
-            queryClient.refetchQueries({ queryKey: queryKeys.metrics.equity(householdId) }),
-            queryClient.refetchQueries({ queryKey: queryKeys.metrics.weeklyPulse(householdId) }),
-            queryClient.refetchQueries({ queryKey: queryKeys.metrics.pointsBreakdown(householdId) }),
+            queryClient.refetchQueries({ queryKey: profileKeys.all(householdId!) }),
+            queryClient.refetchQueries({ queryKey: metricKeys.equity(householdId!) }),
+            queryClient.refetchQueries({ queryKey: metricKeys.weeklyPulse(householdId!) }),
+            queryClient.refetchQueries({ queryKey: metricKeys.pointsBreakdown(householdId!) }),
           ]);
         }}
       />

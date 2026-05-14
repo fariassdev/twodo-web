@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ExpenseActivityFeedItem } from '../../../lib/queries';
+import type { ExpenseActivityFeedItem, Expense } from '../../../domain/expense';
 import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
-import type { ExpenseWithDetails } from '../../../lib/types';
 import ExpenseListItem from '../ExpenseListItem';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
 
 type ExpensesListProps = {
   items?: ExpenseActivityFeedItem[];
-  expenses?: ExpenseWithDetails[];
+  expenses?: Expense[];
   locale: string;
   currentProfileId: string | null;
   hasNextPage?: boolean;
