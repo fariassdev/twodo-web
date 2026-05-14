@@ -17,10 +17,11 @@ export default function UpcomingTasksWidget() {
   const navigate = useNavigate();
   
   const today = new Date();
-  const { tasks: allTasks, loading } = useTasksInRange({
+  const tasksQuery = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });
+  const allTasks = tasksQuery.data ?? [];
   const { data: profiles = [] } = useProfilesQuery();
 
   const tomorrowStr = getLocalDateString(addDays(today, 1));
@@ -29,7 +30,7 @@ export default function UpcomingTasksWidget() {
     [allTasks, tomorrowStr]
   );
 
-  if (loading || tomorrowTasks.length === 0) return null;
+  if (tasksQuery.isLoading || tomorrowTasks.length === 0) return null;
 
   // Group by moment of the day
   const groups: Record<string, Task[]> = {

@@ -14,14 +14,13 @@ import {
   normalizeSearchText,
 } from '../../../helpers/expense';
 import {
-  useAuthScope,
   useExpensesActivityFeedInfiniteQuery,
   useExpenseCategoriesQuery,
   useExpensesListQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import type { ExpensesListSearch } from '../../../router';
-import { cn } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 function formatDateInputValue(date: Date): string {
   const year = date.getFullYear();

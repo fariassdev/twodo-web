@@ -110,8 +110,10 @@ export default function CreateEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const { catalog, loading: catalogLoading } = useTaskCatalog();
-  const { createTasksAsync, isCreating: saving } = useCreateTasks();
+  const catalogQuery = useTaskCatalog();
+  const catalog = catalogQuery.data ?? [];
+  const createTasksMutation = useCreateTasks();
+  const saving = createTasksMutation.isPending;
 
   const profiles: Profile[] = profilesQuery.data ?? [];
 
@@ -248,7 +250,7 @@ export default function CreateEntry() {
         });
       }
 
-      const createdTasks = await createTasksAsync(inputs);
+      const createdTasks = await createTasksMutation.mutateAsync(inputs);
       const firstTask = createdTasks[0];
       if (firstTask) {
         navigate({ to: '/task/$taskId', params: { taskId: firstTask.id } });

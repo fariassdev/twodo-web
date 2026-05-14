@@ -21,30 +21,13 @@ export interface UseTasksInRangeParams {
 
 export const useTasksInRange = ({ startDate, endDate, includeDeleted = false }: UseTasksInRangeParams) => {
   const { householdId } = useAuthScope();
-  const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery({
+  return useQuery({
     queryKey: taskKeys.range(householdId, startDate, endDate, includeDeleted),
     queryFn: () => fetchTasksInRange(householdId, startDate, endDate, includeDeleted),
     select: (raw) => raw.map(normalizeTask),
     placeholderData: keepPreviousData,
   });
-
-  const prefetch = useCallback(
-    (params: UseTasksInRangeParams) =>
-      queryClient.prefetchQuery({
-        queryKey: taskKeys.range(householdId, params.startDate, params.endDate, params.includeDeleted ?? false),
-        queryFn: () => fetchTasksInRange(householdId, params.startDate, params.endDate, params.includeDeleted),
-      }),
-    [householdId, queryClient],
-  );
-
-  return {
-    tasks: data ?? [],
-    loading: isLoading,
-    isError,
-    prefetch,
-  };
 };
 
 // ── useTask ───────────────────────────────────────────────────────────────────
@@ -52,18 +35,12 @@ export const useTasksInRange = ({ startDate, endDate, includeDeleted = false }: 
 export const useTask = ({ id }: { id: string | undefined }) => {
   const { householdId } = useAuthScope();
 
-  const { data, isLoading, isError } = useQuery({
+  return useQuery({
     queryKey: taskKeys.detail(householdId, id!),
     queryFn: () => fetchTaskById(householdId, id!),
     select: (raw) => (raw ? normalizeTask(raw) : null),
     enabled: Boolean(id),
   });
-
-  return {
-    task: data ?? null,
-    loading: isLoading,
-    isError,
-  };
 };
 
 // ── useTaskCompletions ────────────────────────────────────────────────────────
@@ -71,13 +48,11 @@ export const useTask = ({ id }: { id: string | undefined }) => {
 export const useTaskCompletions = (taskId: string | undefined) => {
   const { householdId } = useAuthScope();
 
-  const { data, isLoading } = useQuery({
+  return useQuery({
     queryKey: taskKeys.completions(householdId, taskId!),
     queryFn: () => fetchTaskCompletions(householdId, taskId!),
     enabled: Boolean(taskId),
   });
-
-  return { completions: data ?? [], loading: isLoading };
 };
 
 // ── useTaskCount ──────────────────────────────────────────────────────────────
@@ -85,23 +60,20 @@ export const useTaskCompletions = (taskId: string | undefined) => {
 export const useTaskCount = () => {
   const { householdId } = useAuthScope();
 
-  const { data, isLoading } = useQuery({
+  return useQuery({
     queryKey: taskKeys.count(householdId),
     queryFn: () => fetchTaskCount(householdId),
   });
-
-  return { count: data ?? 0, loading: isLoading };
 };
 
 // ── useTaskCatalog ────────────────────────────────────────────────────────────
 
 export const useTaskCatalog = () => {
-  const { data, isLoading } = useQuery({
+  return useQuery({
     queryKey: taskKeys.catalog(),
     queryFn: fetchTaskCatalog,
     staleTime: 1000 * 60 * 60, // 1 hour — catalog changes rarely
     gcTime: Infinity,
   });
-
-  return { catalog: data ?? [], loading: isLoading };
 };
+

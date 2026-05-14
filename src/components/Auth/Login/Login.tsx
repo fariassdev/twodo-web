@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { useSignInMutation } from '../../../lib/queryHooks';
+import { useLogin } from '../../../api/auth';
 import { loginSchema, type LoginFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
@@ -15,7 +15,7 @@ import TwodoLogo from '../../ui/TwodoLogo';
 export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const signInMutation = useSignInMutation();
+  const loginMutation = useLogin();
 
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -25,12 +25,12 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
-  const loading = signInMutation.isPending;
+  const loading = loginMutation.isPending;
 
   async function onSubmit(data: LoginFormValues) {
     setServerError(null);
     try {
-      await signInMutation.mutateAsync({ email: data.email.trim(), password: data.password });
+      await loginMutation.mutateAsync({ email: data.email.trim(), password: data.password });
       navigate({ to: '/' });
     } catch {
       setServerError(t('auth.login.error'));

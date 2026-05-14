@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   useLoveNoteForTaskQuery,
-  useProfileQuery,
-  useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { useTask, useDeleteTask, useDeleteTaskSeries, useCompleteTask } from '../../../api/tasks';
 import { 
@@ -36,6 +34,7 @@ import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
+import { useProfiles } from '@/src/api/auth';
 
 
 
@@ -77,65 +76,79 @@ export default function TaskDetails() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const { task, loading: taskLoading } = useTask({ id: taskId });
-  const profilesQuery = useProfilesQuery();
+  const taskQuery = useTask({ id: taskId });
+  const task = taskQuery.data ?? null;
+  const profilesQuery = useProfiles();
 
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
-  const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
 
-  const { deleteTask: deleteTaskMutate } = useDeleteTask();
-  const { deleteTaskSeries: deleteTaskSeriesMutate } = useDeleteTaskSeries();
-  const { completeTask, isCompleting: acting } = useCompleteTask();
+  const deleteTaskMutation = useDeleteTask();
+  const deleteTaskSeriesMutation = useDeleteTaskSeries();
+  const completeTaskMutation = useCompleteTask();
 
   const loveNote = loveNoteQuery.data ?? null;
-  const assignedProfile = assignedProfileQuery.data ?? null;
+  const assignedProfile = task?.assigned_profile;
   const profiles = profilesQuery.data ?? [];
 
-  const loading = taskLoading || (Boolean(task) && profilesQuery.isLoading);
+  const loading = taskQuery.isLoading || (Boolean(task) && profilesQuery.isLoading);
+  const acting = completeTaskMutation.isPending || deleteTaskMutation.isPending || deleteTaskSeriesMutation.isPending;
 
-  const isStale = loveNoteQuery.isStale;
-  const isFetching = loveNoteQuery.isFetching;
+  const isStale = loveNoteQuery.isStale || taskQuery.isStale;
+  const isFetching = loveNoteQuery.isFetching || taskQuery.isFetching;
 
   async function handleDeleteSingle() {
     if (!task) return;
-    setActionError(null);
     try {
-      await new Promise<void>((resolve, reject) =>
-        deleteTaskMutate({ taskId: task.id }, { onSuccess: () => resolve(), onError: reject })
-      );
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setActionError(null);
+      await deleteTaskMutation.mutateAsync({ taskId: task.id });
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
   async function handleDeleteFollowing() {
     if (!task || !task.recurrence_id) return;
-    setActionError(null);
     try {
-      await new Promise<void>((resolve, reject) =>
-        deleteTaskSeriesMutate({ recurrenceId: task.recurrence_id!, fromDate: task.date || undefined }, { onSuccess: () => resolve(), onError: reject })
-      );
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setActionError(null);
+      await deleteTaskSeriesMutation.mutateAsync({ 
+        seriesId: task.recurrence_id, 
+        fromDate: task.date || undefined 
+      });
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
   async function handleDeleteAll() {
     if (!task || !task.recurrence_id) return;
-    setActionError(null);
     try {
-      await new Promise<void>((resolve, reject) =>
-        deleteTaskSeriesMutate({ recurrenceId: task.recurrence_id! }, { onSuccess: () => resolve(), onError: reject })
-      );
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setActionError(null);
+      await deleteTaskSeriesMutation.mutateAsync({ 
+        seriesId: task.recurrence_id 
+      });
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
-  const handleDeleteClick = async () => {
+  async function handleComplete() {
+    if (!task) return;
+    try {
+      setActionError(null);
+      await completeTaskMutation.mutateAsync({ taskId: task.id });
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.completeError'));
+    }
+  }
+
+  const handleDeleteClick = () => {
     if (!task) return;
     if (task.recurrence_id) {
       setDeleteModalOpen(true);
@@ -143,15 +156,7 @@ export default function TaskDetails() {
     }
     
     if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-      setActionError(null);
-      try {
-        await new Promise<void>((resolve, reject) =>
-          deleteTaskMutate({ taskId: task.id }, { onSuccess: () => resolve(), onError: reject })
-        );
-        navigate({ to: '/' });
-      } catch {
-        setActionError(t('queryState.mutationError'));
-      }
+      handleDeleteSingle();
     }
   };
 

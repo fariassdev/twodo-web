@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
 import { useTasksInRange, useTaskCount, useCompleteTask } from '../../../api/tasks';
-import { useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
+import { useProfilesQuery } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
@@ -14,6 +14,7 @@ import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import ListRow from '../../ui/ListRow';
 import SectionHeader from '../../ui/SectionHeader';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -21,17 +22,18 @@ export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const today = new Date();
-  const { tasks: allTasks } = useTasksInRange({
+  const tasksQuery = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });
-  const { count: totalCount } = useTaskCount();
-  const { completeTask } = useCompleteTask();
+  const allTasks = tasksQuery.data ?? [];
+  const taskCountQuery = useTaskCount();
+  const totalCount = taskCountQuery.data ?? 0;
+  const completeTaskMutation = useCompleteTask();
   const { profileId } = useAuthScope();
   const { data: profiles = [] } = useProfilesQuery();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
-  const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
   const todayStr = getLocalDateString();
   
@@ -103,11 +105,8 @@ export default function TodayTasksWidget() {
         return;
       }
 
-      await new Promise<void>((resolve, reject) =>
-        completeTask({ taskId }, { onSuccess: () => resolve(), onError: reject })
-      );
+      await completeTaskMutation.mutateAsync({ taskId });
       const completedTask = task ?? null;
-      setLastCompletedTask(completedTask);
       
       const assignmentText =
         completedTask?.assignment_type === 'team_work'

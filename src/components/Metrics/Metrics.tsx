@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthScope,
   useEquityBalanceQuery,
   usePointsBreakdownQuery,
   useProfilesQuery,
@@ -15,6 +14,7 @@ import QueryErrorState from '../ui/QueryErrorState';
 import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import BalanceScoreWidget from '../ui/BalanceScoreWidget';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 export default function Metrics() {
   const { t } = useTranslation();

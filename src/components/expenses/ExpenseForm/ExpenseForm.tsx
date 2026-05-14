@@ -9,12 +9,12 @@ import { NumericInput } from '../../ui/NumericInput';
 import TextInput from '../../ui/TextInput';
 import ScrollContainer from '../../ui/ScrollContainer/ScrollContainer';
 import {
-  useAuthScope,
   useExpenseCategoriesQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 import { cn, parseAmountToCents, getLocalDateString } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 interface ExpenseFormProps {
   initialValues?: ExpenseFormValues;

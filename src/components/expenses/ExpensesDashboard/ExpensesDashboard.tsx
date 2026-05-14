@@ -7,7 +7,6 @@ import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import DataStatusBanner from '../../ui/DataStatusBanner';
-import ErrorBanner from '../../ui/ErrorBanner';
 import QueryErrorState from '../../ui/QueryErrorState';
 import FullPageLoading from '../../ui/FullPageLoading';
 import SettlementSuccess from '../SettleBalance/SettlementSuccess';
@@ -15,18 +14,18 @@ import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
-  useAuthScope,
   useExpensesActivityFeedInfiniteQuery,
   useExpensesDashboardQuery,
 } from '../../../lib/queryHooks';
 import { cn } from '@/src/utils';
+import { useCurrentProfile } from '@/src/api/auth';
 
 
 export default function ExpensesDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
-  const { profileId, profile } = useAuthScope();
+  const { data: currentProfile } = useCurrentProfile();
   const [showPreview, setShowPreview] = React.useState(false);
 
   const dashboardQuery = useExpensesDashboardQuery();
@@ -60,7 +59,7 @@ export default function ExpensesDashboard() {
     return (
       <SettlementSuccess 
         onDone={() => setShowPreview(false)} 
-        userAvatar={profile?.avatar_url}
+        userAvatar={currentProfile?.avatar_url}
         partnerAvatar={balance?.counterpartyProfile?.avatar_url}
         partnerName={counterpartyName}
       />
@@ -242,7 +241,7 @@ export default function ExpensesDashboard() {
             </Card>
           ) : (
             <ExpensesList
-              currentProfileId={profileId}
+              currentProfileId={currentProfile?.id ?? ''}
               hasNextPage={activityQuery.hasNextPage}
               isFetchingNextPage={activityQuery.isFetchingNextPage}
               items={activityItems}

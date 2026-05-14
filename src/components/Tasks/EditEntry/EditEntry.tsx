@@ -98,13 +98,15 @@ export default function EditEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const { task: editTask, loading: taskLoading } = useTask({ id: taskId });
-  const { updateTaskAsync, isUpdating: saving } = useUpdateTask();
-  const { createTasksAsync } = useCreateTasks();
-  const { deleteTasksAfterAsync } = useDeleteTasksAfter();
+  const taskQuery = useTask({ id: taskId });
+  const editTask = taskQuery.data ?? null;
+  const updateTaskMutation = useUpdateTask();
+  const createTasksMutation = useCreateTasks();
+  const deleteTasksAfterMutation = useDeleteTasksAfter();
+  const saving = updateTaskMutation.isPending || createTasksMutation.isPending || deleteTasksAfterMutation.isPending;
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const loading = profilesQuery.isPending || taskLoading;
+  const loading = profilesQuery.isPending || taskQuery.isLoading;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {
@@ -203,10 +205,10 @@ export default function EditEntry() {
         end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
       };
 
-      await updateTaskAsync({ taskId, input });
+      await updateTaskMutation.mutateAsync({ taskId, input });
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
-        await deleteTasksAfterAsync({ recurrenceId: originalTask.recurrence_id, date: originalTask.date });
+        await deleteTasksAfterMutation.mutateAsync({ seriesId: originalTask.recurrence_id, date: originalTask.date });
 
         if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];
@@ -262,7 +264,7 @@ export default function EditEntry() {
           }
 
           if (newTasks.length > 0) {
-            await createTasksAsync(newTasks);
+            await createTasksMutation.mutateAsync(newTasks);
           }
         }
       }

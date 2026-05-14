@@ -7,12 +7,11 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 import {
-  useAuthScope,
   useDeleteExpenseMutation,
   useExpenseByIdQuery,
 } from '../../../lib/queryHooks';
-import { cn } from '../../../utils';
-import { type ExpenseDetailsSearch } from '../../../router';
+import type { ExpenseDetailsSearch } from '../../../router';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
   return (

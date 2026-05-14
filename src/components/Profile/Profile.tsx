@@ -4,12 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  useCurrentProfileId,
-  useSignOutMutation,
-  useProfileQuery,
   useProfilesQuery,
   useUpdateProfileMutation,
 } from '../../lib/queryHooks';
+import { useCurrentProfile, useLogout } from '../../api/auth';
 import type { Profile } from '../../lib/types';
 import PageHeader from '../ui/PageHeader';
 import FullPageLoading from '../ui/FullPageLoading';
@@ -22,15 +20,15 @@ import { toast } from '../ui/Snackbar';
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const currentProfileId = useCurrentProfileId();
   const profilesQuery = useProfilesQuery();
-  const profileQuery = useProfileQuery(currentProfileId ?? undefined);
+  const currentProfileQuery = useCurrentProfile();
   const updateProfileMutation = useUpdateProfileMutation();
-  const signOutMutation = useSignOutMutation();
+  const logoutMutation = useLogout();
 
   const profileOptions: Profile[] = profilesQuery.data ?? [];
-  const profile = profileQuery.data ?? null;
-  const loading = !currentProfileId || profilesQuery.isPending || profileQuery.isLoading;
+  const profile = currentProfileQuery.data ?? null;
+  const currentProfileId = profile?.id;
+  const loading = !currentProfileId || profilesQuery.isPending || currentProfileQuery.isLoading;
   const saving = updateProfileMutation.isPending;
 
   const {
@@ -72,7 +70,7 @@ export default function Profile() {
   async function handleSignOut() {
     setAuthError(null);
     try {
-      await signOutMutation.mutateAsync();
+      await logoutMutation.mutateAsync();
     } catch {
       setAuthError(t('auth.signOutError'));
     }
@@ -371,7 +369,7 @@ export default function Profile() {
           <Button
             variant="subtle"
             onClick={handleSignOut}
-            loading={signOutMutation.isPending}
+            loading={logoutMutation.isPending}
             fullWidth
             size="lg"
           >

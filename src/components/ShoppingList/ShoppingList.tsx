@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import {
-  useAuthScope,
   useAddShoppingItemMutation,
   useDeleteShoppingItemMutation,
   useShoppingItemsQuery,
@@ -21,6 +20,7 @@ import Button from '../ui/Button';
 import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 export default function ShoppingList() {
   const { t } = useTranslation();

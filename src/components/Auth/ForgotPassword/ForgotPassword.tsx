@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { useForgotPasswordMutation } from '../../../lib/queryHooks';
+import { useForgotPassword } from '../../../api/auth';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
@@ -14,7 +14,7 @@ import TwodoLogo from '../../ui/TwodoLogo';
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
-  const forgotMutation = useForgotPasswordMutation();
+  const forgotMutation = useForgotPassword();
 
   const [sent, setSent] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);

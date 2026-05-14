@@ -15,12 +15,12 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import SettlementSuccess from './SettlementSuccess';
 import { centsToCurrency } from '../../../helpers/expense';
 import {
-  useAuthScope,
-  useCreateSettlementMutation,
+    useCreateSettlementMutation,
   useExpensesDashboardQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
 import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 const MoneyFlowParticles = ({ direction }: { direction: 'to-center' | 'from-center' }) => {
   const isToCenter = direction === 'to-center';

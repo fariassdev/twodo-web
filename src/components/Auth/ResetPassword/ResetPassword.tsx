@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
-import { useUpdatePasswordMutation } from '../../../lib/queryHooks';
+import { useUpdatePassword } from '../../../api/auth';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
@@ -18,7 +18,7 @@ type PageState = 'loading' | 'ready' | 'expired' | 'success';
 export default function ResetPassword() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const updateMutation = useUpdatePasswordMutation();
+  const updateMutation = useUpdatePassword();
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [serverError, setServerError] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export default function ResetPassword() {
   async function onSubmit(data: ResetPasswordFormValues) {
     setServerError(null);
     try {
-      await updateMutation.mutateAsync({ password: data.password });
+      await updateMutation.mutateAsync(data.password);
       setPageState('success');
       setTimeout(() => {
         void navigate({ to: '/auth/login' });

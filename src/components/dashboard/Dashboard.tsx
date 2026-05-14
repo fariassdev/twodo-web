@@ -19,10 +19,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const today = new Date();
-  const { tasks: allTasks } = useTasksInRange({
+  const tasksQuery = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });
+  const allTasks = tasksQuery.data ?? [];
   const todayStr = getLocalDateString();
 
   const hasTasksToday = allTasks.some(t => 

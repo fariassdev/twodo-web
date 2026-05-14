@@ -6,14 +6,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  useAuthScope,
   useCreateHouseholdAndInviteMutation,
   useGetOrCreateHouseholdInviteMutation,
   useAcceptHouseholdInviteMutation,
   useInviteInfoQuery,
   useSendEmailInviteMutation,
-  useSignOutMutation,
 } from '../../lib/queryHooks';
+import { useCurrentProfile, useLogout } from '../../api/auth';
 import type { HouseholdInviteResult } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import {
@@ -29,6 +28,7 @@ import Card from '../ui/Card';
 import IconBox from '../ui/IconBox';
 import TwodoLogo from '../ui/TwodoLogo';
 import FullPageLoading from '../ui/FullPageLoading';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 
 type View = 'initial' | 'invite-created' | 'join-confirm' | 'join-success' | 'enter-code';
@@ -37,8 +37,9 @@ export default function ConnectPartner() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { profile, profileId, householdId } = useAuthScope();
-  const signOutMutation = useSignOutMutation();
+  const { profileId, householdId } = useAuthScope();
+  const { data: profile } = useCurrentProfile();
+  const logoutMutation = useLogout();
   const existingInviteLoadKeyRef = useRef<string | null>(null);
 
   const {
@@ -245,7 +246,7 @@ export default function ConnectPartner() {
   }
 
   async function handleSignOut() {
-    try { await signOutMutation.mutateAsync(); } catch { /* retry available */ }
+    try { await logoutMutation.mutateAsync(); } catch { /* retry available */ }
   }
 
   async function handleGoDashboard() {

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { startOfWeek, subDays, startOfYear, endOfDay } from 'date-fns';
-import { useAuthScope, useProfilesQuery, useBalanceScoreQuery } from '../../../lib/queryHooks';
+import { useProfilesQuery, useBalanceScoreQuery } from '../../../lib/queryHooks';
 import { cn } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 interface BalanceScoreWidgetProps {
   compact?: boolean;
@@ -29,7 +30,7 @@ interface BalanceInsight {
 export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidgetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { profile } = useAuthScope();
+  const { profileId } = useAuthScope();
   const profilesQuery = useProfilesQuery();
   const profiles = profilesQuery.data ?? [];
   
@@ -71,7 +72,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
   }, [pointsMemberA, pointsMemberB]);
 
   const { colorTheme, trend, translations } = useMemo((): BalanceInsight => {
-    const hasEnoughProfiles = !!profile && profiles.length >= 2;
+    const hasEnoughProfiles = !!profileId && profiles.length >= 2;
     
     if (!hasEnoughProfiles || total === 0 || !memberA || !memberB) {
       return {
@@ -119,7 +120,7 @@ export default function BalanceScoreWidget({ compact = false }: BalanceScoreWidg
         insight: t('dashboard.balance.muchMoreLoad', { name: loadedMember.name })
       }
     }
-  }, [finalPercentage, total, profile, profiles.length, memberA, memberB, t]);
+  }, [finalPercentage, total, profileId, profiles.length, memberA, memberB, t]);
 
   const isLoading = isPending || profilesQuery.isPending;
   const themeColorVar = `var(--color-${colorTheme})`;

@@ -8,8 +8,7 @@ import {
   type QueryKey,
 } from '@tanstack/react-query';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import { subDays, addDays } from 'date-fns';
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   acceptHouseholdInvite,
   addShoppingItem,
@@ -25,15 +24,12 @@ import {
   getExpensesDashboard,
   getExpensesList,
   getInviteInfo,
-  getAuthContext,
   getEquityBalance,
   getLatestLoveNote,
   getLoveNoteForTask,
   getOrCreateHouseholdInvite,
   getBalanceScore,
   getPointsBreakdown,
-  getProfileById,
-  getProfiles,
   getShoppingItems,
   getSettlementsHistory,
   getWeeklyPulse,
@@ -54,19 +50,16 @@ import {
   type UpdateProfileInput,
   type UpdateExpenseInput,
   type WeeklyPulse,
+  getProfileById,
+  getProfiles,
 } from './queries';
 import { queryKeys } from './queryKeys';
 import {
-  onAuthStateChange,
-  resetPasswordForEmail,
-  resendConfirmationEmail,
-  signInWithPassword,
-  signOut,
-  signUpWithPassword,
   supabase,
-  updatePassword,
 } from './supabase';
+import { authQueryKeys } from '../supabase/auth';
 import { normalizeSearchText } from '../helpers/expense';
+import { useAuthScope } from '../context/AuthContext';
 import type {
   AuthContext,
   ExpenseCategory,
@@ -77,74 +70,13 @@ import type {
   ShoppingItem,
 } from './types';
 
-type AuthCredentials = {
-  email: string;
-  password: string;
-};
-
-type LinkedScope = {
-  householdId: string;
-  profileId: string;
-};
-
-const signedOutContext: AuthContext = {
-  status: 'signed_out',
-  session: null,
-  profile: null,
-  household: null,
-  role: null,
-};
-
 function disabledKey(...segments: string[]) {
   return ['disabled', ...segments] as const;
-}
-
-function isAuthContextKey(queryKey: QueryKey): boolean {
-  return Array.isArray(queryKey) && queryKey[0] === 'auth' && queryKey[1] === 'context';
-}
-
-function getAuthContextFromCache(queryClient: QueryClient): AuthContext {
-  return queryClient.getQueryData<AuthContext>(queryKeys.auth.context()) ?? signedOutContext;
-}
-
-function getLinkedScopeOrThrow(queryClient: QueryClient): LinkedScope {
-  const context = getAuthContextFromCache(queryClient);
-
-  if (context.status !== 'linked' || !context.household?.id || !context.profile?.id) {
-    throw new Error('AUTH_CONTEXT_NOT_READY');
-  }
-
-  return {
-    householdId: context.household.id,
-    profileId: context.profile.id,
-  };
-}
-
-function clearPrivateDomainQueries(queryClient: QueryClient) {
-  queryClient.removeQueries({ queryKey: queryKeys.profiles.all });
-  queryClient.removeQueries({ queryKey: queryKeys.tasks.all });
-  queryClient.removeQueries({ queryKey: queryKeys.calendar.all });
-  queryClient.removeQueries({ queryKey: queryKeys.taskDetail.all });
-  queryClient.removeQueries({ queryKey: queryKeys.metrics.all });
-  queryClient.removeQueries({ queryKey: queryKeys.shopping.all });
-  queryClient.removeQueries({ queryKey: queryKeys.expenses.all });
-  queryClient.removeQueries({ queryKey: queryKeys.loveNotes.all });
 }
 
 function isDomainForHousehold(queryKey: QueryKey, domain: string, householdId: string): boolean {
   return Array.isArray(queryKey) && queryKey[0] === domain && queryKey.some((part) => part === householdId);
 }
-
-function toYearMonth(date: string | null | undefined): { year: number; month: number } | null {
-  if (!date) return null;
-  const parsed = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return {
-    year: parsed.getFullYear(),
-    month: parsed.getMonth(),
-  };
-}
-
 
 function getExpenseFiltersSignature(filters: ExpenseFilters = {}): string {
   const normalizedSearchText = filters.searchText ? normalizeSearchText(filters.searchText) : null;
@@ -297,127 +229,8 @@ function findExpenseInCache(
   return undefined;
 }
 
-export function useAuthContextSnapshot(): AuthContext {
-  const queryClient = useQueryClient();
-
-  return useSyncExternalStore(
-    (onStoreChange) =>
-      queryClient.getQueryCache().subscribe((event) => {
-        if (event?.query && isAuthContextKey(event.query.queryKey)) {
-          onStoreChange();
-        }
-      }),
-    () => getAuthContextFromCache(queryClient),
-    () => signedOutContext,
-  );
-}
-
-export function useAuthScope() {
-  const context = useAuthContextSnapshot();
-
-  return {
-    status: context.status,
-    householdId: context.household?.id ?? null,
-    profileId: context.profile?.id ?? null,
-    profile: context.profile,
-  };
-}
-
-export function useCurrentHouseholdId(): string | null {
-  return useAuthScope().householdId;
-}
-
-export function useCurrentProfileId(): string | null {
-  return useAuthScope().profileId;
-}
-
-export function useAuthContextQuery() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = onAuthStateChange(() => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [queryClient]);
-
-  return useQuery<AuthContext>({
-    queryKey: queryKeys.auth.context(),
-    queryFn: getAuthContext,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
-  });
-}
-
-export function useSignInMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ email, password }: AuthCredentials) => signInWithPassword(email, password),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
-  });
-}
-
-export function useSignUpMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ email, password }: AuthCredentials) => signUpWithPassword(email, password),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
-  });
-}
-
-export function useSignOutMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => signOut(),
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.auth.context() });
-      queryClient.setQueryData<AuthContext>(queryKeys.auth.context(), signedOutContext);
-      clearPrivateDomainQueries(queryClient);
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
-  });
-}
-
-export function useForgotPasswordMutation() {
-  return useMutation({
-    mutationFn: ({ email }: { email: string }) =>
-      resetPasswordForEmail(email, `${window.location.origin}/auth/reset-password`),
-  });
-}
-
-export function useUpdatePasswordMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ password }: { password: string }) => updatePassword(password),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.context() });
-    },
-  });
-}
-
-export function useResendVerificationMutation() {
-  return useMutation({
-    mutationFn: ({ email }: { email: string }) => resendConfirmationEmail(email),
-  });
-}
-
 export function useProfilesQuery() {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<Profile[]>({
     queryKey: householdId ? queryKeys.profiles.list(householdId) : disabledKey('profiles', 'list'),
@@ -427,7 +240,7 @@ export function useProfilesQuery() {
 }
 
 export function useProfileQuery(profileId: string | undefined) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<Profile | null>({
     queryKey:
@@ -441,7 +254,7 @@ export function useProfileQuery(profileId: string | undefined) {
 
 
 export function useLatestLoveNoteQuery() {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<LoveNote | null>({
     queryKey: householdId ? queryKeys.loveNotes.latest(householdId) : disabledKey('loveNotes', 'latest'),
@@ -451,7 +264,7 @@ export function useLatestLoveNoteQuery() {
 }
 
 export function useLoveNoteForTaskQuery(taskId: string | undefined) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<LoveNote | null>({
     queryKey:
@@ -464,7 +277,7 @@ export function useLoveNoteForTaskQuery(taskId: string | undefined) {
 }
 
 export function useWeeklyPulseQuery() {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<WeeklyPulse>({
     queryKey: householdId ? queryKeys.metrics.weeklyPulse(householdId) : disabledKey('metrics', 'weeklyPulse'),
@@ -474,7 +287,7 @@ export function useWeeklyPulseQuery() {
 }
 
 export function useEquityBalanceQuery(profiles: Profile[] | undefined) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   const sortedProfiles = useMemo(
     () => (profiles ? [...profiles].sort((a, b) => a.id.localeCompare(b.id)) : undefined),
@@ -493,7 +306,7 @@ export function useEquityBalanceQuery(profiles: Profile[] | undefined) {
 }
 
 export function useBalanceScoreQuery(startDate: string, endDate: string) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<BalanceScoreData>({
     queryKey: householdId ? queryKeys.metrics.balanceScore(householdId, startDate, endDate) : ['metrics', 'balanceScore', 'disabled'],
@@ -503,7 +316,7 @@ export function useBalanceScoreQuery(startDate: string, endDate: string) {
 }
 
 export function usePointsBreakdownQuery(profiles: Profile[] | undefined) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   const sortedProfiles = useMemo(
     () => (profiles ? [...profiles].sort((a, b) => a.id.localeCompare(b.id)) : undefined),
@@ -523,7 +336,7 @@ export function usePointsBreakdownQuery(profiles: Profile[] | undefined) {
 
 export function useShoppingItemsQuery() {
   const queryClient = useQueryClient();
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   useEffect(() => {
     if (!householdId) return;
@@ -577,7 +390,7 @@ export function useUpdateProfileMutation() {
     mutationFn: ({ profileId, input }: { profileId: string; input: UpdateProfileInput }) =>
       updateProfile(profileId, input),
     onSuccess: async (profile) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      const { householdId } = useAuthScope();
 
       queryClient.setQueryData(queryKeys.profiles.detail(profile.id, householdId), profile);
       queryClient.setQueryData<Profile[]>(queryKeys.profiles.list(householdId), (current) => {
@@ -589,6 +402,7 @@ export function useUpdateProfileMutation() {
       });
 
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: authQueryKeys.context() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.profiles.list(householdId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.metrics.weeklyPulse(householdId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.metrics.equity(householdId) }),
@@ -600,9 +414,10 @@ export function useUpdateProfileMutation() {
 
 export function useAddShoppingItemMutation() {
   const queryClient = useQueryClient();
+  const scope = useAuthScope();
 
   return useMutation({
-    mutationFn: (name: string) => addShoppingItem(name, getLinkedScopeOrThrow(queryClient)),
+    mutationFn: (name: string) => addShoppingItem(name, scope),
     onSuccess: (item) => {
       queryClient.setQueryData<ShoppingItem[]>(queryKeys.shopping.list(item.household_id), (current) => {
         const deduped = (current ?? []).filter((existing) => existing.id !== item.id);
@@ -614,15 +429,13 @@ export function useAddShoppingItemMutation() {
 
 export function useTogglePurchasedMutation() {
   const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
 
   return useMutation({
     mutationFn: ({ id, currentValue }: { id: string; currentValue: boolean }) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
       return togglePurchased(id, currentValue, householdId);
     },
     onMutate: async ({ id, currentValue }) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
-
       await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
       const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
 
@@ -650,15 +463,13 @@ export function useTogglePurchasedMutation() {
 
 export function useUpdateQuantityMutation() {
   const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
 
   return useMutation({
     mutationFn: ({ id, quantity }: { id: string; quantity: number }) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
       return updateQuantity(id, quantity, householdId);
     },
     onMutate: async ({ id, quantity }) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
-
       await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
       const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
 
@@ -682,14 +493,13 @@ export function useUpdateQuantityMutation() {
 
 export function useDeleteShoppingItemMutation() {
   const queryClient = useQueryClient();
+  const { householdId } = useAuthScope();
 
   return useMutation({
     mutationFn: (id: string) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
       return deleteShoppingItem(id, householdId);
     },
     onMutate: async (id) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
 
       await queryClient.cancelQueries({ queryKey: queryKeys.shopping.list(householdId) });
       const previous = queryClient.getQueryData<ShoppingItem[]>(queryKeys.shopping.list(householdId));
@@ -746,7 +556,7 @@ export function useExpenseBalanceSnapshotQuery() {
 }
 
 export function useExpensesActivityFeedInfiniteQuery(pageSize = 20, options?: { enabled?: boolean }) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
   const isEnabled = options?.enabled ?? true;
 
   return useInfiniteQuery<ExpenseActivityFeedPage>({
@@ -761,7 +571,7 @@ export function useExpensesActivityFeedInfiniteQuery(pageSize = 20, options?: { 
 }
 
 export function useExpensesListQuery(filters: ExpenseFilters = {}, options?: { enabled?: boolean }) {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
   const signature = useMemo(() => getExpenseFiltersSignature(filters), [filters]);
   const isEnabled = options?.enabled ?? true;
 
@@ -777,7 +587,7 @@ export function useExpensesListQuery(filters: ExpenseFilters = {}, options?: { e
 
 export function useExpenseByIdQuery(expenseId: string | undefined) {
   const queryClient = useQueryClient();
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<ExpenseWithDetails | null>({
     queryKey:
@@ -794,7 +604,7 @@ export function useExpenseByIdQuery(expenseId: string | undefined) {
 }
 
 export function useSettlementsHistoryQuery() {
-  const householdId = useCurrentHouseholdId();
+  const { householdId } = useAuthScope();
 
   return useQuery<SettlementWithDetails[]>({
     queryKey: householdId
@@ -807,9 +617,10 @@ export function useSettlementsHistoryQuery() {
 
 export function useCreateExpenseMutation() {
   const queryClient = useQueryClient();
+  const scope = useAuthScope();
 
   return useMutation({
-    mutationFn: (input: CreateExpenseInput) => createExpense(input, getLinkedScopeOrThrow(queryClient)),
+    mutationFn: (input: CreateExpenseInput) => createExpense(input, scope),
     onSuccess: async (expense) => {
       const householdId = expense.household_id;
       queryClient.setQueryData<ExpenseWithDetails | null>(
@@ -824,10 +635,11 @@ export function useCreateExpenseMutation() {
 
 export function useUpdateExpenseMutation() {
   const queryClient = useQueryClient();
+  const scope = useAuthScope();
 
   return useMutation({
     mutationFn: ({ expenseId, input }: { expenseId: string; input: UpdateExpenseInput }) =>
-      updateExpense(expenseId, input, getLinkedScopeOrThrow(queryClient)),
+      updateExpense(expenseId, input, scope),
     onSuccess: async (expense) => {
       const householdId = expense.household_id;
       queryClient.setQueryData<ExpenseWithDetails | null>(
@@ -845,11 +657,11 @@ export function useDeleteExpenseMutation() {
 
   return useMutation({
     mutationFn: (expenseId: string) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      const { householdId } = useAuthScope();
       return deleteExpense(expenseId, householdId);
     },
     onMutate: async (expenseId) => {
-      const { householdId } = getLinkedScopeOrThrow(queryClient);
+      const { householdId } = useAuthScope();
       queryClient.removeQueries({ queryKey: queryKeys.expenses.detail(expenseId, householdId) });
       return { householdId, expenseId };
     },
@@ -862,9 +674,10 @@ export function useDeleteExpenseMutation() {
 
 export function useCreateSettlementMutation() {
   const queryClient = useQueryClient();
+  const scope = useAuthScope();
 
   return useMutation({
-    mutationFn: ({ note }: { note?: string }) => createSettlement({ note }, getLinkedScopeOrThrow(queryClient)),
+    mutationFn: ({ note }: { note?: string }) => createSettlement({ note }, scope),
     onSuccess: async (settlement) => {
       await invalidateExpenseMutationGraph(queryClient, settlement.household_id);
       await queryClient.invalidateQueries({ queryKey: queryKeys.expenses.settlements(settlement.household_id) });

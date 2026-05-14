@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useAuthScope,
   useProfilesQuery,
 } from '../../lib/queryHooks';
 import { useTasksInRange, taskKeys } from '../../api/tasks';
@@ -20,6 +19,7 @@ import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
 import { ContextMenu } from '../ui/ContextMenu/ContextMenu';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -91,38 +91,34 @@ export default function Calendar() {
   }
 
   const profilesQuery = useProfilesQuery();
-  const { tasks: monthTasks, prefetch: prefetchMonth } = useTasksInRange({
+  const monthTasksQuery = useTasksInRange({
     ...getMonthDateRange(year, month),
     includeDeleted: showDeleted,
   });
-  const { tasks: selectedMonthTasks } = useTasksInRange({
+  const monthTasks = monthTasksQuery.data ?? [];
+  
+  const selectedMonthTasksQuery = useTasksInRange({
     ...getMonthDateRange(selectedDate.getFullYear(), selectedDate.getMonth()),
     includeDeleted: showDeleted,
   });
+  const selectedMonthTasks = selectedMonthTasksQuery.data ?? [];
 
   const profiles: Profile[] = profilesQuery.data ?? [];
   const profileNameMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.name])), [profiles]);
   const hasQueryError =
-    profilesQuery.isError;
+    profilesQuery.isError || monthTasksQuery.isError || selectedMonthTasksQuery.isError;
   const isStale =
-    profilesQuery.isStale;
+    profilesQuery.isStale || monthTasksQuery.isStale || selectedMonthTasksQuery.isStale;
   const isFetching =
-    profilesQuery.isFetching;
+    profilesQuery.isFetching || monthTasksQuery.isFetching || selectedMonthTasksQuery.isFetching;
 
   const tasksByBlock = useMemo(() => {
-    const filtered = selectedMonthTasks
-      .filter((task) => task.date === selectedStr)
-      .filter((task) => {
-        if (task.type === 'task') {
-          if (!showTasks) return false;
-          if (!showDailyTasks && task.is_recurring && task.frequency === 'daily') return false;
-          return true;
-        }
-        if (task.type === 'event') {
-          return showEvents;
-        }
-        return true;
-      });
+    const filtered = selectedMonthTasks.filter(
+      (task) =>
+        task.date === selectedStr &&
+        (task.type === 'task' ? showTasks : showEvents) &&
+        (task.type === 'task' ? (showDailyTasks ? true : task.recurrence_id === null) : true),
+    );
 
     const groups: Record<string, Task[]> = {
       morning: [],
@@ -155,9 +151,22 @@ export default function Calendar() {
   useEffect(() => {
     const next = getMonthDateRange(year, month + 1);
     const prev = getMonthDateRange(year, month - 1);
-    void prefetchMonth({ ...next, includeDeleted: showDeleted });
-    void prefetchMonth({ ...prev, includeDeleted: showDeleted });
-  }, [year, month, showDeleted, prefetchMonth]);
+    
+    const prefetch = (range: { startDate: string; endDate: string }) => 
+      queryClient.prefetchQuery({
+        queryKey: taskKeys.range(householdId!, range.startDate, range.endDate, showDeleted),
+        queryFn: () => {
+          // This is a bit duplicative of the hook's queryFn but avoids exposing it
+          // In a real refactor, maybe extract the fetcher or put prefetch back in hook
+          // For now, following the "standard" request which often means less abstraction
+          const { fetchTasksInRange } = require('../../supabase/queries/tasks');
+          return fetchTasksInRange(householdId!, range.startDate, range.endDate, showDeleted);
+        }
+      });
+
+    void prefetch(next);
+    void prefetch(prev);
+  }, [year, month, showDeleted, householdId, queryClient]);
 
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));

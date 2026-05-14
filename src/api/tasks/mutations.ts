@@ -37,17 +37,10 @@ export const useCreateTask = () => {
   const scope = useAuthScope();
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending, isError } = useMutation({
+  return useMutation({
     mutationFn: (input: CreateTaskInput) => createTask(input, scope),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    createTask: mutate,
-    createTaskAsync: mutateAsync,
-    isCreating: isPending,
-    isError,
-  };
 };
 
 // ── useCreateTasks (batch) ────────────────────────────────────────────────────
@@ -56,17 +49,10 @@ export const useCreateTasks = () => {
   const scope = useAuthScope();
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending, isError } = useMutation({
+  return useMutation({
     mutationFn: (inputs: CreateTaskInput[]) => createTasks(inputs, scope),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    createTasks: mutate,
-    createTasksAsync: mutateAsync,
-    isCreating: isPending,
-    isError,
-  };
 };
 
 // ── useUpdateTask ─────────────────────────────────────────────────────────────
@@ -75,17 +61,11 @@ export const useUpdateTask = () => {
   const { householdId } = useAuthScope();
   const { invalidateDetail } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending } = useMutation({
+  return useMutation({
     mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) =>
       updateTask(taskId, householdId, input),
     onSuccess: (_, { taskId }) => invalidateDetail(taskId),
   });
-
-  return {
-    updateTask: mutate,
-    updateTaskAsync: mutateAsync,
-    isUpdating: isPending,
-  };
 };
 
 // ── useDeleteTask ─────────────────────────────────────────────────────────────
@@ -94,15 +74,10 @@ export const useDeleteTask = () => {
   const { householdId } = useAuthScope();
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, isPending } = useMutation({
+  return useMutation({
     mutationFn: ({ taskId }: { taskId: string }) => deleteTask(taskId, householdId),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    deleteTask: mutate,
-    isDeleting: isPending,
-  };
 };
 
 // ── useCompleteTask ───────────────────────────────────────────────────────────
@@ -112,7 +87,7 @@ export const useCompleteTask = () => {
   const queryClient = useQueryClient();
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending } = useMutation({
+  return useMutation({
     mutationFn: ({ taskId, override }: { taskId: string; override?: AssignmentOverride }) =>
       completeTask(taskId, scope, override),
 
@@ -135,12 +110,6 @@ export const useCompleteTask = () => {
     },
     onSettled: () => invalidateAll(),
   });
-
-  return {
-    completeTask: mutate,
-    completeTaskAsync: mutateAsync,
-    isCompleting: isPending,
-  };
 };
 
 // ── useUpdateTaskSeries ───────────────────────────────────────────────────────
@@ -149,7 +118,7 @@ export const useUpdateTaskSeries = () => {
   const { householdId } = useAuthScope();
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending } = useMutation({
+  return useMutation({
     mutationFn: ({
       recurrenceId,
       fromDate,
@@ -161,12 +130,6 @@ export const useUpdateTaskSeries = () => {
     }) => updateTaskSeries(recurrenceId, fromDate, input, householdId),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    updateTaskSeries: mutate,
-    updateTaskSeriesAsync: mutateAsync,
-    isUpdating: isPending,
-  };
 };
 
 // ── useDeleteTaskSeries ───────────────────────────────────────────────────────
@@ -174,16 +137,11 @@ export const useUpdateTaskSeries = () => {
 export const useDeleteTaskSeries = () => {
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: ({ recurrenceId, fromDate }: { recurrenceId: string; fromDate?: string }) =>
-      deleteTaskSeries(recurrenceId, fromDate),
+  return useMutation({
+    mutationFn: ({ seriesId, fromDate }: { seriesId: string; fromDate?: string }) =>
+      deleteTaskSeries(seriesId, fromDate),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    deleteTaskSeries: mutate,
-    isDeleting: isPending,
-  };
 };
 
 // ── useDeleteTasksAfter ───────────────────────────────────────────────────────
@@ -191,17 +149,11 @@ export const useDeleteTaskSeries = () => {
 export const useDeleteTasksAfter = () => {
   const { invalidateAll } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending } = useMutation({
-    mutationFn: ({ recurrenceId, date }: { recurrenceId: string; date: string }) =>
-      deleteTasksAfter(recurrenceId, date),
+  return useMutation({
+    mutationFn: ({ seriesId, date }: { seriesId: string; date: string }) =>
+      deleteTasksAfter(seriesId, date),
     onSuccess: () => invalidateAll(),
   });
-
-  return {
-    deleteTasksAfter: mutate,
-    deleteTasksAfterAsync: mutateAsync,
-    isDeleting: isPending,
-  };
 };
 
 // ── useUpdateCompletionAssignment ─────────────────────────────────────────────
@@ -210,7 +162,7 @@ export const useUpdateCompletionAssignment = () => {
   const scope = useAuthScope();
   const { invalidateDetail } = useInvalidateTasks();
 
-  const { mutate, mutateAsync, isPending } = useMutation({
+  return useMutation({
     mutationFn: ({
       taskId,
       assignmentType,
@@ -222,10 +174,4 @@ export const useUpdateCompletionAssignment = () => {
     }) => updateTaskCompletionAssignment(taskId, assignmentType, assignedTo, scope),
     onSuccess: (_, { taskId }) => invalidateDetail(taskId),
   });
-
-  return {
-    updateCompletionAssignment: mutate,
-    updateCompletionAssignmentAsync: mutateAsync,
-    isUpdating: isPending,
-  };
 };
