@@ -25,3 +25,8 @@ export const useProfile = (profileId: string | undefined) => {
     enabled: Boolean(householdId && profileId),
   });
 };
+
+export const useCurrentProfile = () => {
+  const { profileId } = useAuthScope();
+  return useProfile(profileId);
+};

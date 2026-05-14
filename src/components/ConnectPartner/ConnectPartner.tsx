@@ -12,7 +12,8 @@ import {
   useInviteInfo,
   useSendEmailInvite,
 } from '../../api/invites';
-import { useCurrentProfile, useLogout } from '../../api/auth';
+import { useLogout } from '../../api/auth';
+import { useCurrentProfile } from '../../api/profiles';
 import type { HouseholdInviteResult } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import {

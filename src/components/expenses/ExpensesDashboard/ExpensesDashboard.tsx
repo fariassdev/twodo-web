@@ -18,7 +18,7 @@ import {
   useExpenseBalanceSnapshot,
 } from '../../../api/expenses';
 import { cn } from '@/src/utils';
-import { useCurrentProfile } from '@/src/api/auth';
+import { useCurrentProfile } from '@/src/api/profiles';
 
 
 export default function ExpensesDashboard() {
