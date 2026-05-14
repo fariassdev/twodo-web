@@ -9,7 +9,7 @@ import UpcomingTasksWidget from './UpcomingTasksWidget';
 import Button from '../ui/Button';
 import DataStatusBanner from '../ui/DataStatusBanner';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { useTasks } from '../../api/hooks';
+import { useTasksInRange } from '../../api/tasks';
 import { getLocalDateString } from '../../utils';
 import { subDays, addDays } from 'date-fns';
 
@@ -19,7 +19,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const today = new Date();
-  const { tasks: allTasks } = useTasks({
+  const { tasks: allTasks } = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });

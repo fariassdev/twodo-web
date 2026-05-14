@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTaskActions, useTaskCatalog } from '../../../api/hooks';
+import { useCreateTasks, useTaskCatalog } from '../../../api/tasks';
 import { useProfilesQuery } from '../../../lib/queryHooks';
-import type { CreateTaskInput } from '../../../api/mutations/tasks';
+import type { CreateTaskInput } from '../../../domain/types';
 import type { Profile, TaskCatalogItem } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
@@ -111,7 +111,7 @@ export default function CreateEntry() {
 
   const profilesQuery = useProfilesQuery();
   const { catalog, loading: catalogLoading } = useTaskCatalog();
-  const { createTasks, isLoading: saving } = useTaskActions();
+  const { createTasksAsync, isCreating: saving } = useCreateTasks();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
 
@@ -248,7 +248,7 @@ export default function CreateEntry() {
         });
       }
 
-      const createdTasks = await createTasks(inputs);
+      const createdTasks = await createTasksAsync(inputs);
       const firstTask = createdTasks[0];
       if (firstTask) {
         navigate({ to: '/task/$taskId', params: { taskId: firstTask.id } });

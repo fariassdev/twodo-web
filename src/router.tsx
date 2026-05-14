@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-router';
 import { useLanguageChange } from './hooks/useLanguageChange';
 import { useScreenTelemetry } from './hooks/useScreenTelemetry';
-import { useAuthContextQuery } from './lib/queryHooks';
+import { useAuthState } from './context/AuthContext';
 import BottomNav from './components/ui/BottomNav';
 import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
 import FullPageLoading from './components/ui/FullPageLoading';
@@ -38,8 +38,6 @@ const VerifyEmail = React.lazy(() => import('./components/Auth/VerifyEmail'));
 const PendingAccess = React.lazy(() => import('./components/Auth/PendingAccess'));
 const TaskAssignment = React.lazy(() => import('./components/Tasks/TaskAssignment/TaskAssignment'));
 
-const AuthQueryContext = React.createContext<ReturnType<typeof useAuthContextQuery> | null>(null);
-
 
 function RouteLoadingFallback() {
   return <FullPageLoading message={i18n.t('loading')} />;
@@ -56,42 +54,21 @@ function RouteShell({ children, sectionName }: { children: React.ReactNode; sect
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const authContextQuery = useAuthContextQuery();
   useLanguageChange();
   useScreenTelemetry(pathname);
 
   return (
-    <AuthQueryContext.Provider value={authContextQuery}>
-      <div className="bg-background-dark text-surface-2 min-h-dvh font-display flex flex-col">
-        <Outlet />
-      </div>
-    </AuthQueryContext.Provider>
+    <div className="bg-background-dark text-surface-2 min-h-dvh font-display flex flex-col">
+      <Outlet />
+    </div>
   );
 }
 
-function useGateAuthQuery() {
-  const authContextQuery = React.useContext(AuthQueryContext);
-
-  if (!authContextQuery) {
-    throw new Error('Auth query context is not available in route gate');
-  }
-
-  return authContextQuery;
-}
-
 function PublicOnlyOutlet() {
-  const authContextQuery = useGateAuthQuery();
+  const { status } = useAuthState();
 
-  if (authContextQuery.isPending) {
-    return <RouteLoadingFallback />;
-  }
-
-  const status = authContextQuery.data?.status ?? 'signed_out';
-
-  if (status === 'linked') {
-    return <Navigate to="/" replace />;
-  }
-
+  if (status === 'loading') return <RouteLoadingFallback />;
+  if (status === 'linked') return <Navigate to="/" replace />;
   if (status === 'pending_profile' || status === 'pending_household') {
     return <Navigate to="/pending-access" replace />;
   }
@@ -100,38 +77,20 @@ function PublicOnlyOutlet() {
 }
 
 function SessionRequiredOutlet() {
-  const authContextQuery = useGateAuthQuery();
+  const { status } = useAuthState();
 
-  if (authContextQuery.isPending) {
-    return <RouteLoadingFallback />;
-  }
-
-  const status = authContextQuery.data?.status ?? 'signed_out';
-
-  if (status === 'signed_out') {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  if (status === 'linked') {
-    return <Navigate to="/" replace />;
-  }
+  if (status === 'loading') return <RouteLoadingFallback />;
+  if (status === 'signed_out') return <Navigate to="/auth/login" replace />;
+  if (status === 'linked') return <Navigate to="/" replace />;
 
   return <Outlet />;
 }
 
 function LinkedAppOutlet() {
-  const authContextQuery = useGateAuthQuery();
+  const { status } = useAuthState();
 
-  if (authContextQuery.isPending) {
-    return <RouteLoadingFallback />;
-  }
-
-  const status = authContextQuery.data?.status ?? 'signed_out';
-
-  if (status === 'signed_out') {
-    return <Navigate to="/auth/login" replace />;
-  }
-
+  if (status === 'loading') return <RouteLoadingFallback />;
+  if (status === 'signed_out') return <Navigate to="/auth/login" replace />;
   if (status === 'pending_profile' || status === 'pending_household') {
     return <Navigate to="/pending-access" replace />;
   }
@@ -221,7 +180,7 @@ interface JoinSearch {
 
 function JoinRedirect() {
   const { code } = joinRoute.useSearch();
-  const authContextQuery = useGateAuthQuery();
+  const { status } = useAuthState();
 
   React.useEffect(() => {
     if (code) {
@@ -229,16 +188,8 @@ function JoinRedirect() {
     }
   }, [code]);
 
-  if (authContextQuery.isPending) {
-    return <RouteLoadingFallback />;
-  }
-
-  const status = authContextQuery.data?.status ?? 'signed_out';
-
-  if (status === 'signed_out') {
-    return <Navigate to="/auth/login" replace />;
-  }
-
+  if (status === 'loading') return <RouteLoadingFallback />;
+  if (status === 'signed_out') return <Navigate to="/auth/login" replace />;
   if (status === 'pending_profile' || status === 'pending_household') {
     return <Navigate to="/pending-access" replace />;
   }

@@ -4,7 +4,7 @@ import {
   useProfileQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
-import { useTask, useTaskActions } from '../../../api/hooks';
+import { useTask, useDeleteTask, useDeleteTaskSeries, useCompleteTask } from '../../../api/tasks';
 import { 
   Trash2, 
   CookingPot, 
@@ -83,7 +83,9 @@ export default function TaskDetails() {
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
   const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
 
-  const { completeTask, deleteTask, deleteTaskSeries, isLoading: acting } = useTaskActions();
+  const { deleteTask: deleteTaskMutate } = useDeleteTask();
+  const { deleteTaskSeries: deleteTaskSeriesMutate } = useDeleteTaskSeries();
+  const { completeTask, isCompleting: acting } = useCompleteTask();
 
   const loveNote = loveNoteQuery.data ?? null;
   const assignedProfile = assignedProfileQuery.data ?? null;
@@ -98,7 +100,9 @@ export default function TaskDetails() {
     if (!task) return;
     setActionError(null);
     try {
-      await deleteTask(task.id);
+      await new Promise<void>((resolve, reject) =>
+        deleteTaskMutate({ taskId: task.id }, { onSuccess: () => resolve(), onError: reject })
+      );
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -109,7 +113,9 @@ export default function TaskDetails() {
     if (!task || !task.recurrence_id) return;
     setActionError(null);
     try {
-      await deleteTaskSeries(task.recurrence_id, task.date || undefined);
+      await new Promise<void>((resolve, reject) =>
+        deleteTaskSeriesMutate({ recurrenceId: task.recurrence_id!, fromDate: task.date || undefined }, { onSuccess: () => resolve(), onError: reject })
+      );
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -120,7 +126,9 @@ export default function TaskDetails() {
     if (!task || !task.recurrence_id) return;
     setActionError(null);
     try {
-      await deleteTaskSeries(task.recurrence_id);
+      await new Promise<void>((resolve, reject) =>
+        deleteTaskSeriesMutate({ recurrenceId: task.recurrence_id! }, { onSuccess: () => resolve(), onError: reject })
+      );
       navigate({ to: '/' });
     } catch (err) {
       setActionError(t('queryState.mutationError'));
@@ -137,7 +145,9 @@ export default function TaskDetails() {
     if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
       setActionError(null);
       try {
-        await deleteTask(task.id);
+        await new Promise<void>((resolve, reject) =>
+          deleteTaskMutate({ taskId: task.id }, { onSuccess: () => resolve(), onError: reject })
+        );
         navigate({ to: '/' });
       } catch {
         setActionError(t('queryState.mutationError'));

@@ -1,45 +1,18 @@
-import { supabase } from '../../lib/supabase';
-import type { Task as RawTask } from '../../lib/types';
-import { EFFORT_POINTS, type EffortLevel } from '../../constants';
-import { fetchTaskById, TASK_FULL_QUERY } from '../queries/tasks';
-import { getProfiles } from '../../lib/queries'; // Temporary until profiles are refactored
+import { supabase } from '../client';
+import { SupabaseError } from '../errors';
+import { fetchTaskById } from '../queries/tasks';
+import { getProfiles } from '../../lib/queries';
+import { EFFORT_POINTS } from '../../constants';
+import type { AuthScope } from '../../context/AuthContext';
+import type {
+  CreateTaskInput,
+  UpdateTaskInput,
+  AssignmentOverride,
+  AssignmentOverrideType,
+} from '../../domain/types';
 
-export interface CreateTaskInput {
-  title: string;
-  description?: string;
-  type: 'task' | 'event';
-  priority: 'normal' | 'high';
-  date?: string;
-  points?: number;
-  effort_level?: EffortLevel;
-  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'anytime';
-  category?: string;
-  catalog_task_id?: string | null;
-  is_recurring: boolean;
-  frequency?: 'daily' | 'weekly' | 'monthly' | null;
-  recurrence_id?: string | null;
-  assignment_type: 'strict_rotation' | 'team_work' | 'individual' | 'anyone';
-  assigned_to?: string | null;
-  location?: string;
-  start_time?: string;
-  end_time?: string;
-}
+// ── Private helpers ────────────────────────────────────────────────────────────
 
-export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
-
-export type TaskAssignmentOverrideType = 'team_work' | 'individual' | 'anyone';
-
-export interface TaskAssignmentOverride {
-  type: TaskAssignmentOverrideType;
-  assignedTo?: string[];
-}
-
-interface MutationScope {
-  householdId: string;
-  profileId: string;
-}
-
-// Helpers
 function resolveAssignedToForInsert(
   input: Pick<CreateTaskInput, 'assignment_type' | 'assigned_to'>,
   currentProfileId: string,
@@ -67,17 +40,19 @@ function splitPointsAcrossRecipients(totalPoints: number, recipientIds: string[]
 }
 
 async function resolveAssignmentRecipients(
-  task: RawTask,
-  scope: MutationScope,
-  assignmentOverride?: TaskAssignmentOverride,
+  task: Awaited<ReturnType<typeof fetchTaskById>>,
+  scope: AuthScope,
+  assignmentOverride?: AssignmentOverride,
 ): Promise<{
-  assignmentType: TaskAssignmentOverrideType | 'strict_rotation';
+  assignmentType: AssignmentOverrideType | 'strict_rotation';
   assignedTo: string | null;
   recipientIds: string[];
 }> {
+  if (!task) throw new Error('Task not found');
+
   if (assignmentOverride?.type === 'team_work') {
     const members = await getProfiles(scope.householdId);
-    const recipientIds = members.map((member) => member.id);
+    const recipientIds = members.map((m) => m.id);
     return {
       assignmentType: 'team_work',
       assignedTo: null,
@@ -105,7 +80,7 @@ async function resolveAssignmentRecipients(
 
   if (task.assignment_type === 'team_work') {
     const members = await getProfiles(scope.householdId);
-    const recipientIds = members.map((member) => member.id);
+    const recipientIds = members.map((m) => m.id);
     return {
       assignmentType: 'team_work',
       assignedTo: null,
@@ -123,7 +98,7 @@ async function resolveAssignmentRecipients(
 
   const assignedId = task.assigned_to ?? scope.profileId;
   return {
-    assignmentType: task.assignment_type as TaskAssignmentOverrideType | 'strict_rotation',
+    assignmentType: task.assignment_type as AssignmentOverrideType | 'strict_rotation',
     assignedTo: assignedId,
     recipientIds: [assignedId],
   };
@@ -141,7 +116,7 @@ async function replaceTaskCompletions(
     .eq('task_id', taskId)
     .eq('household_id', householdId);
 
-  if (deleteError) throw deleteError;
+  if (deleteError) throw new SupabaseError(deleteError);
 
   const splitCompletions = splitPointsAcrossRecipients(points, recipientIds);
   const completions = splitCompletions.map((completion) => ({
@@ -152,75 +127,72 @@ async function replaceTaskCompletions(
   }));
 
   const { error: insertError } = await supabase.from('task_completions').insert(completions);
-  if (insertError) throw insertError;
+  if (insertError) throw new SupabaseError(insertError);
 }
 
-// Public API
-export async function createTask(input: CreateTaskInput, scope: MutationScope): Promise<RawTask> {
-  const { householdId, profileId } = scope;
+// ── Public API ─────────────────────────────────────────────────────────────────
 
-  const points = input.type === 'task' && input.effort_level
-    ? EFFORT_POINTS[input.effort_level]
-    : (input.points ?? 10);
+export async function createTask(input: CreateTaskInput, scope: AuthScope) {
+  const points =
+    input.type === 'task' && input.effort_level
+      ? EFFORT_POINTS[input.effort_level]
+      : (input.points ?? 10);
 
-  const { data: createdTask, error } = await supabase
+  const { data, error } = await supabase
     .from('tasks')
     .insert({
       ...input,
       points,
-      household_id: householdId,
+      household_id: scope.householdId,
       status: 'pending',
-      created_by: profileId,
-      assigned_to: resolveAssignedToForInsert(input, profileId),
+      created_by: scope.profileId,
+      assigned_to: resolveAssignedToForInsert(input, scope.profileId),
     })
     .select()
     .single();
 
-  if (error) throw error;
-  return createdTask as unknown as RawTask;
+  if (error) throw new SupabaseError(error);
+  return data;
 }
 
-export async function createTasks(inputs: CreateTaskInput[], scope: MutationScope): Promise<RawTask[]> {
-  const { householdId, profileId } = scope;
-
+export async function createTasks(inputs: CreateTaskInput[], scope: AuthScope) {
   const tasksToInsert = inputs.map((input) => {
-    const points = input.type === 'task' && input.effort_level
-      ? EFFORT_POINTS[input.effort_level]
-      : (input.points ?? 10);
+    const points =
+      input.type === 'task' && input.effort_level
+        ? EFFORT_POINTS[input.effort_level]
+        : (input.points ?? 10);
 
     return {
       ...input,
       points,
-      household_id: householdId,
+      household_id: scope.householdId,
       status: 'pending',
-      created_by: profileId,
-      assigned_to: resolveAssignedToForInsert(input, profileId),
+      created_by: scope.profileId,
+      assigned_to: resolveAssignedToForInsert(input, scope.profileId),
     };
   });
 
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert(tasksToInsert)
-    .select();
+  const { data, error } = await supabase.from('tasks').insert(tasksToInsert).select();
 
-  if (error) throw error;
-  return (data ?? []) as unknown as RawTask[];
+  if (error) throw new SupabaseError(error);
+  return data ?? [];
 }
 
-export async function updateTask(taskId: string, input: UpdateTaskInput, householdId: string): Promise<RawTask> {
-  const { data: updatedTask, error } = await supabase
+export async function updateTask(
+  taskId: string,
+  householdId: string,
+  input: UpdateTaskInput,
+) {
+  const { data, error } = await supabase
     .from('tasks')
-    .update({
-      ...input,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ...input, updated_at: new Date().toISOString() })
     .eq('id', taskId)
     .eq('household_id', householdId)
     .select()
     .single();
 
-  if (error) throw error;
-  return updatedTask as unknown as RawTask;
+  if (error) throw new SupabaseError(error);
+  return data;
 }
 
 export async function deleteTask(taskId: string, householdId: string): Promise<void> {
@@ -230,7 +202,7 @@ export async function deleteTask(taskId: string, householdId: string): Promise<v
     .eq('task_id', taskId)
     .eq('household_id', householdId);
 
-  if (completionsError) throw completionsError;
+  if (completionsError) throw new SupabaseError(completionsError);
 
   if (completions && completions.length > 0) {
     const { error } = await supabase
@@ -238,17 +210,41 @@ export async function deleteTask(taskId: string, householdId: string): Promise<v
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', taskId)
       .eq('household_id', householdId);
-
-    if (error) throw error;
+    if (error) throw new SupabaseError(error);
   } else {
     const { error } = await supabase
       .from('tasks')
       .delete()
       .eq('id', taskId)
       .eq('household_id', householdId);
-
-    if (error) throw error;
+    if (error) throw new SupabaseError(error);
   }
+}
+
+export async function completeTask(
+  taskId: string,
+  scope: AuthScope,
+  override?: AssignmentOverride,
+): Promise<void> {
+  const task = await fetchTaskById(scope.householdId, taskId);
+  if (!task) throw new Error('Task not found');
+
+  const assignment = await resolveAssignmentRecipients(task, scope, override);
+
+  const { error: updateError } = await supabase
+    .from('tasks')
+    .update({
+      status: 'completed',
+      last_done_by: scope.profileId,
+      assignment_type: assignment.assignmentType,
+      assigned_to: assignment.assignedTo,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', taskId)
+    .eq('household_id', scope.householdId);
+
+  if (updateError) throw new SupabaseError(updateError);
+  await replaceTaskCompletions(taskId, scope.householdId, task.points, assignment.recipientIds);
 }
 
 export async function updateTaskSeries(
@@ -259,15 +255,12 @@ export async function updateTaskSeries(
 ): Promise<void> {
   const { error } = await supabase
     .from('tasks')
-    .update({
-      ...input,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ...input, updated_at: new Date().toISOString() })
     .eq('household_id', householdId)
     .eq('recurrence_id', recurrenceId)
     .gte('date', fromDate);
 
-  if (error) throw error;
+  if (error) throw new SupabaseError(error);
 }
 
 export async function deleteTaskSeries(
@@ -276,10 +269,9 @@ export async function deleteTaskSeries(
 ): Promise<void> {
   const { error } = await supabase.rpc('delete_task_series_rpc', {
     p_recurrence_id: recurrenceId,
-    p_from_date: fromDate || undefined,
+    p_from_date: fromDate,
   });
-
-  if (error) throw error;
+  if (error) throw new SupabaseError(error);
 }
 
 export async function deleteTasksAfter(
@@ -290,46 +282,16 @@ export async function deleteTasksAfter(
     p_recurrence_id: recurrenceId,
     p_date: date,
   });
-
-  if (error) throw error;
-}
-
-export async function completeTask(
-  taskId: string,
-  scope: MutationScope,
-  assignmentOverride?: TaskAssignmentOverride,
-): Promise<void> {
-  const { householdId, profileId } = scope;
-
-  const task = await fetchTaskById(taskId, householdId);
-  if (!task) throw new Error('Task not found');
-
-  const assignment = await resolveAssignmentRecipients(task, scope, assignmentOverride);
-
-  const { error: updateError } = await supabase
-    .from('tasks')
-    .update({
-      status: 'completed',
-      last_done_by: profileId,
-      assignment_type: assignment.assignmentType,
-      assigned_to: assignment.assignedTo,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', taskId)
-    .eq('household_id', householdId);
-
-  if (updateError) throw updateError;
-
-  await replaceTaskCompletions(taskId, householdId, task.points, assignment.recipientIds);
+  if (error) throw new SupabaseError(error);
 }
 
 export async function updateTaskCompletionAssignment(
   taskId: string,
-  assignmentType: TaskAssignmentOverrideType,
+  assignmentType: AssignmentOverrideType,
   assignedTo: string[],
-  scope: MutationScope,
+  scope: AuthScope,
 ): Promise<void> {
-  const task = await fetchTaskById(taskId, scope.householdId);
+  const task = await fetchTaskById(scope.householdId, taskId);
   if (!task) throw new Error('Task not found');
   if (task.status !== 'completed') throw new Error('Task is not completed');
 
@@ -348,7 +310,6 @@ export async function updateTaskCompletionAssignment(
     .eq('id', taskId)
     .eq('household_id', scope.householdId);
 
-  if (updateError) throw updateError;
-
+  if (updateError) throw new SupabaseError(updateError);
   await replaceTaskCompletions(taskId, scope.householdId, task.points, assignment.recipientIds);
 }

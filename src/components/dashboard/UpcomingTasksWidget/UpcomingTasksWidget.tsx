@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { subDays, addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
-import { useTasks } from '../../../api/hooks';
+import { useTasksInRange } from '../../../api/tasks';
 import { useProfilesQuery } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
-import type { Task } from '../../../models/Task';
+import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
 import ListRow from '../../ui/ListRow';
 import Badge from '../../ui/Badge';
@@ -17,7 +17,7 @@ export default function UpcomingTasksWidget() {
   const navigate = useNavigate();
   
   const today = new Date();
-  const { tasks: allTasks, loading } = useTasks({
+  const { tasks: allTasks, loading } = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });

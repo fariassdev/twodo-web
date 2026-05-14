@@ -1,17 +1,22 @@
-import React from 'react';
-import type { Profile } from '../../../lib/types';
-import type { Task } from '../../../models/Task';
+import type { Task } from '../../../domain/task';
+
+// Minimal profile shape — works with both full Profile and normalized NormalizedProfile
+interface AvatarProfile {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
 
 interface TaskAvatarsProps {
   task: Task;
-  profiles: Profile[];
+  profiles: AvatarProfile[];
   className?: string;
   overlap?: string;
 }
 
 export default function TaskAvatars({ task, profiles, className = "ml-3", overlap = "-space-x-2" }: Readonly<TaskAvatarsProps>) {
   const isCompleted = task.status === 'completed';
-  let avatarsToShow: Profile[] = [];
+  let avatarsToShow: AvatarProfile[] = [];
 
   if (isCompleted) {
     // If team work or anyone, show both members if they exist

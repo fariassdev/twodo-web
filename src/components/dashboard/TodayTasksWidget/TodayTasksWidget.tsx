@@ -3,10 +3,10 @@ import { subDays, addDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTasks, useTaskCount, useTaskActions } from '../../../api/hooks';
+import { useTasksInRange, useTaskCount, useCompleteTask } from '../../../api/tasks';
 import { useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
-import type { Task } from '../../../models/Task';
+import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
 import EmptyTodayState from './EmptyTodayState';
 import { toast } from '../../ui/Snackbar';
@@ -21,12 +21,12 @@ export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const today = new Date();
-  const { tasks: allTasks } = useTasks({
+  const { tasks: allTasks } = useTasksInRange({
     startDate: getLocalDateString(subDays(today, 7)),
     endDate: getLocalDateString(addDays(today, 1)),
   });
   const { count: totalCount } = useTaskCount();
-  const { completeTask } = useTaskActions();
+  const { completeTask } = useCompleteTask();
   const { profileId } = useAuthScope();
   const { data: profiles = [] } = useProfilesQuery();
 
@@ -103,7 +103,9 @@ export default function TodayTasksWidget() {
         return;
       }
 
-      await completeTask(taskId);
+      await new Promise<void>((resolve, reject) =>
+        completeTask({ taskId }, { onSuccess: () => resolve(), onError: reject })
+      );
       const completedTask = task ?? null;
       setLastCompletedTask(completedTask);
       

@@ -15,6 +15,7 @@ import {
   markAppBoot,
 } from './lib/telemetry';
 import { Toaster } from './components/ui/Snackbar';
+import { AuthProvider } from './context/AuthContext';
 import './index.css';
 import './i18n';
 
@@ -37,8 +38,11 @@ createRoot(document.getElementById('root')!).render(
         queryClient.resumePausedMutations().catch(() => undefined);
       }}
     >
-      <RouterProvider router={router} />
-      <Toaster />
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </AuthProvider>
     </PersistQueryClientProvider>
   </StrictMode>,
 );
+

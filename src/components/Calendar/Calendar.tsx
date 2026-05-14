@@ -4,10 +4,10 @@ import {
   useAuthScope,
   useProfilesQuery,
 } from '../../lib/queryHooks';
-import { useTasks } from '../../api/hooks';
+import { useTasksInRange, taskKeys } from '../../api/tasks';
 import { queryKeys } from '../../lib/queryKeys';
 import type { Profile } from '../../lib/types';
-import type { Task } from '../../models/Task';
+import type { Task } from '../../domain/task';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
@@ -91,11 +91,11 @@ export default function Calendar() {
   }
 
   const profilesQuery = useProfilesQuery();
-  const { tasks: monthTasks, prefetch: prefetchMonth } = useTasks({
+  const { tasks: monthTasks, prefetch: prefetchMonth } = useTasksInRange({
     ...getMonthDateRange(year, month),
     includeDeleted: showDeleted,
   });
-  const { tasks: selectedMonthTasks } = useTasks({
+  const { tasks: selectedMonthTasks } = useTasksInRange({
     ...getMonthDateRange(selectedDate.getFullYear(), selectedDate.getMonth()),
     includeDeleted: showDeleted,
   });
@@ -316,7 +316,7 @@ export default function Calendar() {
           if (!householdId) return;
 
           void Promise.all([
-            queryClient.refetchQueries({ queryKey: queryKeys.tasks.all }),
+            queryClient.refetchQueries({ queryKey: taskKeys.all(householdId) }),
             queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
           ]);
         }}

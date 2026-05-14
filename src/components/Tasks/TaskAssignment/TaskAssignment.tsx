@@ -6,8 +6,8 @@ import {
   useProfilesQuery,
   useAuthScope,
 } from '../../../lib/queryHooks';
-import { useTask, useTaskCompletions, useTaskActions } from '../../../api/hooks';
-import { TaskAssignmentOverrideType } from '../../../api/mutations/tasks';
+import { useTask, useTaskCompletions, useCompleteTask, useUpdateCompletionAssignment } from '../../../api/tasks';
+import type { AssignmentOverrideType } from '../../../domain/types';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import FullPageLoading from '../../ui/FullPageLoading';
 import QueryErrorState from '../../ui/QueryErrorState';
@@ -21,7 +21,9 @@ export default function TaskAssignment() {
   const profilesQuery = useProfilesQuery();
   const { completions, loading: completionsLoading } = useTaskCompletions(taskId);
 
-  const { completeTask, updateTaskCompletionAssignment, isLoading: acting } = useTaskActions();
+  const { completeTaskAsync, isCompleting } = useCompleteTask();
+  const { updateCompletionAssignmentAsync, isUpdating } = useUpdateCompletionAssignment();
+  const acting = isCompleting || isUpdating;
 
   const profiles = profilesQuery.data ?? [];
 
@@ -57,18 +59,18 @@ export default function TaskAssignment() {
       const { type: selectedType, assignedTo } = selectedAssignment;
       
       // Smart type preservation
-      const finalType: TaskAssignmentOverrideType = selectedType === 'team_work' 
-        ? 'team_work' 
+      const finalType: AssignmentOverrideType = selectedType === 'team_work' 
+        ? 'team_work'
         : (task.assignment_type === 'anyone' ? 'anyone' : 'individual');
 
       if (isCompleted) {
-        await updateTaskCompletionAssignment(task.id, finalType, assignedTo);
+        await updateCompletionAssignmentAsync({ taskId: task.id, assignmentType: finalType, assignedTo });
         toast.success(t('taskCompletion.assignmentUpdated'));
       } else {
-        await completeTask(task.id, {
+        await completeTaskAsync({ taskId: task.id, override: {
           type: finalType,
           assignedTo: assignedTo,
-        });
+        }});
         toast.success(t('taskCompletion.completed'));
       }
       

@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  useTaskActions,
   useTask,
-} from '../../../api/hooks';
+  useUpdateTask,
+  useCreateTasks,
+  useDeleteTasksAfter,
+} from '../../../api/tasks';
 import {
   useProfilesQuery,
 } from '../../../lib/queryHooks';
-import type { UpdateTaskInput, CreateTaskInput } from '../../../api/mutations/tasks';
-import type { Task, Profile } from '../../../lib/types';
+import type { UpdateTaskInput, CreateTaskInput } from '../../../domain/types';
+import type { Task } from '../../../domain/task';
+import type { Profile } from '../../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
@@ -96,7 +99,9 @@ export default function EditEntry() {
 
   const profilesQuery = useProfilesQuery();
   const { task: editTask, loading: taskLoading } = useTask({ id: taskId });
-  const { updateTask, createTasks, deleteTasksAfter, isLoading: saving } = useTaskActions();
+  const { updateTaskAsync, isUpdating: saving } = useUpdateTask();
+  const { createTasksAsync } = useCreateTasks();
+  const { deleteTasksAfterAsync } = useDeleteTasksAfter();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
   const loading = profilesQuery.isPending || taskLoading;
@@ -198,10 +203,10 @@ export default function EditEntry() {
         end_time: data.type === 'event' ? (data.endTime || undefined) : undefined,
       };
 
-      await updateTask(taskId, input);
+      await updateTaskAsync({ taskId, input });
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
-        await deleteTasksAfter(originalTask.recurrence_id, originalTask.date);
+        await deleteTasksAfterAsync({ recurrenceId: originalTask.recurrence_id, date: originalTask.date });
 
         if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];
@@ -257,7 +262,7 @@ export default function EditEntry() {
           }
 
           if (newTasks.length > 0) {
-            await createTasks(newTasks);
+            await createTasksAsync(newTasks);
           }
         }
       }
