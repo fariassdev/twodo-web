@@ -7,7 +7,7 @@ import {
   updatePassword,
   resendConfirmationEmail,
   authQueryKeys 
-} from '../../supabase/auth';
+} from '@/src/supabase/auth';
 
 export function useResendVerification() {
   return useMutation({

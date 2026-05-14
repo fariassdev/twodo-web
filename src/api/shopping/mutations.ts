@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { deleteShoppingItem, insertShoppingItem, updateShoppingItem } from '../../supabase/mutations/shopping';
+import { deleteShoppingItem, insertShoppingItem, updateShoppingItem, type RawShoppingItem } from '@/src/supabase/shopping';
 import { shoppingKeys } from './keys';
-import type { RawShoppingItem } from '../../supabase/queries/shopping';
 
 export const useAddShoppingItem = () => {
   const queryClient = useQueryClient();

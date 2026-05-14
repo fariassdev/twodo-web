@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { acceptHouseholdInvite, createHouseholdAndInvite, getOrCreateHouseholdInvite, sendEmailInvite } from '@/src/supabase/mutations/invites';
+import { acceptHouseholdInvite, createHouseholdAndInvite, getOrCreateHouseholdInvite, sendEmailInvite } from '@/src/supabase/invites';
 
 
 export const useCreateHouseholdAndInvite = () => {

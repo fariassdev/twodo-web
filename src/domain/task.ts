@@ -1,7 +1,7 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { getLocalDateString } from '../utils';
 import { normalizeProfile } from './profile';
-import type { RawTask } from '../supabase/queries/tasks';
+import type { RawTask } from '../supabase/tasks/queries';
 
 // ── Task normalization ─────────────────────────────────────────────────────────
 

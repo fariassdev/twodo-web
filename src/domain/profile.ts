@@ -1,4 +1,4 @@
-import type { RawProfile } from "../supabase/queries/profiles";
+import type { RawProfile } from "../supabase/profiles/queries";
 
 /**
  * Normalizes a raw Supabase profile into the frontend Profile model.

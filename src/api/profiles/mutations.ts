@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { updateProfile } from '../../supabase/mutations/profiles';
+import { updateProfile, type ProfileUpdate } from '@/src/supabase/profiles';
 import { profileKeys } from './keys';
-import { authQueryKeys } from '../../supabase/auth';
-import type { ProfileUpdate } from '../../supabase/mutations/profiles';
+import { authQueryKeys } from '@/src/supabase/auth';
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();

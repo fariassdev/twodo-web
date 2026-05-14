@@ -1,5 +1,4 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 import { useAuthScope } from '../../context/AuthContext';
 import {
   fetchTaskById,
@@ -7,7 +6,7 @@ import {
   fetchTaskCompletions,
   fetchTaskCount,
   fetchTasksInRange,
-} from '../../supabase/queries/tasks';
+} from '../../supabase/tasks/queries';
 import { normalizeTask } from '../../domain/task';
 import { taskKeys } from './keys';
 

@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { deleteExpense, insertExpense, insertSettlement, updateExpense } from '../../supabase/mutations/expenses';
+import { deleteExpense, insertExpense, insertSettlement, updateExpense } from '../../supabase/expenses/mutations';
 import { expenseKeys } from './keys';
-import { fetchExpenseBalanceSnapshot } from '../../supabase/queries/expenses';
-import { fetchProfiles } from '../../supabase/queries/profiles';
+import { fetchExpenseBalanceSnapshot } from '../../supabase/expenses/queries';
+import { fetchProfiles } from '../../supabase/profiles/queries';
 import { CreateExpenseInput, UpdateExpenseInput } from '../../domain/expense';
 
 export const useCreateExpense = () => {

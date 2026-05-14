@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { fetchBalanceScore, fetchEquityBalance, fetchPointsBreakdown, fetchWeeklyPulse } from '../../supabase/queries/metrics';
+import { fetchBalanceScore, fetchEquityBalance, fetchPointsBreakdown, fetchWeeklyPulse } from '@/src/supabase/metrics';
 import { metricKeys } from './keys';
 
 export const useWeeklyPulse = () => {

@@ -7,11 +7,11 @@ import {
   fetchExpenses,
   fetchSettlements,
   getExpensesActivityFeedPage,
-} from '../../supabase/queries/expenses';
+} from '../../supabase/expenses/queries';
 import { expenseKeys } from './keys';
 import { useProfiles } from '../../api/profiles';
 import { normalizeProfile } from '../../domain/profile';
-import type { RawExpense, RawSettlement } from '../../supabase/queries/expenses';
+import type { RawExpense, RawSettlement } from '../../supabase/expenses/queries';
 import {
   ExpenseActivityFeedItem,
   normalizeExpense,

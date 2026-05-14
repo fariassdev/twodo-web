@@ -10,7 +10,7 @@ import {
   updateTask,
   updateTaskCompletionAssignment,
   updateTaskSeries,
-} from '../../supabase/mutations/tasks';
+} from '@/src/supabase/tasks';
 import type { CreateTaskInput, UpdateTaskInput, AssignmentOverride, AssignmentOverrideType } from '../../domain/types';
 import type { Task } from '../../domain/task';
 import { taskKeys } from './keys';

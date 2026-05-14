@@ -1,5 +1,5 @@
 import { normalizeProfile } from './profile';
-import type { RawExpense, RawSettlement } from '../supabase/queries/expenses';
+import type { RawExpense, RawSettlement } from '../supabase/expenses/queries';
 
 export interface ExpenseCategory {
   id: string;

@@ -1,6 +1,6 @@
 import { supabase } from '../client';
 import { SupabaseError } from '../errors';
-import { fetchProfiles } from './profiles';
+import { fetchProfiles } from '../profiles/queries';
 
 export async function fetchWeeklyPulse(householdId: string) {
   const now = new Date();

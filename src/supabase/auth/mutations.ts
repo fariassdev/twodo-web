@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, onAuthStateChange } from '../lib/supabase';
-import type { AuthContext, Profile, Household } from '../lib/types';
+import { supabase, onAuthStateChange } from '../../lib/supabase';
+import type { AuthContext, Profile, Household } from '../../lib/types';
 
 // ── Low Level Supabase Actions ────────────────────────────────────────────────
 

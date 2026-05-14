@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useAuthScope } from '../../context/AuthContext';
-import { fetchShoppingItems } from '../../supabase/queries/shopping';
+import { fetchShoppingItems } from '../../supabase/shopping/queries';
 import { shoppingKeys } from './keys';
 import { supabase } from '../../lib/supabase';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-import type { RawShoppingItem } from '../../supabase/queries/shopping';
+import type { RawShoppingItem } from '../../supabase/shopping/queries';
 
 function sortShoppingItems(items: RawShoppingItem[]): RawShoppingItem[] {
   return [...items].sort((a, b) => {

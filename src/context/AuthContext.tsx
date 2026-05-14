@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { useAuthInfrastructureQuery } from '../supabase/auth';
+import { useAuthInfrastructureQuery } from '@/src/supabase/auth';
 
 // ── Public types ───────────────────────────────────────────────────────────────
 

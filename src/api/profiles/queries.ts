@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { fetchProfileById, fetchProfiles } from '../../supabase/queries/profiles';
+import { fetchProfileById, fetchProfiles } from '../../supabase/profiles';
 import { normalizeProfile } from '../../domain/profile';
 import { profileKeys } from './keys';
 

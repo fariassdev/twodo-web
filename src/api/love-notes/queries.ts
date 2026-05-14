@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthScope } from '../../context/AuthContext';
-import { fetchLatestLoveNote, fetchLoveNoteForTask } from '../../supabase/queries/loveNotes';
+import { fetchLatestLoveNote, fetchLoveNoteForTask } from '../../supabase/love-notes';
 import { loveNoteKeys } from './keys';
 
 export const useLatestLoveNote = () => {
