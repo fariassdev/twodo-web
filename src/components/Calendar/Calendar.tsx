@@ -4,7 +4,7 @@ import {
   useAuthScope,
   useProfilesQuery,
 } from '../../lib/queryHooks';
-import { useTasksForMonth, usePrefetchMonthTasks } from '../../api/hooks';
+import { useTasks } from '../../api/hooks';
 import { queryKeys } from '../../lib/queryKeys';
 import type { Profile } from '../../lib/types';
 import type { Task } from '../../models/Task';
@@ -83,24 +83,31 @@ export default function Calendar() {
   const month = currentDate.getMonth();
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
+  function getMonthDateRange(year: number, month: number) {
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    return { startDate, endDate };
+  }
+
   const profilesQuery = useProfilesQuery();
-  const monthTasksQuery = useTasksForMonth(year, month, showDeleted);
-  const prefetchMonthTasks = usePrefetchMonthTasks();
+  const { tasks: monthTasks, prefetch: prefetchMonth } = useTasks({
+    ...getMonthDateRange(year, month),
+    includeDeleted: showDeleted,
+  });
+  const { tasks: selectedMonthTasks } = useTasks({
+    ...getMonthDateRange(selectedDate.getFullYear(), selectedDate.getMonth()),
+    includeDeleted: showDeleted,
+  });
 
-  const selectedYear = selectedDate.getFullYear();
-  const selectedMonth = selectedDate.getMonth();
-  const selectedMonthTasksQuery = useTasksForMonth(selectedYear, selectedMonth, showDeleted);
-
-  const monthTasks = monthTasksQuery.data ?? [];
-  const selectedMonthTasks = selectedMonthTasksQuery.data ?? [];
   const profiles: Profile[] = profilesQuery.data ?? [];
   const profileNameMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.name])), [profiles]);
   const hasQueryError =
-    monthTasksQuery.isError || profilesQuery.isError;
+    profilesQuery.isError;
   const isStale =
-    monthTasksQuery.isStale || profilesQuery.isStale;
+    profilesQuery.isStale;
   const isFetching =
-    monthTasksQuery.isFetching || profilesQuery.isFetching;
+    profilesQuery.isFetching;
 
   const tasksByBlock = useMemo(() => {
     const filtered = selectedMonthTasks
@@ -146,9 +153,11 @@ export default function Calendar() {
   }, [selectedMonthTasks, selectedStr, showTasks, showDailyTasks, showEvents]);
 
   useEffect(() => {
-    void prefetchMonthTasks(year, month + 1, showDeleted);
-    void prefetchMonthTasks(year, month - 1, showDeleted);
-  }, [year, month, showDeleted, prefetchMonthTasks]);
+    const next = getMonthDateRange(year, month + 1);
+    const prev = getMonthDateRange(year, month - 1);
+    void prefetchMonth({ ...next, includeDeleted: showDeleted });
+    void prefetchMonth({ ...prev, includeDeleted: showDeleted });
+  }, [year, month, showDeleted, prefetchMonth]);
 
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -307,9 +316,7 @@ export default function Calendar() {
           if (!householdId) return;
 
           void Promise.all([
-            queryClient.refetchQueries({
-              queryKey: queryKeys.calendar.month(year, month, showDeleted, householdId),
-            }),
+            queryClient.refetchQueries({ queryKey: queryKeys.tasks.all }),
             queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
           ]);
         }}

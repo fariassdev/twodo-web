@@ -110,11 +110,10 @@ export default function CreateEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const catalogQuery = useTaskCatalog();
+  const { catalog, loading: catalogLoading } = useTaskCatalog();
   const { createTasks, isLoading: saving } = useTaskActions();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const catalog: TaskCatalogItem[] = catalogQuery.data ?? [];
 
   // Group catalog by category
   const catalogByCategory = useMemo((): Record<string, TaskCatalogItem[]> => {

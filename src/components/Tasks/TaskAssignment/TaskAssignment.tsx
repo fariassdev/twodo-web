@@ -6,7 +6,7 @@ import {
   useProfilesQuery,
   useAuthScope,
 } from '../../../lib/queryHooks';
-import { useTaskById, useTaskCompletions, useTaskActions } from '../../../api/hooks';
+import { useTask, useTaskCompletions, useTaskActions } from '../../../api/hooks';
 import { TaskAssignmentOverrideType } from '../../../api/mutations/tasks';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import FullPageLoading from '../../ui/FullPageLoading';
@@ -17,15 +17,13 @@ export default function TaskAssignment() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const taskQuery = useTaskById(taskId);
+  const { task, loading: taskLoading } = useTask({ id: taskId });
   const profilesQuery = useProfilesQuery();
-  const taskCompletionsQuery = useTaskCompletions(taskId);
+  const { completions, loading: completionsLoading } = useTaskCompletions(taskId);
 
   const { completeTask, updateTaskCompletionAssignment, isLoading: acting } = useTaskActions();
 
-  const task = taskQuery.data;
   const profiles = profilesQuery.data ?? [];
-  const completions = taskCompletionsQuery.data ?? [];
 
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection | null>(null);
 
@@ -84,12 +82,12 @@ export default function TaskAssignment() {
 
   const { profileId } = useAuthScope();
 
-  if (taskQuery.isPending || profilesQuery.isPending || (task?.status === 'completed' && taskCompletionsQuery.isPending)) {
+  if (taskLoading || profilesQuery.isPending || (task?.status === 'completed' && completionsLoading)) {
     return <FullPageLoading message={t('loading')} />;
   }
 
-  if (taskQuery.isError || !task) {
-    return <QueryErrorState onRetry={() => taskQuery.refetch()} />;
+  if (!task) {
+    return <QueryErrorState onRetry={() => window.location.reload()} />;
   }
 
   if (!selectedAssignment) return null;

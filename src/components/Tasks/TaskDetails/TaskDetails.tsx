@@ -4,7 +4,7 @@ import {
   useProfileQuery,
   useProfilesQuery,
 } from '../../../lib/queryHooks';
-import { useTaskById, useTaskActions } from '../../../api/hooks';
+import { useTask, useTaskActions } from '../../../api/hooks';
 import { 
   Trash2, 
   CookingPot, 
@@ -77,8 +77,7 @@ export default function TaskDetails() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const taskQuery = useTaskById(taskId);
-  const task = taskQuery.data ?? null;
+  const { task, loading: taskLoading } = useTask({ id: taskId });
   const profilesQuery = useProfilesQuery();
 
   const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
@@ -90,10 +89,10 @@ export default function TaskDetails() {
   const assignedProfile = assignedProfileQuery.data ?? null;
   const profiles = profilesQuery.data ?? [];
 
-  const loading = taskQuery.isPending || (Boolean(task) && profilesQuery.isLoading);
+  const loading = taskLoading || (Boolean(task) && profilesQuery.isLoading);
 
-  const isStale = taskQuery.isStale || loveNoteQuery.isStale;
-  const isFetching = taskQuery.isFetching || loveNoteQuery.isFetching;
+  const isStale = loveNoteQuery.isStale;
+  const isFetching = loveNoteQuery.isFetching;
 
   async function handleDeleteSingle() {
     if (!task) return;
@@ -168,13 +167,7 @@ export default function TaskDetails() {
   if (loading) return <FullPageLoading message={t('loading')} />;
 
   if (!task) {
-    if (taskQuery.isError) return <QueryErrorState onRetry={() => void taskQuery.refetch()} />;
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
-        <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">{t('cta.back')}</Button>
-      </div>
-    );
+    return <QueryErrorState onRetry={() => window.location.reload()} />;
   }
 
   const CategoryIcon = categoryIcons[task.category || 'other'];

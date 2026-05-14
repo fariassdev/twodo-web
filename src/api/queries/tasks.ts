@@ -1,85 +1,54 @@
-import { supabase } from '../../lib/supabase';
+import { queryOptions } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
+import {
+  fetchTaskById,
+  fetchTasksInRange,
+  fetchTaskCatalog,
+  fetchTaskCount,
+  fetchTaskCompletions,
+} from '../supabase/queries/tasks';
 
-export const TASK_FULL_QUERY = `
-  *,
-  assigned_profile:profiles!tasks_assigned_to_fkey(*),
-  last_done_by_profile:profiles!tasks_last_done_by_fkey(*)
-`;
+export const taskQueryOptions = (id: string, householdId: string) =>
+  queryOptions({
+    queryKey: queryKeys.tasks.detail(id, householdId),
+    queryFn: () => fetchTaskById(id, householdId),
+    enabled: Boolean(id && householdId),
+  });
 
-export async function fetchTaskCount(householdId: string) {
-  const { count, error } = await supabase
-    .from('tasks')
-    .select('*', { count: 'exact', head: true })
-    .eq('household_id', householdId)
-    .is('deleted_at', null);
-
-  if (error) throw error;
-  return count ?? 0;
-}
-
-export async function fetchTasksInRange(params: {
-  householdId: string;
+export const tasksQueryOptions = (params: {
   startDate: string;
   endDate: string;
+  householdId: string;
   includeDeleted?: boolean;
-}) {
-  const { householdId, startDate, endDate, includeDeleted = false } = params;
+}) =>
+  queryOptions({
+    queryKey: queryKeys.tasks.range(
+      params.startDate,
+      params.endDate,
+      params.includeDeleted ?? false,
+      params.householdId,
+    ),
+    queryFn: () => fetchTasksInRange(params),
+    enabled: Boolean(params.householdId),
+  });
 
-  let query = supabase
-    .from('tasks')
-    .select(TASK_FULL_QUERY)
-    .eq('household_id', householdId)
-    .gte('date', startDate)
-    .lte('date', endDate)
-    .order('date', { ascending: true })
-    .order('start_time', { ascending: true })
-    .order('priority', { ascending: true });
+export const taskCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.tasks.catalog(),
+    queryFn: fetchTaskCatalog,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
-  if (!includeDeleted) {
-    query = query.is('deleted_at', null);
-  }
+export const taskCountQueryOptions = (householdId: string) =>
+  queryOptions({
+    queryKey: queryKeys.tasks.count(householdId),
+    queryFn: () => fetchTaskCount(householdId),
+    enabled: Boolean(householdId),
+  });
 
-  const { data, error } = await query;
-  if (error) throw error;
-  
-  // Return raw data, normalization will happen in hooks
-  return data ?? [];
-}
-
-export async function fetchTaskCatalog() {
-  const { data, error } = await supabase
-    .from('task_catalog')
-    .select('*')
-    .order('sort_order', { ascending: true });
-
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function fetchTaskById(id: string, householdId: string) {
-  const { data: task, error } = await supabase
-    .from('tasks')
-    .select(TASK_FULL_QUERY)
-    .eq('household_id', householdId)
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return task;
-}
-
-export async function fetchTaskCompletions(
-  taskId: string,
-  householdId: string,
-) {
-  const { data, error } = await supabase
-    .from('task_completions')
-    .select('*, profile:profiles(*)')
-    .eq('task_id', taskId)
-    .eq('household_id', householdId)
-    .order('completed_at', { ascending: true });
-
-  if (error) throw error;
-  return data ?? [];
-}
+export const taskCompletionsQueryOptions = (taskId: string, householdId: string) =>
+  queryOptions({
+    queryKey: queryKeys.taskDetail.completions(taskId, householdId),
+    queryFn: () => fetchTaskCompletions(taskId, householdId),
+    enabled: Boolean(taskId && householdId),
+  });

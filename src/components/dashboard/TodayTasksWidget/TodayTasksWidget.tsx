@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { subDays } from 'date-fns';
+import { subDays, addDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTasksDashboard, useTaskCount, useTaskActions } from '../../../api/hooks';
+import { useTasks, useTaskCount, useTaskActions } from '../../../api/hooks';
 import { useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
 import { getLocalDateString } from '../../../utils';
 import type { Task } from '../../../models/Task';
@@ -20,8 +20,12 @@ const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const dashboardTasksQuery = useTasksDashboard();
-  const taskCountQuery = useTaskCount();
+  const today = new Date();
+  const { tasks: allTasks } = useTasks({
+    startDate: getLocalDateString(subDays(today, 7)),
+    endDate: getLocalDateString(addDays(today, 1)),
+  });
+  const { count: totalCount } = useTaskCount();
   const { completeTask } = useTaskActions();
   const { profileId } = useAuthScope();
   const { data: profiles = [] } = useProfilesQuery();
@@ -30,7 +34,6 @@ export default function TodayTasksWidget() {
   const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
   const todayStr = getLocalDateString();
-  const allTasks = dashboardTasksQuery.data ?? [];
   
   const tasks = useMemo(() => 
     allTasks.filter(t => t.date === todayStr && t.type === 'task'), 
@@ -224,7 +227,7 @@ export default function TodayTasksWidget() {
 
       {tasks.length === 0 && (
         <EmptyTodayState 
-          isOnboarding={taskCountQuery.data === 0}
+          isOnboarding={totalCount === 0}
           onAddClick={() => navigate({ to: '/create' })}
           onPlanClick={() => navigate({ to: '/calendar' })}
           compact={overdueTasks.length > 0}

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useTaskActions,
-  useTaskById,
+  useTask,
 } from '../../../api/hooks';
 import {
   useProfilesQuery,
@@ -95,11 +95,11 @@ export default function EditEntry() {
   }, [startTime]);
 
   const profilesQuery = useProfilesQuery();
-  const taskQuery = useTaskById(taskId);
+  const { task: editTask, loading: taskLoading } = useTask({ id: taskId });
   const { updateTask, createTasks, deleteTasksAfter, isLoading: saving } = useTaskActions();
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const loading = profilesQuery.isPending || taskQuery.isPending;
+  const loading = profilesQuery.isPending || taskLoading;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {
@@ -120,7 +120,7 @@ export default function EditEntry() {
 
   // Populate form when task data loads
   useEffect(() => {
-    const task = taskQuery.data;
+    const task = editTask;
     if (task) {
       setOriginalTask(task);
       let assignCategory: 'team_work' | 'anyone' | 'individual' = 'team_work';
@@ -158,7 +158,7 @@ export default function EditEntry() {
         endTime: task.end_time || '',
       });
     }
-  }, [taskQuery.data, reset]);
+  }, [editTask, reset]);
 
   function handleSave() {
     if (originalTask?.recurrence_id) {
