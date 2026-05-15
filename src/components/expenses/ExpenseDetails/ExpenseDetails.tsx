@@ -6,28 +6,13 @@ import PageHeader from '../../ui/PageHeader';
 import ErrorBanner from '../../ui/ErrorBanner';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
+import InfoTile from '../../ui/InfoTile';
 import {
   useDeleteExpense,
   useExpense,
 } from '../../../api/expenses';
 import type { ExpenseDetailsSearch } from '../../../router';
 import { useAuthScope } from '@/src/context/AuthContext';
-
-function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
-  return (
-    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
-      <div className="flex items-center gap-1.5 opacity-40">
-        <Icon size={14} className={colorClass} />
-        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-      </div>
-      <span className="text-sm font-bold text-surface-2 truncate">{value}</span>
-    </div>
-  );
-}
-
-function centsToInput(cents: number): string {
-  return (cents / 100).toFixed(2);
-}
 
 export default function ExpenseDetails() {
   const { t, i18n } = useTranslation();
@@ -140,7 +125,7 @@ export default function ExpenseDetails() {
           <div className="mt-4 mb-8">
             <div className="flex items-center gap-[0.5rem] leading-none mb-2">
               <span className="font-display text-[clamp(3rem,15vw,5rem)] font-normal tracking-[-0.02em] leading-[0.9] tabular-nums text-surface-2 italic">
-                {centsToInput(expense.amount_cents)}
+                {(expense.amount_cents / 100).toFixed(2)}
               </span>
               <span className="font-sans text-[clamp(1.2rem,6vw,2.2rem)] font-light text-surface-2/20 pt-[0.4rem]">
                 €
@@ -158,12 +143,12 @@ export default function ExpenseDetails() {
 
           <div className="animate-in fade-in duration-500">
             <div className="grid grid-cols-2 gap-3 mb-8">
-              <SpecItem 
+              <InfoTile 
                 icon={Tag} 
                 label={t('expenses.category')} 
                 value={categoryLabel} 
               />
-              <SpecItem 
+              <InfoTile 
                 icon={Banknote} 
                 label={t('expenses.splitTitle')} 
                 value={t('expenses.splitShared')} 

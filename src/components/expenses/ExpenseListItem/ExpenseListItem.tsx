@@ -79,7 +79,6 @@ export default function ExpenseListItem({
 
   const whenLabel = toRelativeExpenseDate(baseData.expense_date, language);
 
-  const amountLabel = centsToCurrency(baseData.amount_cents, language);
   const isDebtor = !isSettlement && item.expense.paid_by_profile_id !== currentProfileId;
   const statusColor = isDebtor ? 'text-danger' : 'text-success';
   
@@ -125,7 +124,7 @@ export default function ExpenseListItem({
 
       <div className="text-right flex flex-col items-end">
         <p className="text-lg font-bold tracking-tight text-surface-2 flex items-baseline gap-1">
-          <span>{amountLabel.replace(/[^\d.,]/g, '')}</span>
+          <span>{centsToCurrency(baseData.amount_cents, language)}</span>
           <span className="text-sm font-medium text-surface-2/30">€</span>
         </p>
         <p className={cn("text-[9px] font-bold uppercase tracking-[0.05em]", statusColor)}>
