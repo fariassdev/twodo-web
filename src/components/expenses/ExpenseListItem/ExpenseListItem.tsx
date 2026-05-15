@@ -1,105 +1,123 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Expense } from '../../../domain/expense';
+import { 
+  ShoppingCart, 
+  Utensils, 
+  Home, 
+  Car, 
+  Activity, 
+  Film, 
+  Plane, 
+  Repeat, 
+  Gift, 
+  Tag, 
+  CheckCircle2, 
+  Banknote 
+} from 'lucide-react';
+import type { ExpenseActivityFeedItem } from '../../../domain/expense';
 import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
 import { cn } from '@/src/utils';
 
 type ExpenseListItemProps = {
-  expense: Expense;
-  locale: string;
+  item: ExpenseActivityFeedItem;
   currentProfileId: string | null;
-  showWhenLabel?: boolean;
   onClick?: () => void | Promise<void>;
 };
 
-const categoryColorMap: Record<string, { bg: string; text: string }> = {
-  shopping_cart: { bg: 'bg-[#fb923c]/15', text: 'text-[#fb923c]' }, // Orange
-  restaurant: { bg: 'bg-[#60a5fa]/15', text: 'text-[#60a5fa]' },   // Blue
-  home: { bg: 'bg-[#a78bfa]/15', text: 'text-[#a78bfa]' },         // Purple
-  directions_car: { bg: 'bg-[#facc15]/15', text: 'text-[#facc15]' },// Yellow
-  local_hospital: { bg: 'bg-[#4ade80]/15', text: 'text-[#4ade80]' },// Green
-  movie: { bg: 'bg-[#f472b6]/15', text: 'text-[#f472b6]' },        // Pink
-  flight: { bg: 'bg-[#22d3ee]/15', text: 'text-[#22d3ee]' },       // Cyan
-  subscriptions: { bg: 'bg-[#f87171]/15', text: 'text-[#f87171]' }, // Red
-  redeem: { bg: 'bg-[#fbbf24]/15', text: 'text-[#fbbf24]' },       // Amber
-  category: { bg: 'bg-[#94a3b8]/15', text: 'text-[#94a3b8]' },     // Slate
+const CATEGORY_CONFIG: Record<string, { icon: any; bg: string; text: string }> = {
+  shopping_cart: { icon: ShoppingCart, bg: 'bg-[#fb923c]/15', text: 'text-[#fb923c]' },
+  restaurant: { icon: Utensils, bg: 'bg-[#60a5fa]/15', text: 'text-[#60a5fa]' },
+  home: { icon: Home, bg: 'bg-[#a78bfa]/15', text: 'text-[#a78bfa]' },
+  directions_car: { icon: Car, bg: 'bg-[#facc15]/15', text: 'text-[#facc15]' },
+  local_hospital: { icon: Activity, bg: 'bg-[#4ade80]/15', text: 'text-[#4ade80]' },
+  movie: { icon: Film, bg: 'bg-[#f472b6]/15', text: 'text-[#f472b6]' },
+  flight: { icon: Plane, bg: 'bg-[#22d3ee]/15', text: 'text-[#22d3ee]' },
+  subscriptions: { icon: Repeat, bg: 'bg-[#f87171]/15', text: 'text-[#f87171]' },
+  redeem: { icon: Gift, bg: 'bg-[#fbbf24]/15', text: 'text-[#fbbf24]' },
+  category: { icon: Tag, bg: 'bg-[#94a3b8]/15', text: 'text-[#94a3b8]' },
+  payments: { icon: Banknote, bg: 'bg-primary/15', text: 'text-primary' },
+  verified: { icon: CheckCircle2, bg: 'bg-success/10', text: 'text-success' },
 };
 
 export default function ExpenseListItem({
-  expense,
-  locale,
+  item,
   currentProfileId,
   onClick,
 }: ExpenseListItemProps): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language;
+  const isSettlement = item.type === 'settlement';
 
-  const icon = expense.category?.icon ?? 'shopping_cart';
-  const categoryName =
-    locale.startsWith('es')
-      ? expense.category?.name_es ?? t('expenses.categoryFallback')
-      : expense.category?.name_en ?? t('expenses.categoryFallback');
+  const baseData = isSettlement ? item.settlement : item.expense;
 
-  const { bg: iconBg, text: iconText } = categoryColorMap[icon] || categoryColorMap.category;
+  const iconKey = isSettlement ? 'verified' : (item.expense.category?.icon ?? 'shopping_cart');
+  const { icon: IconComponent, bg: iconBg, text: iconText } = 
+    CATEGORY_CONFIG[iconKey] || CATEGORY_CONFIG.category;
 
-  const amountLabel = centsToCurrency(expense.amount_cents, locale);
-  const splitAmountLabel = centsToCurrency(Math.round(expense.amount_cents / 2), locale);
+  const title = isSettlement 
+    ? t('expenses.settleUp')
+    : item.expense.description?.trim() || 
+      (language.startsWith('es') ? item.expense.category?.name_es : item.expense.category?.name_en) || 
+      t('expenses.categoryFallback');
 
-  const isDebtor = expense.paid_by_profile_id !== currentProfileId;
-  const impactLabel = isDebtor
-    ? t('expenses.impact.youOwe', { amount: splitAmountLabel })
-    : t('expenses.impact.theyOwe', { amount: splitAmountLabel });
-
-  const whenLabel = toRelativeExpenseDate(expense.expense_date, locale, {
+  const whenLabel = toRelativeExpenseDate(baseData.expense_date, language, {
     today: t('common.today'),
     yesterday: t('common.yesterday'),
   });
 
-  const clickableProps = onClick
-    ? {
-        role: 'button' as const,
-        tabIndex: 0,
-        onClick,
-        onKeyDown: (event: React.KeyboardEvent) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onClick();
-          }
-        },
-      }
-    : {};
+  const amountLabel = centsToCurrency(baseData.amount_cents, language);
+  const isDebtor = !isSettlement && item.expense.paid_by_profile_id !== currentProfileId;
+  const statusColor = isDebtor ? 'text-danger' : 'text-success';
+  
+  const statusLabel = isSettlement 
+    ? t('expenses.settlement.feedStatus')
+    : t(isDebtor ? 'expenses.impact.youOwe' : 'expenses.impact.theyOwe', { 
+        amount: centsToCurrency(Math.round(item.expense.amount_cents / 2), language) 
+      });
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      onClick();
+    }
+  };
 
   return (
     <ListRow
-      className="group p-3 gap-3"
-      interactive={Boolean(onClick)}
+      as="article"
+      className={cn(
+        "group p-3 gap-3",
+        isSettlement && "border-success/20 bg-success/[0.03]"
+      )}
+      interactive={!!onClick}
       variant="subtle"
-      {...clickableProps}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
-      {/* Icon Container */}
       <IconBox className={cn(iconBg, iconText, "rounded-xl")} size="sm" tone="custom">
-        <span className="material-symbols-outlined !text-[20px]">{icon}</span>
+        <IconComponent size={20} />
       </IconBox>
 
-      {/* Info Container */}
       <div className="flex-1 min-w-0">
         <h3 className="truncate text-base font-bold tracking-tight text-surface-2">
-          {expense.description?.trim() || categoryName}
+          {title}
         </h3>
         <p className="text-sm font-medium text-surface-2/60">
           {whenLabel}
         </p>
       </div>
 
-      {/* Amount Container */}
       <div className="text-right flex flex-col items-end">
         <p className="text-lg font-bold tracking-tight text-surface-2 flex items-baseline gap-1">
           <span>{amountLabel.replace(/[^\d.,]/g, '')}</span>
           <span className="text-sm font-medium text-surface-2/30">€</span>
         </p>
-        <p className={`text-[9px] font-bold uppercase tracking-[0.05em] ${isDebtor ? 'text-danger' : 'text-success'}`}>
-          {impactLabel}
+        <p className={cn("text-[9px] font-bold uppercase tracking-[0.05em]", statusColor)}>
+          {statusLabel}
         </p>
       </div>
     </ListRow>

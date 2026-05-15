@@ -442,11 +442,9 @@ export default function ExpensesListPage() {
             <div className="mt-6">
               <ExpensesList
                 currentProfileId={profileId}
-                expenses={hasActiveFilters ? visibleExpenses : undefined}
                 hasNextPage={!hasActiveFilters ? activityQuery.hasNextPage : undefined}
                 isFetchingNextPage={!hasActiveFilters ? activityQuery.isFetchingNextPage : undefined}
                 items={!hasActiveFilters ? activityItems : undefined}
-                locale={i18n.language}
                 onLoadMore={() => {
                   if (!hasActiveFilters && activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
                     void activityQuery.fetchNextPage();

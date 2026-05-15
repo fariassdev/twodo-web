@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { ExpenseActivityFeedItem, Expense } from '../../../domain/expense';
-import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
+import type { ExpenseActivityFeedItem } from '../../../domain/expense';
 import ExpenseListItem from '../ExpenseListItem';
-import IconBox from '../../ui/IconBox';
-import ListRow from '../../ui/ListRow';
 
 type ExpensesListProps = {
   items?: ExpenseActivityFeedItem[];
-  expenses?: Expense[];
-  locale: string;
   currentProfileId: string | null;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
@@ -19,26 +13,13 @@ type ExpensesListProps = {
 
 export default function ExpensesList({
   items = [],
-  expenses = [],
-  locale,
   currentProfileId,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
   onExpenseClick,
 }: ExpensesListProps): React.ReactElement {
-  const { t } = useTranslation();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  const effectiveItems = useMemo(() => {
-    if (items.length > 0) return items;
-    if (expenses.length === 0) return [];
-
-    return expenses.map((expense) => ({
-      type: 'expense' as const,
-      expense,
-    }));
-  }, [items, expenses]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -63,57 +44,20 @@ export default function ExpensesList({
 
   return (
     <div className="flex flex-col gap-3">
-      {effectiveItems.map((item) => {
-        if (item.type === 'expense') {
-          const expense = item.expense;
-          return (
-            <div key={`expense-${expense.id}`}>
-              <ExpenseListItem
-                currentProfileId={currentProfileId}
-                expense={expense}
-                locale={locale}
-                showWhenLabel={true}
-                onClick={onExpenseClick ? () => onExpenseClick(expense.id) : undefined}
-              />
-            </div>
-          );
-        }
-
-        const settlement = item.settlement;
-
+      {items.map((item) => {
+        const data = item.type === 'expense' ? item.expense : item.settlement;
+        
         return (
-          <ListRow
-            as="article"
-            key={`settlement-${settlement.id}`}
-            className="group p-3 gap-3 border-success/20 bg-success/[0.03]"
-            variant="subtle"
-          >
-            <IconBox className="bg-success/10 text-success rounded-xl" size="sm" tone="custom">
-              <span className="material-symbols-outlined !text-[20px]">verified</span>
-            </IconBox>
-
-            <div className="flex-1 min-w-0">
-              <h3 className="truncate text-base font-bold tracking-tight text-surface-2">
-                {t('expenses.settleUp')}
-              </h3>
-              <p className="text-sm font-medium text-surface-2/60">
-                {toRelativeExpenseDate(settlement.expense_date, locale, {
-                  today: t('common.today'),
-                  yesterday: t('common.yesterday'),
-                })}
-              </p>
-            </div>
-
-            <div className="text-right flex flex-col items-end">
-              <p className="text-lg font-bold tracking-tight text-surface-2 flex items-baseline gap-1">
-                <span>{centsToCurrency(settlement.amount_cents, locale).replace(/[^\d.,]/g, '')}</span>
-                <span className="text-[13px] font-medium text-surface-2/30">€</span>
-              </p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.05em] text-success">
-                {t('expenses.settlement.feedStatus')}
-              </p>
-            </div>
-          </ListRow>
+          <ExpenseListItem
+            key={`${item.type}-${data.id}`}
+            item={item}
+            currentProfileId={currentProfileId}
+            onClick={
+              onExpenseClick && item.type === 'expense'
+                ? () => onExpenseClick(item.expense.id)
+                : undefined
+            }
+          />
         );
       })}
 

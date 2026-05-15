@@ -244,7 +244,6 @@ export default function ExpensesDashboard() {
               hasNextPage={activityQuery.hasNextPage}
               isFetchingNextPage={activityQuery.isFetchingNextPage}
               items={activityItems}
-              locale={i18n.language}
               onLoadMore={() => {
                 if (activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
                   void activityQuery.fetchNextPage();
