@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { ExpenseActivityFeedItem } from '../../../domain/expense';
-import ExpenseListItem from '../ExpenseListItem';
+import ExpenseListItem from './ExpenseListItem';
 
 type ExpensesListProps = {
   items?: ExpenseActivityFeedItem[];
