@@ -19,7 +19,7 @@ import QueryErrorState from '../ui/QueryErrorState';
 import Button from '../ui/Button';
 import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
+import { shoppingItemSchema, type ShoppingItemFormValues } from '../../domain/schemas';
 import { useAuthScope } from '@/src/context/AuthContext';
 
 export default function ShoppingList() {

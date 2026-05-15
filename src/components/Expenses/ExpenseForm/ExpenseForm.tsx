@@ -10,7 +10,7 @@ import TextInput from '../../ui/TextInput';
 import ScrollContainer from '../../ui/ScrollContainer/ScrollContainer';
 import { useExpenseCategories } from '../../../api/expenses';
 import { useProfiles } from '../../../api/profiles';
-import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
+import { expenseFormSchema, type ExpenseFormValues } from '../../../domain/schemas';
 import { cn, parseAmountToCents, getLocalDateString } from '../../../utils';
 import { useAuthScope } from '@/src/context/AuthContext';
 

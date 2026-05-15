@@ -18,7 +18,7 @@ import {
   useExpenseBalanceSnapshot,
 } from '../../../api/expenses';
 import { useProfiles } from '../../../api/profiles';
-import { settlementFormSchema, type SettlementFormValues } from '../../../helpers/schemas';
+import { settlementFormSchema, type SettlementFormValues } from '../../../domain/schemas';
 import { useAuthScope } from '@/src/context/AuthContext';
 
 const MoneyFlowParticles = ({ direction }: { direction: 'to-center' | 'from-center' }) => {

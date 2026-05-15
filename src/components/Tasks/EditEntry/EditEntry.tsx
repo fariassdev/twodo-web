@@ -22,7 +22,7 @@ import Modal from '../../ui/Modal';
 import TextInput from '../../ui/TextInput';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { SegmentedControl, SegmentedControlItem } from '../../ui/SegmentedControl';
-import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../../../helpers/schemas';
+import { entryFormSchema, EFFORT_LEVELS, TIME_OF_DAY_OPTIONS, TASK_CATEGORIES, type EntryFormValues, type EffortLevel, type TimeOfDay } from '../../../domain/schemas';
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 
 export default function EditEntry() {

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '../../../api/auth';
-import { loginSchema, type LoginFormValues } from '../../../helpers/schemas';
+import { loginSchema, type LoginFormValues } from '../../../domain/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';

@@ -11,7 +11,7 @@ import FullPageLoading from '../ui/FullPageLoading';
 import Button from '../ui/Button';
 import TextInput from '../ui/TextInput';
 import FormField from '../ui/FormField';
-import { profileSchema, type ProfileFormValues } from '../../helpers/schemas';
+import { profileSchema, type ProfileFormValues } from '../../domain/schemas';
 import { toast } from '../ui/Snackbar';
 
 export default function Profile() {

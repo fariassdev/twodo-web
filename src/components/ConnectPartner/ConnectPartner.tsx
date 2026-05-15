@@ -21,7 +21,7 @@ import {
   partnerInviteEmailFormSchema,
   type PartnerInviteCodeFormValues,
   type PartnerInviteEmailFormValues,
-} from '../../helpers/schemas';
+} from '../../domain/schemas';
 import PageHeader from '../ui/PageHeader';
 import Button from '../ui/Button';
 import TextInput from '../ui/TextInput';

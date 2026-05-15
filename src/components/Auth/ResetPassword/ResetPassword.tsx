@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 import { useUpdatePassword } from '../../../api/auth';
-import { resetPasswordSchema, type ResetPasswordFormValues } from '../../../helpers/schemas';
+import { resetPasswordSchema, type ResetPasswordFormValues } from '../../../domain/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';

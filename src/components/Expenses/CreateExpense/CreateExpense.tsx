@@ -7,7 +7,7 @@ import ExpenseForm from '../ExpenseForm';
 import {
   useCreateExpense,
 } from '../../../api/expenses';
-import { type ExpenseFormValues } from '../../../helpers/schemas';
+import { type ExpenseFormValues } from '../../../domain/schemas';
 import { parseAmountToCents } from '../../../utils';
 
 export default function CreateExpense() {

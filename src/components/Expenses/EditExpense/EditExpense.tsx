@@ -9,7 +9,7 @@ import {
   useUpdateExpense,
   useExpense,
 } from '../../../api/expenses';
-import { type ExpenseFormValues } from '../../../helpers/schemas';
+import { type ExpenseFormValues } from '../../../domain/schemas';
 import { parseAmountToCents, centsToInput, getLocalDateString } from '../../../utils';
 
 export default function EditExpense() {
