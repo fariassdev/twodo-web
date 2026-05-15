@@ -42,10 +42,11 @@ const CATEGORY_CONFIG: Record<string, { icon: any; bg: string; text: string }> =
 };
 
 function toRelativeExpenseDate(
-  expenseDate: Date,
+  expenseDate: Date | string,
   locale: string,
 ): string {
-  const diffDays = differenceInCalendarDays(new Date(), expenseDate);
+  const date = typeof expenseDate === 'string' ? new Date(expenseDate) : expenseDate;
+  const diffDays = differenceInCalendarDays(new Date(), date);
 
   if (diffDays === 0 || diffDays === 1) {
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
@@ -53,7 +54,7 @@ function toRelativeExpenseDate(
     return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
-  return expenseDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 export default function ExpenseListItem({
