@@ -31,7 +31,6 @@ export default function ExpenseListItem({
   expense,
   locale,
   currentProfileId,
-  showWhenLabel = true,
   onClick,
 }: ExpenseListItemProps): React.ReactElement {
   const { t } = useTranslation();

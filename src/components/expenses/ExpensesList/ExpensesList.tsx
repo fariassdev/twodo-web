@@ -36,10 +36,6 @@ export default function ExpensesList({
 
     return expenses.map((expense) => ({
       type: 'expense' as const,
-      id: expense.id,
-      activity_day: expense.expense_date,
-      activity_at: `${expense.expense_date}T00:00:00`,
-      created_at: expense.created_at,
       expense,
     }));
   }, [items, expenses]);
@@ -69,14 +65,15 @@ export default function ExpensesList({
     <div className="flex flex-col gap-3">
       {effectiveItems.map((item) => {
         if (item.type === 'expense') {
+          const expense = item.expense;
           return (
-            <div key={`expense-${item.id}`}>
+            <div key={`expense-${expense.id}`}>
               <ExpenseListItem
                 currentProfileId={currentProfileId}
-                expense={item.expense}
+                expense={expense}
                 locale={locale}
                 showWhenLabel={true}
-                onClick={onExpenseClick ? () => onExpenseClick(item.expense.id) : undefined}
+                onClick={onExpenseClick ? () => onExpenseClick(expense.id) : undefined}
               />
             </div>
           );
@@ -87,7 +84,7 @@ export default function ExpensesList({
         return (
           <ListRow
             as="article"
-            key={`settlement-${item.id}`}
+            key={`settlement-${settlement.id}`}
             className="group p-3 gap-3 border-success/20 bg-success/[0.03]"
             variant="subtle"
           >
@@ -100,7 +97,7 @@ export default function ExpensesList({
                 {t('expenses.settleUp')}
               </h3>
               <p className="text-sm font-medium text-surface-2/60">
-                {toRelativeExpenseDate(item.activity_day, locale, {
+                {toRelativeExpenseDate(settlement.expense_date, locale, {
                   today: t('common.today'),
                   yesterday: t('common.yesterday'),
                 })}

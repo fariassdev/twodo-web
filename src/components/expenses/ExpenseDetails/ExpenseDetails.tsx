@@ -148,7 +148,7 @@ export default function ExpenseDetails() {
             </div>
 
             <p className="text-primary font-bold text-lg">
-              {new Date(expense.expense_date + 'T12:00:00').toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
+              {expense.expense_date.toLocaleDateString(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
 
             <p className="mt-4 text-surface-2/60 leading-relaxed font-medium max-w-[90%]">

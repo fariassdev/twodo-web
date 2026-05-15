@@ -153,44 +153,38 @@ export async function fetchExpenseBalanceSnapshot(householdId: string, profileId
   };
 }
 
-export async function getExpensesActivityFeedPage(householdId: string, pageSize: number, page: number) {
-  // This is a simplified implementation that fetches all and slices,
-  // matching the logic we want to move from the API layer.
-  const [expenses, settlements] = await Promise.all([
-    fetchExpenses(householdId),
-    fetchSettlements(householdId),
+export async function fetchExpensesActivityFeedRows(
+  householdId: string,
+  limit: number,
+) {
+  const [
+    { data: expenseRows, error: expensesError },
+    { data: settlementRows, error: settlementsError },
+  ] = await Promise.all([
+    supabase
+      .from('expenses')
+      .select(EXPENSE_SELECT)
+      .eq('household_id', householdId)
+      .order('expense_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(limit),
+
+    supabase
+      .from('settlements')
+      .select(SETTLEMENT_SELECT)
+      .eq('household_id', householdId)
+      .order('settled_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(limit),
   ]);
 
-  const items = [
-    ...expenses.map((e) => ({
-      type: 'expense' as const,
-      id: e.id,
-      activity_day: e.expense_date,
-      activity_at: `${e.expense_date}T00:00:00`,
-      created_at: e.created_at,
-      raw: e,
-    })),
-    ...settlements.map((s) => ({
-      type: 'settlement' as const,
-      id: s.id,
-      activity_day: s.settled_at.split('T')[0],
-      activity_at: s.settled_at,
-      created_at: s.created_at,
-      raw: s,
-    })),
-  ];
-
-  items.sort((a, b) => {
-    if (a.activity_at !== b.activity_at) return b.activity_at.localeCompare(a.activity_at);
-    return b.created_at.localeCompare(a.created_at);
-  });
-
-  const start = page * pageSize;
-  const end = start + pageSize;
-  const pageItems = items.slice(start, end);
+  if (expensesError) throw new SupabaseError(expensesError);
+  if (settlementsError) throw new SupabaseError(settlementsError);
 
   return {
-    items: pageItems,
-    hasMore: items.length > end,
+    expenseRows: expenseRows ?? [],
+    settlementRows: settlementRows ?? [],
   };
 }

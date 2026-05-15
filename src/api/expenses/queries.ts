@@ -6,16 +6,15 @@ import {
   fetchExpenseCategories,
   fetchExpenses,
   fetchSettlements,
-  getExpensesActivityFeedPage,
+  fetchExpensesActivityFeedRows,
 } from '../../supabase/expenses/queries';
 import { expenseKeys } from './keys';
 import { useProfiles } from '../../api/profiles';
-import { normalizeProfile } from '../../domain/profile';
-import type { RawExpense, RawSettlement } from '../../supabase/expenses/queries';
 import {
-  ExpenseActivityFeedItem,
+  normalizeActivityFeedItem,
   normalizeExpense,
   normalizeSettlement,
+  sortActivityFeedItems,
 } from '../../domain/expense';
 
 export const useExpenseCategories = () => {
@@ -111,33 +110,27 @@ export const useExpensesFeed = (pageSize = 20) => {
   return useInfiniteQuery({
     queryKey: expenseKeys.feed(householdId),
     queryFn: async ({ pageParam = 0 }) => {
-      const pageData = await getExpensesActivityFeedPage(householdId!, pageSize, pageParam as number);
+      const normalizedPageSize = Math.max(1, Math.floor(pageSize));
+      const normalizedPageIndex = Math.max(0, Math.floor(pageParam));
+      const endIndex = (normalizedPageIndex + 1) * normalizedPageSize;
+      const fetchLimit = endIndex + 1;
 
-      const items: ExpenseActivityFeedItem[] = pageData.items.map((item) => {
-        if (item.type === 'expense') {
-          return {
-            type: 'expense',
-            id: item.id,
-            activity_day: item.activity_day,
-            activity_at: item.activity_at,
-            created_at: item.created_at,
-            expense: normalizeExpense(item.raw as RawExpense),
-          };
-        } else {
-          return {
-            type: 'settlement',
-            id: item.id,
-            activity_day: item.activity_day,
-            activity_at: item.activity_at,
-            created_at: item.created_at,
-            settlement: normalizeSettlement(item.raw as RawSettlement),
-          };
-        }
-      });
+      const { expenseRows, settlementRows } = await fetchExpensesActivityFeedRows(
+        householdId!,
+        fetchLimit,
+      );
+
+      const items = [
+        ...expenseRows.map((expense) => normalizeActivityFeedItem({ type: 'expense', expense })),
+        ...settlementRows.map((settlement) => normalizeActivityFeedItem({ type: 'settlement', settlement })),
+      ];
+
+      const sortedItems = sortActivityFeedItems(items);
+      const paginatedItems = sortedItems.slice(normalizedPageIndex * normalizedPageSize, endIndex);
 
       return {
-        items,
-        nextPage: pageData.hasMore ? (pageParam as number) + 1 : undefined,
+        items: paginatedItems,
+        nextPage: sortedItems.length > endIndex ? normalizedPageIndex + 1 : undefined,
       };
     },
     initialPageParam: 0,

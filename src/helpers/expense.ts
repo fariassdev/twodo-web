@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import type { ExpenseWithDetails } from '../lib/types';
 
 const DEFAULT_CURRENCY = 'EUR';
@@ -31,8 +31,7 @@ export function groupExpensesByMonth(expenses: ExpenseWithDetails[]): Array<{ mo
   const grouped = new Map<string, ExpenseWithDetails[]>();
 
   for (const expense of expenses) {
-    const [year, month] = expense.expense_date.split('-');
-    const monthKey = `${year}-${month}`;
+    const monthKey = format(expense.expense_date, 'yyyy-MM');
 
     const current = grouped.get(monthKey) ?? [];
     current.push(expense);
@@ -43,11 +42,11 @@ export function groupExpensesByMonth(expenses: ExpenseWithDetails[]): Array<{ mo
 }
 
 export function toRelativeExpenseDate(
-  expenseDate: string,
+  expenseDate: string | Date,
   locale: string,
   labels: { today: string; yesterday: string },
 ): string {
-  const target = parseISO(expenseDate);
+  const target = typeof expenseDate === 'string' ? parseISO(expenseDate) : expenseDate;
   const diffDays = differenceInCalendarDays(new Date(), target);
 
   if (diffDays === 0) return labels.today;

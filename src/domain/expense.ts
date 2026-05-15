@@ -1,3 +1,4 @@
+import { compareDesc, format, parseISO } from 'date-fns';
 import { normalizeProfile } from './profile';
 import type { RawExpense, RawSettlement } from '../supabase/expenses/queries';
 
@@ -14,6 +15,8 @@ export interface ExpenseCategory {
 export const normalizeExpense = (raw: RawExpense) => {
   return {
     ...raw,
+    expense_date: parseISO(raw.expense_date),
+    created_at: parseISO(raw.created_at),
     category: raw.category,
     paid_by_profile: raw.paid_by_profile ? normalizeProfile(raw.paid_by_profile) : null,
     created_by_profile: raw.created_by_profile ? normalizeProfile(raw.created_by_profile) : null,
@@ -27,6 +30,8 @@ export type Expense = ReturnType<typeof normalizeExpense>;
 export const normalizeSettlement = (raw: RawSettlement) => {
   return {
     ...raw,
+    expense_date: parseISO(raw.settled_at),
+    created_at: parseISO(raw.created_at),
     paid_by_profile: raw.paid_by_profile ? normalizeProfile(raw.paid_by_profile) : null,
     paid_to_profile: raw.paid_to_profile ? normalizeProfile(raw.paid_to_profile) : null,
     created_by_profile: raw.created_by_profile ? normalizeProfile(raw.created_by_profile) : null,
@@ -37,25 +42,48 @@ export type Settlement = ReturnType<typeof normalizeSettlement>;
 
 // ── Activity Feed ─────────────────────────────────────────────────────────────
 
-export interface ExpenseActivityFeedExpenseItem {
-  type: 'expense';
-  id: string;
-  activity_day: string;
-  activity_at: string;
-  created_at: string;
-  expense: Expense;
-}
+export type ExpenseActivityFeedItem =
+  | { type: 'expense'; expense: Expense }
+  | { type: 'settlement'; settlement: Settlement };
 
-export interface ExpenseActivityFeedSettlementItem {
-  type: 'settlement';
-  id: string;
-  activity_day: string;
-  activity_at: string;
-  created_at: string;
-  settlement: Settlement;
-}
+export const normalizeActivityFeedItem = (
+  raw: { type: 'expense'; expense: RawExpense } | { type: 'settlement'; settlement: RawSettlement }
+): ExpenseActivityFeedItem => {
+  if (raw.type === 'expense') {
+    return {
+      type: 'expense',
+      expense: normalizeExpense(raw.expense),
+    };
+  } else {
+    return {
+      type: 'settlement',
+      settlement: normalizeSettlement(raw.settlement),
+    };
+  }
+};
 
-export type ExpenseActivityFeedItem = ExpenseActivityFeedExpenseItem | ExpenseActivityFeedSettlementItem;
+export const sortActivityFeedItems = (items: ExpenseActivityFeedItem[]): ExpenseActivityFeedItem[] => {
+  return [...items].sort((left, right) => {
+    const leftData = left.type === 'expense' ? left.expense : left.settlement;
+    const rightData = right.type === 'expense' ? right.expense : right.settlement;
+
+    // 1. Sort by activity date (descending)
+    const byDate = compareDesc(leftData.expense_date, rightData.expense_date);
+    if (byDate !== 0) return byDate;
+
+    // 2. Sort by created_at (descending)
+    const byCreatedAt = compareDesc(leftData.created_at, rightData.created_at);
+    if (byCreatedAt !== 0) return byCreatedAt;
+
+    // 3. Settlements first if on the same day/created_at
+    if (left.type !== right.type) {
+      return left.type === 'settlement' ? -1 : 1;
+    }
+
+    // 4. Final tie-break by ID
+    return rightData.id.localeCompare(leftData.id);
+  });
+};
 
 // ── Balance Snapshot ──────────────────────────────────────────────────────────
 
