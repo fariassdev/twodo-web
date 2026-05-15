@@ -22,3 +22,4 @@ export {
 
 // Keys (re-exported for advanced use cases, e.g. prefetching in loaders)
 export { taskKeys } from './keys';
+export { useAdjacentMonthsPrefetch } from './prefetch';

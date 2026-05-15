@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProfiles, profileKeys } from '../../api/profiles';
-import { useTasksInRange, taskKeys } from '../../api/tasks';
-import { queryKeys } from '../../lib/queryKeys';
+import { useTasksInRange, taskKeys, useAdjacentMonthsPrefetch } from '../../api/tasks';
 import type { Profile } from '../../domain/profile';
 import type { Task } from '../../domain/task';
 import { useTranslation } from 'react-i18next';
@@ -146,25 +145,7 @@ export default function Calendar() {
     return groups;
   }, [selectedMonthTasks, selectedStr, showTasks, showDailyTasks, showEvents]);
 
-  useEffect(() => {
-    const next = getMonthDateRange(year, month + 1);
-    const prev = getMonthDateRange(year, month - 1);
-    
-    const prefetch = (range: { startDate: string; endDate: string }) => 
-      queryClient.prefetchQuery({
-        queryKey: taskKeys.range(householdId!, range.startDate, range.endDate, showDeleted),
-        queryFn: () => {
-          // This is a bit duplicative of the hook's queryFn but avoids exposing it
-          // In a real refactor, maybe extract the fetcher or put prefetch back in hook
-          // For now, following the "standard" request which often means less abstraction
-          const { fetchTasksInRange } = require('../../supabase/queries/tasks');
-          return fetchTasksInRange(householdId!, range.startDate, range.endDate, showDeleted);
-        }
-      });
-
-    void prefetch(next);
-    void prefetch(prev);
-  }, [year, month, showDeleted, householdId, queryClient]);
+  useAdjacentMonthsPrefetch({ currentMonth: currentDate, includeDeleted: showDeleted });
 
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));
