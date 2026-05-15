@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, Heart, Coins, Handshake, HandCoins, BanknoteArrowUpIcon, CheckCheckIcon } from 'lucide-react';
 import Button from '../../ui/Button';
