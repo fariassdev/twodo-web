@@ -12,12 +12,11 @@ import FullPageLoading from '../../ui/FullPageLoading';
 import SettlementSuccess from '../SettleBalance/SettlementSuccess';
 import ExpensesList from '../ExpensesList';
 import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
-import { centsToCurrency } from '../../../helpers/expense';
 import {
   useExpensesFeed,
   useExpenseBalanceSnapshot,
 } from '../../../api/expenses';
-import { cn } from '@/src/utils';
+import { centsToCurrency, cn } from '@/src/utils';
 import { useCurrentProfile } from '@/src/api/profiles';
 
 

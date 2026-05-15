@@ -15,10 +15,10 @@ import {
   Banknote 
 } from 'lucide-react';
 import type { ExpenseActivityFeedItem } from '../../../domain/expense';
-import { centsToCurrency, toRelativeExpenseDate } from '../../../helpers/expense';
 import IconBox from '../../ui/IconBox';
 import ListRow from '../../ui/ListRow';
-import { cn } from '@/src/utils';
+import { centsToCurrency, cn } from '@/src/utils';
+import { differenceInCalendarDays } from 'date-fns';
 
 type ExpenseListItemProps = {
   item: ExpenseActivityFeedItem;
@@ -40,6 +40,21 @@ const CATEGORY_CONFIG: Record<string, { icon: any; bg: string; text: string }> =
   payments: { icon: Banknote, bg: 'bg-primary/15', text: 'text-primary' },
   verified: { icon: CheckCircle2, bg: 'bg-success/10', text: 'text-success' },
 };
+
+function toRelativeExpenseDate(
+  expenseDate: Date,
+  locale: string,
+): string {
+  const diffDays = differenceInCalendarDays(new Date(), expenseDate);
+
+  if (diffDays === 0 || diffDays === 1) {
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    const label = rtf.format(-diffDays, 'day');
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  return expenseDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+}
 
 export default function ExpenseListItem({
   item,

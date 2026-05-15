@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Banknote, PiggyBank } from 'lucide-react';
-import { cn } from '../../../utils';
+import { centsToCurrency, cn } from '../../../utils';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
 import FormField from '../../ui/FormField';
@@ -13,7 +13,6 @@ import TextInput from '../../ui/TextInput';
 import FullPageLoading from '../../ui/FullPageLoading';
 import ErrorBanner from '../../ui/ErrorBanner';
 import SettlementSuccess from './SettlementSuccess';
-import { centsToCurrency } from '../../../helpers/expense';
 import {
   useCreateSettlement,
   useExpenseBalanceSnapshot,

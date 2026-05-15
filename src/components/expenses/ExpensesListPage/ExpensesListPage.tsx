@@ -10,10 +10,6 @@ import TextInput from '../../ui/TextInput';
 import ScrollContainer from '../../ui/ScrollContainer';
 import ExpensesList from '../ExpensesList';
 import {
-  includesNormalizedText,
-  normalizeSearchText,
-} from '../../../helpers/expense';
-import {
   useExpensesFeed,
   useExpenseCategories,
   useExpenses,
@@ -77,6 +73,21 @@ function buildExpensesListSearch(params: {
   }
 
   return search;
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function includesNormalizedText(source: string | null | undefined, query: string): boolean {
+  if (!query) return true;
+  if (!source) return false;
+
+  return normalizeSearchText(source).includes(query);
 }
 
 export default function ExpensesListPage() {
