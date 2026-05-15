@@ -15,9 +15,8 @@ export type { EffortLevel, TimeOfDay, TaskCategory };
 // Reusable primitives
 
 const emailSchema = z
-  .string()
-  .min(1, 'auth.validation.requiredFields')
-  .email('auth.validation.invalidEmail');
+  .email('auth.validation.invalidEmail')
+  .min(1, 'auth.validation.requiredFields');
 
 const passwordSchema = z
   .string()
@@ -160,10 +159,9 @@ export type PartnerInviteCodeFormValues = z.infer<typeof partnerInviteCodeFormSc
 
 export const partnerInviteEmailFormSchema = z.object({
   email: z
-    .string()
+    .email('auth.validation.invalidEmail')
     .trim()
     .min(1, 'auth.validation.requiredFields')
-    .email('auth.validation.invalidEmail'),
 });
 
 export type PartnerInviteEmailFormValues = z.infer<typeof partnerInviteEmailFormSchema>;
