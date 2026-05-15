@@ -1,5 +1,4 @@
-import { differenceInCalendarDays, format, parseISO } from 'date-fns';
-import type { ExpenseWithDetails } from '../lib/types';
+import { differenceInCalendarDays } from 'date-fns';
 
 const DEFAULT_CURRENCY = 'EUR';
 
@@ -12,47 +11,19 @@ export function centsToCurrency(cents: number, locale: string, currency = DEFAUL
   }).format(cents / 100);
 }
 
-export function getMonthInputValue(date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
-}
+export function toRelativeExpenseDate(
+  expenseDate: Date,
+  locale: string,
+): string {
+  const diffDays = differenceInCalendarDays(new Date(), expenseDate);
 
-export function formatMonthHeading(monthValue: string, locale: string): string {
-  const [year, month] = monthValue.split('-').map(Number);
-  if (!year || !month) return monthValue;
-
-  return new Date(year, month - 1, 1)
-    .toLocaleDateString(locale, { month: 'long', year: 'numeric' })
-    .toUpperCase();
-}
-
-export function groupExpensesByMonth(expenses: ExpenseWithDetails[]): Array<{ month: string; items: ExpenseWithDetails[] }> {
-  const grouped = new Map<string, ExpenseWithDetails[]>();
-
-  for (const expense of expenses) {
-    const monthKey = format(expense.expense_date, 'yyyy-MM');
-
-    const current = grouped.get(monthKey) ?? [];
-    current.push(expense);
-    grouped.set(monthKey, current);
+  if (diffDays === 0 || diffDays === 1) {
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    const label = rtf.format(-diffDays, 'day');
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
-  return Array.from(grouped.entries()).map(([month, items]) => ({ month, items }));
-}
-
-export function toRelativeExpenseDate(
-  expenseDate: string | Date,
-  locale: string,
-  labels: { today: string; yesterday: string },
-): string {
-  const target = typeof expenseDate === 'string' ? parseISO(expenseDate) : expenseDate;
-  const diffDays = differenceInCalendarDays(new Date(), target);
-
-  if (diffDays === 0) return labels.today;
-  if (diffDays === 1) return labels.yesterday;
-
-  return target.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return expenseDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 export function normalizeSearchText(value: string): string {

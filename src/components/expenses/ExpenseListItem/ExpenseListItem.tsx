@@ -62,10 +62,7 @@ export default function ExpenseListItem({
       (language.startsWith('es') ? item.expense.category?.name_es : item.expense.category?.name_en) || 
       t('expenses.categoryFallback');
 
-  const whenLabel = toRelativeExpenseDate(baseData.expense_date, language, {
-    today: t('common.today'),
-    yesterday: t('common.yesterday'),
-  });
+  const whenLabel = toRelativeExpenseDate(baseData.expense_date, language);
 
   const amountLabel = centsToCurrency(baseData.amount_cents, language);
   const isDebtor = !isSettlement && item.expense.paid_by_profile_id !== currentProfileId;
