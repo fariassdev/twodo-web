@@ -14,9 +14,9 @@ import {
   CheckCircle2, 
   Banknote 
 } from 'lucide-react';
-import type { ExpenseActivityFeedItem } from '../../../domain/expense';
-import IconBox from '../../ui/IconBox';
-import ListRow from '../../ui/ListRow';
+import type { ExpenseActivityFeedItem } from '@/src/domain/expense';
+import IconBox from '@/src/components/ui/IconBox';
+import ListRow from '@/src/components/ui/ListRow';
 import { centsToCurrency, cn } from '@/src/utils';
 import { differenceInCalendarDays } from 'date-fns';
 
