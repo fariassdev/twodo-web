@@ -10,10 +10,6 @@ import TextInput from '../../ui/TextInput';
 import ScrollContainer from '../../ui/ScrollContainer';
 import ExpensesList from '../ExpensesList';
 import {
-  includesNormalizedText,
-  normalizeSearchText,
-} from '../../../helpers/expense';
-import {
   useExpensesFeed,
   useExpenseCategories,
   useExpenses,
@@ -79,7 +75,22 @@ function buildExpensesListSearch(params: {
   return search;
 }
 
-export default function ExpensesListPage() {
+function normalizeSearchText(value: string): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function includesNormalizedText(source: string | null | undefined, query: string): boolean {
+  if (!query) return true;
+  if (!source) return false;
+
+  return normalizeSearchText(source).includes(query);
+}
+
+export default function ExpensesSearch() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Partial<ExpensesListSearch>;
@@ -442,11 +453,9 @@ export default function ExpensesListPage() {
             <div className="mt-6">
               <ExpensesList
                 currentProfileId={profileId}
-                expenses={hasActiveFilters ? visibleExpenses : undefined}
                 hasNextPage={!hasActiveFilters ? activityQuery.hasNextPage : undefined}
                 isFetchingNextPage={!hasActiveFilters ? activityQuery.isFetchingNextPage : undefined}
                 items={!hasActiveFilters ? activityItems : undefined}
-                locale={i18n.language}
                 onLoadMore={() => {
                   if (!hasActiveFilters && activityQuery.hasNextPage && !activityQuery.isFetchingNextPage) {
                     void activityQuery.fetchNextPage();

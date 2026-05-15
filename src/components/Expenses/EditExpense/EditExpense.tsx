@@ -10,7 +10,7 @@ import {
   useExpense,
 } from '../../../api/expenses';
 import { type ExpenseFormValues } from '../../../helpers/schemas';
-import { parseAmountToCents, centsToInput } from '../../../utils';
+import { parseAmountToCents, centsToInput, getLocalDateString } from '../../../utils';
 
 export default function EditExpense() {
   const { t } = useTranslation();
@@ -31,7 +31,7 @@ export default function EditExpense() {
       description: expense.description || '',
       categoryId: expense.category_id,
       paidByProfileId: expense.paid_by_profile_id,
-      expenseDate: expense.expense_date,
+      expenseDate: getLocalDateString(expense.expense_date),
     };
   }, [expense]);
 

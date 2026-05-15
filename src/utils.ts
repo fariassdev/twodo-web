@@ -16,3 +16,14 @@ export function parseAmountToCents(raw: string): number {
 }
 
 export const centsToInput = (cents: number) => (cents / 100).toFixed(2);
+
+const DEFAULT_CURRENCY = 'EUR';
+
+export function centsToCurrency(cents: number, locale: string, currency = DEFAULT_CURRENCY): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}

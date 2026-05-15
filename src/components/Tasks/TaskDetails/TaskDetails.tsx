@@ -33,20 +33,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 import { useProfiles } from '@/src/api/profiles';
-
-
-
-function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
-  return (
-    <div className="flex flex-col gap-1 p-3 rounded-2xl bg-surface-1/50 border border-border-subtle">
-      <div className="flex items-center gap-1.5 opacity-40">
-        <Icon size={14} className={colorClass} />
-        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-      </div>
-      <span className="text-sm font-bold text-surface-2 truncate">{value}</span>
-    </div>
-  );
-}
+import InfoTile from '../../ui/InfoTile';
 
 const categoryIcons: Record<string, any> = {
   trash: Trash2,
@@ -276,27 +263,27 @@ export default function TaskDetails() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-8">
-            <SpecItem 
+            <InfoTile 
               icon={Star} 
               label={t('taskDetails.currentReward')} 
               value={t('taskDetails.pointsReward', { points: task.points })} 
             />
             {task.effort_level && (
-              <SpecItem 
+              <InfoTile 
                 icon={Dumbbell} 
                 label={t('taskDetails.effort')} 
                 value={t(`entryForm.effortLevels.${task.effort_level}`)} 
               />
             )}
             {task.time_of_day && (
-              <SpecItem 
+              <InfoTile 
                 icon={Clock} 
                 label={t('taskDetails.time')} 
                 value={t(`entryForm.timeOfDayOptions.${task.time_of_day}`)} 
               />
             )}
             {task.is_recurring && task.frequency && (
-              <SpecItem 
+              <InfoTile 
                 icon={Repeat} 
                 label={t('taskDetails.frequency')} 
                 value={t(`entryForm.frequencyOptions.${task.frequency}`)} 

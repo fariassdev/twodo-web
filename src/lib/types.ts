@@ -21,12 +21,6 @@ export type ExpenseCategory = Database['public']['Tables']['expense_categories']
 export type Settlement = Database['public']['Tables']['settlements']['Row'];
 export type ExpenseBalanceEvent = Database['public']['Tables']['expense_balance_events']['Row'];
 
-export interface ExpenseWithDetails extends Expense {
-  category?: ExpenseCategory | null;
-  paid_by_profile?: Profile | null;
-  created_by_profile?: Profile | null;
-}
-
 export type LoveNote = Database['public']['Tables']['love_notes']['Row'] & {
   sender?: Profile;
 };
