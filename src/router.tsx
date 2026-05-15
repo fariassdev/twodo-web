@@ -27,7 +27,7 @@ const CreateEntry = React.lazy(() => import('./components/Tasks/CreateEntry'));
 const ExpensesDashboard = React.lazy(() => import('./components/Expenses/ExpensesDashboard'));
 const CreateExpense = React.lazy(() => import('./components/Expenses/CreateExpense'));
 const EditExpense = React.lazy(() => import('./components/Expenses/EditExpense'));
-const ExpensesListPage = React.lazy(() => import('./components/Expenses/ExpensesListPage'));
+const ExpensesSearch = React.lazy(() => import('./components/Expenses/ExpensesSearch'));
 const ExpenseDetails = React.lazy(() => import('./components/Expenses/ExpenseDetails'));
 const SettleBalance = React.lazy(() => import('./components/Expenses/SettleBalance'));
 const Login = React.lazy(() => import('./components/Auth/Login'));
@@ -361,7 +361,7 @@ export const expensesListRoute = createRoute({
   }),
   component: () => (
     <RouteShell sectionName="expenses-list">
-      <ExpensesListPage />
+      <ExpensesSearch />
     </RouteShell>
   ),
 });

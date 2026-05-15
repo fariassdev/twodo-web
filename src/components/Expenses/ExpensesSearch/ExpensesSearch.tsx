@@ -90,7 +90,7 @@ function includesNormalizedText(source: string | null | undefined, query: string
   return normalizeSearchText(source).includes(query);
 }
 
-export default function ExpensesListPage() {
+export default function ExpensesSearch() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Partial<ExpensesListSearch>;
