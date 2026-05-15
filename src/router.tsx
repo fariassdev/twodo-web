@@ -16,7 +16,7 @@ import SectionErrorBoundary from './components/ui/SectionErrorBoundary';
 import FullPageLoading from './components/ui/FullPageLoading';
 import ErrorPage from './components/ui/ErrorPage';
 
-const Dashboard = React.lazy(() => import('./components/dashboard'));
+const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
 const Metrics = React.lazy(() => import('./components/Metrics'));
 const ShoppingList = React.lazy(() => import('./components/ShoppingList'));
