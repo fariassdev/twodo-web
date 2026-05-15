@@ -1,87 +1,134 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="320" alt="Twodo logo" src="public/twodo_logo.svg" />
 </div>
 
-# Run and deploy your AI Studio app
+# Twodo
 
-This contains everything you need to run your app locally.
+Twodo is a household coordination app for couples who want to manage tasks, expenses, shopping, and shared balance with less friction and more clarity. The product is designed for quick daily check-ins, recurring chores, and calm accountability.
 
-View your app in AI Studio: https://ai.studio/apps/2259f889-b8cc-4206-a148-6f7a3dcfe5af
+## What It Does
 
-## Run Locally
+Twodo helps couples:
 
-**Prerequisites:**  Node.js
+- Define recurring and one-off tasks
+- Complete tasks quickly from a mobile-first interface
+- Track household expenses and settlements
+- Manage shopping lists together
+- Review balance and progress through metrics
+- Invite and onboard a partner into the same household
 
+## Tech Stack
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- React 19
+- TypeScript
+- Vite
+- TanStack Router
+- TanStack Query with IndexedDB persistence
+- Supabase for auth, data, and backend functions
+- i18next for localization
+- Tailwind CSS v4
+- Motion and React Error Boundary for interaction and resilience
 
-## Supabase Caching Strategy
+## Getting Started
 
-The app uses TanStack Query v5 with persistent cache in IndexedDB.
+### Prerequisites
 
-- Global provider and persistence setup:
-   - `src/main.tsx`
-   - `src/lib/queryClient.ts`
-- Query key taxonomy:
-   - `src/lib/queryKeys.ts`
-- Domain hooks and mutation invalidation matrix:
-   - `src/lib/queryHooks.ts`
+- Node.js
+- Docker Desktop or another running Docker engine
+- A Supabase project
 
-### Policy summary
+### Install
 
-- Reads use `networkMode: offlineFirst`.
-- Cache is persisted to IndexedDB (`idb-keyval`) with max age of 24h.
-- Retry uses exponential backoff and avoids retrying common client errors.
-- Domain-level `staleTime` and `gcTime` are configured per key family (profiles, tasks, calendar, metrics, shopping, love notes).
+```bash
+pnpm install
+```
 
-### Mutation invalidation
+### Configure Environment
 
-- Task mutations (`complete`, `postpone`, `delete`, `delete series`, `delete after`, `create`, `update`) invalidate:
-   - all tasks keys
-   - calendar keys
-   - task detail keys
-   - metrics keys
-   - love note keys
-- Profile update invalidates profiles + metrics.
-- Shopping mutations keep optimistic local updates and settle with shopping invalidation.
+Create a local environment file from the example file and fill in the local Supabase values:
 
-## Production-Ready Closure (Frontend)
+```bash
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
 
-### Baseline (before this hardening pass)
+The repository already includes [.env.example](.env.example) with the local defaults:
 
-- `npm run lint`: pass (0 type errors)
-- `npm run build`: warning for oversized chunk (`dist/assets/index-*.js` > 500 kB)
+- `VITE_SUPABASE_URL=http://127.0.0.1:54321`
+- `VITE_SUPABASE_ANON_KEY=sb_publishable_XXX`
+- `RESEND_API_KEY=re_XXX`
+- `APP_URL=http://localhost:3000`
 
-### Acceptance criteria
+Copy that file to [.env.local](.env.local) and replace `VITE_SUPABASE_ANON_KEY` with the local anonymous key printed by Supabase after the stack starts.
 
-- Critical routes have section-level error boundaries and retry UI.
-- Offline/stale data is visible to users through explicit status banners.
-- Client telemetry tracks:
-   - time spent per route
-   - request count per active route
-   - mutation errors per active route
-- Routing uses lazy loading to split route code.
-- Invalidation strategy uses narrower query keys where safe, while keeping broad invalidation for recurring-series operations.
+### Run Locally
 
-### Observability quick use
+1. Start Docker if it is not already running.
+2. Start the local Supabase stack:
 
-- Telemetry is exposed in browser runtime as:
-   - `window.__twodoTelemetry.snapshot()`
-- Snapshot includes:
-   - `requestsByRoute`
-   - `mutationErrorsByRoute`
-   - `screenDurationsMs`
+```bash
+pnpm start
+```
 
-### Verification checklist
+This runs the Supabase CLI and brings up the local containers for Postgres, Auth, Storage, and the other local services used by the app.
 
-1. Run `npm run lint` and confirm 0 errors.
-2. Run `npm run build` and compare chunk output vs baseline.
-3. Navigate all routes and verify stale/offline banners appear when expected.
-4. Test critical mutations (create, edit, complete, postpone, delete, shopping, profile) and verify visible error feedback on failures.
-5. Simulate offline/online in DevTools and confirm recovery from persisted cache.
-6. Compare network requests before/after using DevTools Network tab.
+3. Copy the local anonymous key from the Supabase output into [.env.local](.env.local).
+4. Start the frontend in a second terminal:
+
+```bash
+pnpm dev
+```
+
+The app runs on port 3000 and listens on `0.0.0.0`.
+
+If you need to stop the local backend later, use:
+
+```bash
+pnpm exec supabase stop
+```
+
+## Available Scripts
+
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start the Vite development server |
+| `pnpm build` | Build the production bundle |
+| `pnpm preview` | Preview the production build locally |
+| `pnpm lint` | Run the TypeScript type check |
+| `pnpm clean` | Remove the `dist` folder |
+| `pnpm start` | Start Supabase locally |
+| `pnpm update-types` | Regenerate `src/lib/database.types.ts` from the local Supabase schema |
+| `pnpm db:migration:new` | Create a new Supabase migration |
+| `pnpm db:migration:push` | Push local migrations to Supabase |
+| `pnpm db:reset` | Reset the local Supabase database |
+| `pnpm db:sync` | Dump public data into `supabase/seed.sql` and reset the local database |
+
+## Project Structure
+
+- `src/api` is the public data-access surface for each domain. It groups React Query hooks, query keys, mutations, and prefetch helpers so components consume a stable API without importing Supabase or low-level persistence details directly.
+- `src/supabase` contains the Supabase implementation layer. It groups the typed client, typed errors, and the per-domain query and mutation functions that actually talk to the backend.
+- `src/components` contains the main app screens and feature UI.
+- `src/context` holds global providers such as auth state.
+- `src/domain` defines shared domain models and validation.
+- `src/hooks` contains reusable cross-cutting hooks, such as language, online status, and telemetry helpers.
+- `src/lib` holds shared client infrastructure such as Supabase, query caching, and telemetry.
+- `src/locales` stores translations.
+- `supabase` contains local config, migrations, seed data, and functions.
+
+## Architecture Notes
+
+- `src/api` is the stable import boundary for domain data hooks, keys, and prefetch helpers.
+- `src/supabase` is the implementation boundary where the Supabase client and domain-specific persistence logic live.
+- Routes are lazy loaded and protected by auth gates.
+- Query data is cached with TanStack Query and persisted in IndexedDB for offline-friendly behavior.
+- The app exposes lightweight client telemetry for route timing, request counts, and mutation errors.
+- Section-level error boundaries keep failures isolated to the affected part of the UI.
+
+## Housekeeping
+
+If you update the Supabase schema, regenerate the typed client before committing changes:
+
+```bash
+pnpm update-types
+```
 
