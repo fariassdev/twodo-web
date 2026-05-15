@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Profile } from '../../../../lib/types';
-import type { TaskAssignmentOverrideType } from '../../../../lib/queries';
+import type { AssignmentOverrideType } from '../../../../domain/types';
 import Button from '../../../ui/Button';
 import PageHeader from '../../../ui/PageHeader';
+import { Profile } from '@/src/domain/profile';
 
 export interface AssignmentSelection {
-  type: TaskAssignmentOverrideType;
+  type: AssignmentOverrideType;
   assignedTo: string[];
 }
 

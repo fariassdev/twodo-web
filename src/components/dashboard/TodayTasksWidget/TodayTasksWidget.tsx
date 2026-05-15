@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { subDays } from 'date-fns';
+import { subDays, addDays } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { Zap, ChevronDown, ChevronUp, History, CheckCircle2, Check } from 'lucide-react';
-import { useTodaysTasksQuery, useOverdueTasksQuery, useTaskCountQuery, useCompleteTaskMutation, useProfilesQuery, useAuthScope } from '../../../lib/queryHooks';
-import type { Task } from '../../../lib/types';
+import { useTasksInRange, useTaskCount, useCompleteTask } from '../../../api/tasks';
+import { useProfiles } from '../../../api/profiles';
+import { getLocalDateString } from '../../../utils';
+import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
 import EmptyTodayState from './EmptyTodayState';
 import { toast } from '../../ui/Snackbar';
@@ -12,30 +14,43 @@ import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import ListRow from '../../ui/ListRow';
 import SectionHeader from '../../ui/SectionHeader';
-import { getLocalDateString } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
 export default function TodayTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const todaysTasksQuery = useTodaysTasksQuery();
-  const overdueTasksQuery = useOverdueTasksQuery();
-  const taskCountQuery = useTaskCountQuery();
-  const completeTaskMutation = useCompleteTaskMutation();
+  const today = new Date();
+  const tasksQuery = useTasksInRange({
+    startDate: getLocalDateString(subDays(today, 7)),
+    endDate: getLocalDateString(addDays(today, 1)),
+  });
+  const allTasks = tasksQuery.data ?? [];
+  const taskCountQuery = useTaskCount();
+  const totalCount = taskCountQuery.data ?? 0;
+  const completeTaskMutation = useCompleteTask();
   const { profileId } = useAuthScope();
-  const { data: profiles = [] } = useProfilesQuery();
+  const { data: profiles = [] } = useProfiles();
 
   const [isPendingExpanded, setIsPendingExpanded] = useState(false);
-  const [lastCompletedTask, setLastCompletedTask] = useState<Task | null>(null);
 
-  const tasks = todaysTasksQuery.data ?? [];
-  const allOverdueTasks = overdueTasksQuery.data ?? [];
-
-  const overdueTasks = useMemo(() => {
-    const sevenDaysAgo = getLocalDateString(subDays(new Date(), 7));
-    return allOverdueTasks.filter(task => task.date && task.date >= sevenDaysAgo);
-  }, [allOverdueTasks]);
+  const todayStr = getLocalDateString();
+  
+  const tasks = useMemo(() => 
+    allTasks.filter(t => t.date === todayStr && t.type === 'task'), 
+    [allTasks, todayStr]
+  );
+  
+  const overdueTasks = useMemo(() => 
+    allTasks.filter(t => 
+      t.date && 
+      t.date < todayStr && 
+      t.type === 'task' && 
+      (t.status === 'past_due' || (t.status === 'completed' && t.updated_at >= todayStr))
+    ), 
+    [allTasks, todayStr]
+  );
 
   const sortedOverdueTasks = useMemo(() => {
     return [...overdueTasks].sort((a, b) => {
@@ -79,7 +94,7 @@ export default function TodayTasksWidget() {
   const handleComplete = async (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
     try {
-      const task = tasks.find((t) => t.id === taskId) ?? allOverdueTasks.find((t) => t.id === taskId);
+      const task = allTasks.find((t) => t.id === taskId);
       
       // If it's an individual task assigned to someone else, go to assignment screen
       if (task && (task.assignment_type === 'individual' || task.assignment_type === 'strict_rotation') && task.assigned_to !== profileId) {
@@ -92,7 +107,6 @@ export default function TodayTasksWidget() {
 
       await completeTaskMutation.mutateAsync({ taskId });
       const completedTask = task ?? null;
-      setLastCompletedTask(completedTask);
       
       const assignmentText =
         completedTask?.assignment_type === 'team_work'
@@ -121,6 +135,7 @@ export default function TodayTasksWidget() {
 
   const renderTask = (task: Task) => {
     const isCompleted = task.status === 'completed';
+    const isExpired = task.status === 'expired';
     const showSize = task.effort_level === 'L' || task.effort_level === 'XL';
     const isHighPriority = task.priority === 'high';
     const isTeamWork = task.assignment_type === 'team_work';
@@ -129,6 +144,7 @@ export default function TodayTasksWidget() {
       <ListRow
         as="div"
         completed={isCompleted}
+        disabled={isExpired}
         key={task.id}
         onClick={() => navigate({ to: '/task/$taskId', params: { taskId: task.id }, search: { from: 'dashboard' } })}
         className="mb-3 shadow-sm"
@@ -146,7 +162,7 @@ export default function TodayTasksWidget() {
               : 'rounded-full border-2 border-border-subtle text-transparent hover:bg-transparent'
           }`}
           onClick={(e) => {
-            if (isCompleted) {
+            if (isCompleted || isExpired) {
               e.stopPropagation();
             } else {
               handleComplete(e, task.id);
@@ -160,7 +176,7 @@ export default function TodayTasksWidget() {
 
         <div className="flex-1 min-w-0">
           <div className={`font-semibold text-base truncate flex items-center gap-3 ${
-            isCompleted ? 'line-through opacity-40' : ''
+            isCompleted || isExpired ? 'line-through opacity-40' : ''
           }`}>
             {task.title}
             {isHighPriority && !isCompleted && (
@@ -212,7 +228,7 @@ export default function TodayTasksWidget() {
 
       {tasks.length === 0 && (
         <EmptyTodayState 
-          isOnboarding={taskCountQuery.data === 0}
+          isOnboarding={totalCount === 0}
           onAddClick={() => navigate({ to: '/create' })}
           onPlanClick={() => navigate({ to: '/calendar' })}
           compact={overdueTasks.length > 0}
@@ -244,7 +260,7 @@ export default function TodayTasksWidget() {
                 size="sm"
                 tone="neutral"
               >
-                {overdueTasks.filter(t => t.status !== 'completed').length}
+                {overdueTasks.filter(t => t.status === 'past_due').length}
               </Badge>
               {isPendingExpanded ? (
                 <ChevronUp className={`w-5 h-5 ${allOverdueCompleted ? 'text-primary' : 'text-danger'}`} />

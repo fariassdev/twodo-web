@@ -2,34 +2,31 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import {
-  useTaskByIdQuery,
-  useProfilesQuery,
-  useTaskCompletionsQuery,
-  useCompleteTaskMutation,
-  useUpdateTaskCompletionAssignmentMutation,
-  useAuthScope,
-} from '../../../lib/queryHooks';
+import { useProfiles } from '../../../api/profiles';
+import { useTask, useTaskCompletions, useCompleteTask, useUpdateCompletionAssignment } from '../../../api/tasks';
+import type { AssignmentOverrideType } from '../../../domain/types';
 import AssignmentSelector, { type AssignmentSelection } from './AssignmentSelector';
 import FullPageLoading from '../../ui/FullPageLoading';
 import QueryErrorState from '../../ui/QueryErrorState';
-import type { TaskAssignmentOverrideType } from '../../../lib/queries';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 export default function TaskAssignment() {
   const { taskId } = useParams({ strict: false }) as { taskId: string };
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { profileId } = useAuthScope();
 
-  const taskQuery = useTaskByIdQuery(taskId);
-  const profilesQuery = useProfilesQuery();
-  const taskCompletionsQuery = useTaskCompletionsQuery(taskId);
+  const taskQuery = useTask({ id: taskId });
+  const task = taskQuery.data ?? null;
+  const profilesQuery = useProfiles();
+  const completionsQuery = useTaskCompletions(taskId);
+  const completions = completionsQuery.data ?? [];
 
-  const completeTaskMutation = useCompleteTaskMutation();
-  const updateTaskCompletionAssignmentMutation = useUpdateTaskCompletionAssignmentMutation();
+  const completeTaskMutation = useCompleteTask();
+  const updateCompletionAssignmentMutation = useUpdateCompletionAssignment();
+  const acting = completeTaskMutation.isPending || updateCompletionAssignmentMutation.isPending;
 
-  const task = taskQuery.data;
   const profiles = profilesQuery.data ?? [];
-  const completions = taskCompletionsQuery.data ?? [];
 
   const [selectedAssignment, setSelectedAssignment] = useState<AssignmentSelection | null>(null);
 
@@ -63,25 +60,18 @@ export default function TaskAssignment() {
       const { type: selectedType, assignedTo } = selectedAssignment;
       
       // Smart type preservation
-      const finalType: TaskAssignmentOverrideType = selectedType === 'team_work' 
-        ? 'team_work' 
+      const finalType: AssignmentOverrideType = selectedType === 'team_work' 
+        ? 'team_work'
         : (task.assignment_type === 'anyone' ? 'anyone' : 'individual');
 
       if (isCompleted) {
-        await updateTaskCompletionAssignmentMutation.mutateAsync({
-          taskId: task.id,
-          assignmentType: finalType,
-          assignedTo: assignedTo,
-        });
+        await updateCompletionAssignmentMutation.mutateAsync({ taskId: task.id, assignmentType: finalType, assignedTo });
         toast.success(t('taskCompletion.assignmentUpdated'));
       } else {
-        await completeTaskMutation.mutateAsync({
-          taskId: task.id,
-          assignmentOverride: {
-            type: finalType,
-            assignedTo: assignedTo,
-          },
-        });
+        await completeTaskMutation.mutateAsync({ taskId: task.id, override: {
+          type: finalType,
+          assignedTo: assignedTo,
+        }});
         toast.success(t('taskCompletion.completed'));
       }
       
@@ -93,14 +83,12 @@ export default function TaskAssignment() {
     }
   };
 
-  const { profileId } = useAuthScope();
-
-  if (taskQuery.isPending || profilesQuery.isPending || (task?.status === 'completed' && taskCompletionsQuery.isPending)) {
+  if (taskQuery.isLoading || profilesQuery.isPending || (task?.status === 'completed' && completionsQuery.isLoading)) {
     return <FullPageLoading message={t('loading')} />;
   }
 
-  if (taskQuery.isError || !task) {
-    return <QueryErrorState onRetry={() => taskQuery.refetch()} />;
+  if (!task) {
+    return <QueryErrorState onRetry={() => window.location.reload()} />;
   }
 
   if (!selectedAssignment) return null;
@@ -120,7 +108,7 @@ export default function TaskAssignment() {
       subtitle={task.title}
       onConfirm={handleConfirm}
       onCancel={() => window.history.back()}
-      loading={completeTaskMutation.isPending || updateTaskCompletionAssignmentMutation.isPending}
+      loading={acting}
     >
       {isHelpingOut && (
         <div className="relative bg-surface-1/50 backdrop-blur-sm border border-primary/10 rounded-[2rem] p-5 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-sm overflow-hidden group">

@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  useCreateTasksMutation,
-  useDeleteTasksAfterMutation,
-  useProfilesQuery,
-  useTaskByIdQuery,
-  useUpdateTaskMutation,
-} from '../../../lib/queryHooks';
-import type { UpdateTaskInput, CreateTaskInput } from '../../../lib/queries';
-import type { Task, Profile } from '../../../lib/types';
+  useTask,
+  useUpdateTask,
+  useCreateTasks,
+  useDeleteTasksAfter,
+} from '../../../api/tasks';
+import { useProfiles } from '../../../api/profiles';
+import type { UpdateTaskInput, CreateTaskInput } from '../../../domain/types';
+import type { Task } from '../../../domain/task';
+import type { Profile } from '../../../domain/profile';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../../ui/PageHeader';
 import Button from '../../ui/Button';
@@ -94,18 +95,16 @@ export default function EditEntry() {
     }
   }, [startTime]);
 
-  const profilesQuery = useProfilesQuery();
-  const taskQuery = useTaskByIdQuery(taskId);
-  const updateTaskMutation = useUpdateTaskMutation();
-  const deleteTasksAfterMutation = useDeleteTasksAfterMutation();
-  const createTasksMutation = useCreateTasksMutation();
+  const profilesQuery = useProfiles();
+  const taskQuery = useTask({ id: taskId });
+  const editTask = taskQuery.data ?? null;
+  const updateTaskMutation = useUpdateTask();
+  const createTasksMutation = useCreateTasks();
+  const deleteTasksAfterMutation = useDeleteTasksAfter();
+  const saving = updateTaskMutation.isPending || createTasksMutation.isPending || deleteTasksAfterMutation.isPending;
 
   const profiles: Profile[] = profilesQuery.data ?? [];
-  const saving =
-    updateTaskMutation.isPending ||
-    deleteTasksAfterMutation.isPending ||
-    createTasksMutation.isPending;
-  const loading = profilesQuery.isPending || taskQuery.isPending;
+  const loading = profilesQuery.isLoading || taskQuery.isLoading;
 
   useEffect(() => {
     if (profiles.length > 0 && !assignedTo && assignmentCategory === 'individual') {
@@ -126,7 +125,7 @@ export default function EditEntry() {
 
   // Populate form when task data loads
   useEffect(() => {
-    const task = taskQuery.data;
+    const task = editTask;
     if (task) {
       setOriginalTask(task);
       let assignCategory: 'team_work' | 'anyone' | 'individual' = 'team_work';
@@ -164,7 +163,7 @@ export default function EditEntry() {
         endTime: task.end_time || '',
       });
     }
-  }, [taskQuery.data, reset]);
+  }, [editTask, reset]);
 
   function handleSave() {
     if (originalTask?.recurrence_id) {
@@ -207,10 +206,7 @@ export default function EditEntry() {
       await updateTaskMutation.mutateAsync({ taskId, input });
 
       if (mode === 'following' && originalTask.recurrence_id && originalTask.date) {
-        await deleteTasksAfterMutation.mutateAsync({
-          recurrenceId: originalTask.recurrence_id,
-          date: originalTask.date,
-        });
+        await deleteTasksAfterMutation.mutateAsync({ seriesId: originalTask.recurrence_id, date: originalTask.date });
 
         if (data.isRecurring && data.frequency && data.date) {
           const newTasks: CreateTaskInput[] = [];

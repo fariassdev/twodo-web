@@ -1,13 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  useAuthScope,
-  usePrefetchMonthTasks,
-  useProfilesQuery,
-  useTasksForMonthQuery,
-} from '../../lib/queryHooks';
+import { useProfiles, profileKeys } from '../../api/profiles';
+import { useTasksInRange, taskKeys } from '../../api/tasks';
 import { queryKeys } from '../../lib/queryKeys';
-import type { Profile, Task } from '../../lib/types';
+import type { Profile } from '../../domain/profile';
+import type { Task } from '../../domain/task';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
 import DataStatusBanner from '../ui/DataStatusBanner';
@@ -20,6 +17,7 @@ import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Button from '../ui/Button';
 import { ContextMenu } from '../ui/ContextMenu/ContextMenu';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening', 'anytime'] as const;
 
@@ -83,51 +81,42 @@ export default function Calendar() {
   const month = currentDate.getMonth();
   const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
-  const profilesQuery = useProfilesQuery();
-  const monthTasksQuery = useTasksForMonthQuery(year, month, showDeleted);
-  const prefetchMonthTasks = usePrefetchMonthTasks();
+  function getMonthDateRange(year: number, month: number) {
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    return { startDate, endDate };
+  }
 
-  const selectedYear = selectedDate.getFullYear();
-  const selectedMonth = selectedDate.getMonth();
-  const selectedMonthTasksQuery = useTasksForMonthQuery(selectedYear, selectedMonth, showDeleted);
-
+  const profilesQuery = useProfiles();
+  const monthTasksQuery = useTasksInRange({
+    ...getMonthDateRange(year, month),
+    includeDeleted: showDeleted,
+  });
   const monthTasks = monthTasksQuery.data ?? [];
+  
+  const selectedMonthTasksQuery = useTasksInRange({
+    ...getMonthDateRange(selectedDate.getFullYear(), selectedDate.getMonth()),
+    includeDeleted: showDeleted,
+  });
   const selectedMonthTasks = selectedMonthTasksQuery.data ?? [];
+
   const profiles: Profile[] = profilesQuery.data ?? [];
   const profileNameMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.name])), [profiles]);
   const hasQueryError =
-    monthTasksQuery.isError || profilesQuery.isError;
+    profilesQuery.isError || monthTasksQuery.isError || selectedMonthTasksQuery.isError;
   const isStale =
-    monthTasksQuery.isStale || profilesQuery.isStale;
+    profilesQuery.isStale || monthTasksQuery.isStale || selectedMonthTasksQuery.isStale;
   const isFetching =
-    monthTasksQuery.isFetching || profilesQuery.isFetching;
-
-  function getAssigneeSortLabel(task: Task): string {
-    if (task.assignment_type === 'team_work' || task.assignment_type === 'anyone') {
-      return t('calendar.assigneeShared');
-    }
-
-    if (!task.assigned_to) {
-      return t('calendar.assigneeUnassigned');
-    }
-
-    return profileNameMap.get(task.assigned_to) ?? t('calendar.assigneeUnassigned');
-  }
+    profilesQuery.isFetching || monthTasksQuery.isFetching || selectedMonthTasksQuery.isFetching;
 
   const tasksByBlock = useMemo(() => {
-    const filtered = selectedMonthTasks
-      .filter((task) => task.date === selectedStr)
-      .filter((task) => {
-        if (task.type === 'task') {
-          if (!showTasks) return false;
-          if (!showDailyTasks && task.is_recurring && task.frequency === 'daily') return false;
-          return true;
-        }
-        if (task.type === 'event') {
-          return showEvents;
-        }
-        return true;
-      });
+    const filtered = selectedMonthTasks.filter(
+      (task) =>
+        task.date === selectedStr &&
+        (task.type === 'task' ? showTasks : showEvents) &&
+        (task.type === 'task' ? (showDailyTasks ? true : task.recurrence_id === null) : true),
+    );
 
     const groups: Record<string, Task[]> = {
       morning: [],
@@ -158,9 +147,24 @@ export default function Calendar() {
   }, [selectedMonthTasks, selectedStr, showTasks, showDailyTasks, showEvents]);
 
   useEffect(() => {
-    void prefetchMonthTasks(year, month + 1, showDeleted);
-    void prefetchMonthTasks(year, month - 1, showDeleted);
-  }, [year, month, showDeleted, prefetchMonthTasks]);
+    const next = getMonthDateRange(year, month + 1);
+    const prev = getMonthDateRange(year, month - 1);
+    
+    const prefetch = (range: { startDate: string; endDate: string }) => 
+      queryClient.prefetchQuery({
+        queryKey: taskKeys.range(householdId!, range.startDate, range.endDate, showDeleted),
+        queryFn: () => {
+          // This is a bit duplicative of the hook's queryFn but avoids exposing it
+          // In a real refactor, maybe extract the fetcher or put prefetch back in hook
+          // For now, following the "standard" request which often means less abstraction
+          const { fetchTasksInRange } = require('../../supabase/queries/tasks');
+          return fetchTasksInRange(householdId!, range.startDate, range.endDate, showDeleted);
+        }
+      });
+
+    void prefetch(next);
+    void prefetch(prev);
+  }, [year, month, showDeleted, householdId, queryClient]);
 
   function prevMonth() {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -319,10 +323,8 @@ export default function Calendar() {
           if (!householdId) return;
 
           void Promise.all([
-            queryClient.refetchQueries({
-              queryKey: queryKeys.calendar.month(year, month, showDeleted, householdId),
-            }),
-            queryClient.refetchQueries({ queryKey: queryKeys.profiles.list(householdId) }),
+            queryClient.refetchQueries({ queryKey: taskKeys.all(householdId) }),
+            queryClient.refetchQueries({ queryKey: profileKeys.all(householdId!) }),
           ]);
         }}
       />
@@ -519,6 +521,14 @@ export default function Calendar() {
                               {task.status === 'completed' ? (
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-success/20 flex items-center justify-center">
                                   <span className="material-symbols-outlined text-success filled-icon text-[24px]">check_circle</span>
+                                </div>
+                              ) : task.status === 'expired' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-surface-2/10 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-surface-2/40 text-[24px]">history</span>
+                                </div>
+                              ) : task.status === 'past_due' ? (
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-warning/20 flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-warning text-[24px]">history_toggle_off</span>
                                 </div>
                               ) : (
                                 <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center">

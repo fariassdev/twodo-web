@@ -1,16 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import { useAuthScope, useSignOutMutation } from '../../../lib/queryHooks';
+import { useLogout } from '../../../api/auth';
 import ConnectPartner from '../../ConnectPartner';
 import TwodoLogo from '../../ui/TwodoLogo';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import FullPageLoading from '../../ui/FullPageLoading';
+import { useAuthState } from '@/src/context/AuthContext';
 
 
 export default function PendingAccess() {
   const { t } = useTranslation();
-  const { status } = useAuthScope();
-  const signOutMutation = useSignOutMutation();
+  const { status } = useAuthState();
+  const logoutMutation = useLogout();
 
   // Delegate to ConnectPartner for pending_household status
   if (status === 'pending_household') {
@@ -23,14 +24,14 @@ export default function PendingAccess() {
   }
 
 
-  const loading = signOutMutation.isPending;
+  const loading = logoutMutation.isPending;
   const pendingReason = status === 'pending_profile'
     ? t('auth.pending.reasonProfile')
     : t('auth.pending.reasonHousehold');
 
   async function handleSignOut() {
     try {
-      await signOutMutation.mutateAsync();
+      await logoutMutation.mutateAsync();
     } catch {
       // Keeping this intentionally silent because retry remains available in UI.
     }

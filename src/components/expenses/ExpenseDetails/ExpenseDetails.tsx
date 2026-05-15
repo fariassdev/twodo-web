@@ -7,12 +7,11 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import FullPageLoading from '../../ui/FullPageLoading';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
 import {
-  useAuthScope,
-  useDeleteExpenseMutation,
-  useExpenseByIdQuery,
-} from '../../../lib/queryHooks';
-import { cn } from '../../../utils';
-import { type ExpenseDetailsSearch } from '../../../router';
+  useDeleteExpense,
+  useExpense,
+} from '../../../api/expenses';
+import type { ExpenseDetailsSearch } from '../../../router';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 function SpecItem({ icon: Icon, label, value, colorClass = "text-primary" }: { icon: any, label: string, value: string, colorClass?: string }) {
   return (
@@ -37,8 +36,8 @@ export default function ExpenseDetails() {
   const search = useSearch({ strict: false }) as Partial<ExpenseDetailsSearch>;
   const { profileId } = useAuthScope();
 
-  const expenseQuery = useExpenseByIdQuery(expenseId);
-  const deleteExpenseMutation = useDeleteExpenseMutation();
+  const expenseQuery = useExpense(expenseId);
+  const deleteExpenseMutation = useDeleteExpense();
 
   const [actionError, setActionError] = useState<string | null>(null);
 

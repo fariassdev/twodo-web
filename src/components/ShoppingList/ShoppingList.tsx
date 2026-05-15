@@ -4,14 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import {
-  useAuthScope,
-  useAddShoppingItemMutation,
-  useDeleteShoppingItemMutation,
-  useShoppingItemsQuery,
-  useTogglePurchasedMutation,
-  useUpdateQuantityMutation,
-} from '../../lib/queryHooks';
-import { queryKeys } from '../../lib/queryKeys';
+  useAddShoppingItem,
+  useDeleteShoppingItem,
+  useShoppingItems,
+  useUpdateShoppingItemQuantity,
+  shoppingKeys,
+  useToggleShoppingItem,
+} from '../../api/shopping';
 import type { ShoppingItem as ShoppingItemType } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../ui/PageHeader';
@@ -21,6 +20,7 @@ import Button from '../ui/Button';
 import FullPageLoading from '../ui/FullPageLoading';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { shoppingItemSchema, type ShoppingItemFormValues } from '../../helpers/schemas';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 export default function ShoppingList() {
   const { t } = useTranslation();
@@ -29,11 +29,11 @@ export default function ShoppingList() {
   const isOnline = useOnlineStatus();
   const [actionError, setActionError] = React.useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const shoppingItemsQuery = useShoppingItemsQuery();
-  const addShoppingItemMutation = useAddShoppingItemMutation();
-  const togglePurchasedMutation = useTogglePurchasedMutation();
-  const updateQuantityMutation = useUpdateQuantityMutation();
-  const deleteShoppingItemMutation = useDeleteShoppingItemMutation();
+  const shoppingItemsQuery = useShoppingItems();
+  const addShoppingItemMutation = useAddShoppingItem();
+  const toggleShoppingItemMutation = useToggleShoppingItem();
+  const updateShoppingItemQuantityMutation = useUpdateShoppingItemQuantity();
+  const deleteShoppingItemMutation = useDeleteShoppingItem();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ShoppingItemFormValues>({
     resolver: zodResolver(shoppingItemSchema),
@@ -61,9 +61,9 @@ export default function ShoppingList() {
   async function handleToggle(item: ShoppingItemType) {
     setActionError(null);
     try {
-      await togglePurchasedMutation.mutateAsync({
+      await toggleShoppingItemMutation.mutateAsync({
         id: item.id,
-        currentValue: item.is_purchased,
+        isPurchased: item.is_purchased,
       });
     } catch (err) {
       console.error('Toggle error:', err);
@@ -76,7 +76,7 @@ export default function ShoppingList() {
     if (newQty < 1) return;
     setActionError(null);
     try {
-      await updateQuantityMutation.mutateAsync({ id: item.id, quantity: newQty });
+      await updateShoppingItemQuantityMutation.mutateAsync({ id: item.id, quantity: newQty });
     } catch (err) {
       console.error('Quantity error:', err);
       setActionError(t('queryState.mutationError'));
@@ -106,7 +106,7 @@ export default function ShoppingList() {
       <QueryErrorState
         onRetry={() => {
           if (!householdId) return;
-          void queryClient.refetchQueries({ queryKey: queryKeys.shopping.list(householdId) });
+          void queryClient.refetchQueries({ queryKey: shoppingKeys.all(householdId!) });
         }}
       />
     );

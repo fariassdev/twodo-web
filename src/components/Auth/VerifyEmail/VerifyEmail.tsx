@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResendVerificationMutation, useSignOutMutation } from '../../../lib/queryHooks';
+import { useResendVerification, useLogout } from '../../../api/auth';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
 import ErrorBanner from '../../ui/ErrorBanner';
@@ -12,8 +12,8 @@ interface VerifyEmailProps {
 
 export default function VerifyEmail({ email }: VerifyEmailProps) {
   const { t } = useTranslation();
-  const resendMutation = useResendVerificationMutation();
-  const signOutMutation = useSignOutMutation();
+  const resendMutation = useResendVerification();
+  const logoutMutation = useLogout();
 
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
@@ -32,7 +32,7 @@ export default function VerifyEmail({ email }: VerifyEmailProps) {
 
   async function handleSignOut() {
     try {
-      await signOutMutation.mutateAsync();
+      await logoutMutation.mutateAsync();
     } catch {
       // Silently ignore
     }

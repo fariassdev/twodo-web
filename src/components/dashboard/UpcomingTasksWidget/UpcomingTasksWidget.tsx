@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import { addDays } from 'date-fns';
+import { subDays, addDays } from 'date-fns';
 import { Zap } from 'lucide-react';
-import { useUpcomingTasksQuery, useProfilesQuery } from '../../../lib/queryHooks';
+import { useTasksInRange } from '../../../api/tasks';
+import { useProfiles } from '../../../api/profiles';
 import { getLocalDateString } from '../../../utils';
-import type { Task } from '../../../lib/types';
+import type { Task } from '../../../domain/task';
 import TaskAvatars from '../TaskAvatars';
 import ListRow from '../../ui/ListRow';
 import Badge from '../../ui/Badge';
@@ -15,14 +16,21 @@ export default function UpcomingTasksWidget() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   
-  // Fetch today and tomorrow
-  const { data: upcomingTasks = [], isPending } = useUpcomingTasksQuery(1);
-  const { data: profiles = [] } = useProfilesQuery();
+  const today = new Date();
+  const tasksQuery = useTasksInRange({
+    startDate: getLocalDateString(subDays(today, 7)),
+    endDate: getLocalDateString(addDays(today, 1)),
+  });
+  const allTasks = tasksQuery.data ?? [];
+  const { data: profiles = [] } = useProfiles();
 
-  const tomorrowStr = getLocalDateString(addDays(new Date(), 1));
-  const tomorrowTasks = upcomingTasks.filter((task) => task.date === tomorrowStr);
+  const tomorrowStr = getLocalDateString(addDays(today, 1));
+  const tomorrowTasks = useMemo(() => 
+    allTasks.filter((task) => task.date === tomorrowStr && task.type === 'task'),
+    [allTasks, tomorrowStr]
+  );
 
-  if (isPending || tomorrowTasks.length === 0) return null;
+  if (tasksQuery.isLoading || tomorrowTasks.length === 0) return null;
 
   // Group by moment of the day
   const groups: Record<string, Task[]> = {

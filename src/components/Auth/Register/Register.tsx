@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { useSignUpMutation } from '../../../lib/queryHooks';
+import { useSignUp } from '../../../api/auth';
 import { registerSchema, type RegisterFormValues } from '../../../helpers/schemas';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
@@ -15,7 +15,7 @@ import TwodoLogo from '../../ui/TwodoLogo';
 export default function Register() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const signUpMutation = useSignUpMutation();
+  const signUpMutation = useSignUp();
 
   const [serverError, setServerError] = useState<string | null>(null);
 

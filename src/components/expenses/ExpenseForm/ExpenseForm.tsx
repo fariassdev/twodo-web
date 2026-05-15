@@ -8,13 +8,11 @@ import FormField from '../../ui/FormField';
 import { NumericInput } from '../../ui/NumericInput';
 import TextInput from '../../ui/TextInput';
 import ScrollContainer from '../../ui/ScrollContainer/ScrollContainer';
-import {
-  useAuthScope,
-  useExpenseCategoriesQuery,
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+import { useExpenseCategories } from '../../../api/expenses';
+import { useProfiles } from '../../../api/profiles';
 import { expenseFormSchema, type ExpenseFormValues } from '../../../helpers/schemas';
 import { cn, parseAmountToCents, getLocalDateString } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 interface ExpenseFormProps {
   initialValues?: ExpenseFormValues;
@@ -60,8 +58,8 @@ export default function ExpenseForm({
     }
   }, [initialValues, reset]);
 
-  const categoriesQuery = useExpenseCategoriesQuery();
-  const profilesQuery = useProfilesQuery();
+  const categoriesQuery = useExpenseCategories();
+  const profilesQuery = useProfiles();
 
   const categories = categoriesQuery.data ?? [];
   const profiles = profilesQuery.data ?? [];

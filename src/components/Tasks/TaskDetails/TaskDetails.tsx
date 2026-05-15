@@ -1,13 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import {
-  useCompleteTaskMutation,
-  useDeleteTaskMutation,
-  useDeleteTaskSeriesMutation,
-  useLoveNoteForTaskQuery,
-  useProfileQuery,
-  useTaskByIdQuery,
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+import { useLoveNoteForTask } from '../../../api/love-notes';
+import { useTask, useDeleteTask, useDeleteTaskSeries, useCompleteTask } from '../../../api/tasks';
 import { 
   Trash2, 
   CookingPot, 
@@ -39,6 +32,7 @@ import { useOnlineStatus } from '../../../hooks/useOnlineStatus';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TaskDetailsSearch } from '@/src/router';
 import { ContextMenu } from '../../ui/ContextMenu/ContextMenu';
+import { useProfiles } from '@/src/api/profiles';
 
 
 
@@ -68,7 +62,7 @@ const statusToneMap: Record<string, 'primary' | 'success' | 'warning' | 'danger'
   pending: 'primary',
   completed: 'success',
   expired: 'neutral',
-  overdue: 'warning',
+  past_due: 'warning',
 };
 
 export default function TaskDetails() {
@@ -80,68 +74,79 @@ export default function TaskDetails() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const taskQuery = useTaskByIdQuery(taskId);
+  const taskQuery = useTask({ id: taskId });
   const task = taskQuery.data ?? null;
-  const profilesQuery = useProfilesQuery();
+  const profilesQuery = useProfiles();
 
-  const loveNoteQuery = useLoveNoteForTaskQuery(task?.id);
-  const assignedProfileQuery = useProfileQuery(task?.assigned_to ?? undefined);
+  const loveNoteQuery = useLoveNoteForTask(task?.id);
 
-  const completeTaskMutation = useCompleteTaskMutation();
-  const deleteTaskMutation = useDeleteTaskMutation();
-  const deleteTaskSeriesMutation = useDeleteTaskSeriesMutation();
+  const deleteTaskMutation = useDeleteTask();
+  const deleteTaskSeriesMutation = useDeleteTaskSeries();
+  const completeTaskMutation = useCompleteTask();
 
   const loveNote = loveNoteQuery.data ?? null;
-  const assignedProfile = assignedProfileQuery.data ?? null;
+  const assignedProfile = task?.assigned_profile;
   const profiles = profilesQuery.data ?? [];
 
-  const loading = taskQuery.isPending || (Boolean(task) && profilesQuery.isLoading);
+  const loading = taskQuery.isLoading || (Boolean(task) && profilesQuery.isLoading);
+  const acting = completeTaskMutation.isPending || deleteTaskMutation.isPending || deleteTaskSeriesMutation.isPending;
 
-  const acting =
-    completeTaskMutation.isPending ||
-    deleteTaskMutation.isPending ||
-    deleteTaskSeriesMutation.isPending;
-
-  const isStale = taskQuery.isStale || loveNoteQuery.isStale;
-  const isFetching = taskQuery.isFetching || loveNoteQuery.isFetching;
+  const isStale = loveNoteQuery.isStale || taskQuery.isStale;
+  const isFetching = loveNoteQuery.isFetching || taskQuery.isFetching;
 
   async function handleDeleteSingle() {
     if (!task) return;
-    setActionError(null);
     try {
-      await deleteTaskMutation.mutateAsync(task.id);
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setActionError(null);
+      await deleteTaskMutation.mutateAsync({ taskId: task.id });
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
   async function handleDeleteFollowing() {
     if (!task || !task.recurrence_id) return;
-    setActionError(null);
     try {
-      await deleteTaskSeriesMutation.mutateAsync({
-        recurrenceId: task.recurrence_id,
-        fromDate: task.date || undefined,
+      setActionError(null);
+      await deleteTaskSeriesMutation.mutateAsync({ 
+        seriesId: task.recurrence_id, 
+        fromDate: task.date || undefined 
       });
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
   async function handleDeleteAll() {
     if (!task || !task.recurrence_id) return;
-    setActionError(null);
     try {
-      await deleteTaskSeriesMutation.mutateAsync({ recurrenceId: task.recurrence_id });
-      navigate({ to: '/' });
-    } catch (err) {
-      setActionError(t('queryState.mutationError'));
+      setActionError(null);
+      await deleteTaskSeriesMutation.mutateAsync({ 
+        seriesId: task.recurrence_id 
+      });
+      setDeleteModalOpen(false);
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.deleteError'));
     }
   }
 
-  const handleDeleteClick = async () => {
+  async function handleComplete() {
+    if (!task) return;
+    try {
+      setActionError(null);
+      await completeTaskMutation.mutateAsync({ taskId: task.id });
+      navigate({ to: (from === 'calendar' ? '/calendar' : '/') });
+    } catch {
+      setActionError(t('tasks.details.completeError'));
+    }
+  }
+
+  const handleDeleteClick = () => {
     if (!task) return;
     if (task.recurrence_id) {
       setDeleteModalOpen(true);
@@ -149,13 +154,7 @@ export default function TaskDetails() {
     }
     
     if (window.confirm(t('taskDetails.confirmDeleteSingle'))) {
-      setActionError(null);
-      try {
-        await deleteTaskMutation.mutateAsync(task.id);
-        navigate({ to: '/' });
-      } catch {
-        setActionError(t('queryState.mutationError'));
-      }
+      handleDeleteSingle();
     }
   };
 
@@ -181,13 +180,7 @@ export default function TaskDetails() {
   if (loading) return <FullPageLoading message={t('loading')} />;
 
   if (!task) {
-    if (taskQuery.isError) return <QueryErrorState onRetry={() => void taskQuery.refetch()} />;
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-surface-2/60">{t('taskDetails.notFound')}</p>
-        <Button onClick={() => navigate({ to: '/' })} size="sm" variant="ghost">{t('cta.back')}</Button>
-      </div>
-    );
+    return <QueryErrorState onRetry={() => window.location.reload()} />;
   }
 
   const CategoryIcon = categoryIcons[task.category || 'other'];
@@ -351,6 +344,17 @@ export default function TaskDetails() {
             </div>
           )}
 
+          {task.status === 'expired' && (
+            <div className="mb-10 p-6 rounded-3xl bg-surface-1 border border-border-subtle flex gap-4 items-start shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-surface-2/5 flex items-center justify-center shrink-0">
+                <Clock size={20} className="text-surface-2/40" />
+              </div>
+              <p className="text-sm text-surface-2/60 leading-relaxed font-medium">
+                {t(`taskDetails.expiration.${task.frequency === 'daily' ? 'daily' : 'others'}`)}
+              </p>
+            </div>
+          )}
+
           {actionError && <ErrorBanner className="mb-6" message={actionError} />}
 
           {/* Fixed Bottom Action Bar */}
@@ -360,7 +364,7 @@ export default function TaskDetails() {
                 <Button 
                   className="flex-1 justify-center shadow-button h-14 rounded-2xl group" 
                   onClick={() => navigate({ to: '/task/$taskId/assignment', params: { taskId: task.id } })}
-                  disabled={acting}
+                  disabled={acting || task.status === 'expired'}
                 >
                   <CheckCircle2 size={24} className="group-active:scale-125 transition-transform" />
                   {t('taskDetails.markCompleted')}

@@ -14,14 +14,13 @@ import {
   normalizeSearchText,
 } from '../../../helpers/expense';
 import {
-  useAuthScope,
-  useExpensesActivityFeedInfiniteQuery,
-  useExpenseCategoriesQuery,
-  useExpensesListQuery,
-  useProfilesQuery,
-} from '../../../lib/queryHooks';
+  useExpensesFeed,
+  useExpenseCategories,
+  useExpenses,
+} from '../../../api/expenses';
+import { useProfiles } from '../../../api/profiles';
 import type { ExpensesListSearch } from '../../../router';
-import { cn } from '../../../utils';
+import { useAuthScope } from '@/src/context/AuthContext';
 
 function formatDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -94,8 +93,8 @@ export default function ExpensesListPage() {
     ? searchParams.toDate
     : defaultDateRange.toDate;
 
-  const categoriesQuery = useExpenseCategoriesQuery();
-  const profilesQuery = useProfilesQuery();
+  const categoriesQuery = useExpenseCategories();
+  const profilesQuery = useProfiles();
 
   const [categoryId, setCategoryId] = useState<string>(searchParams.categoryId ?? 'all');
   const [paidByProfileId, setPaidByProfileId] = useState<string>(searchParams.paidByProfileId ?? 'all');
@@ -246,8 +245,8 @@ export default function ExpensesListPage() {
     navigate({ to: '/expenses/list', search: {}, replace: true });
   };
 
-  const expensesQuery = useExpensesListQuery(filters, { enabled: hasActiveFilters });
-  const activityQuery = useExpensesActivityFeedInfiniteQuery(20, { enabled: !hasActiveFilters });
+  const expensesQuery = useExpenses(filters);
+  const activityQuery = useExpensesFeed(20);
 
   const expenses = expensesQuery.data ?? [];
   const visibleExpenses = useMemo(() => {

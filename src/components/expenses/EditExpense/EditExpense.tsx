@@ -6,9 +6,9 @@ import ErrorBanner from '../../ui/ErrorBanner';
 import FullPageLoading from '../../ui/FullPageLoading';
 import ExpenseForm from '../ExpenseForm';
 import {
-  useUpdateExpenseMutation,
-  useExpenseByIdQuery,
-} from '../../../lib/queryHooks';
+  useUpdateExpense,
+  useExpense,
+} from '../../../api/expenses';
 import { type ExpenseFormValues } from '../../../helpers/schemas';
 import { parseAmountToCents, centsToInput } from '../../../utils';
 
@@ -17,8 +17,8 @@ export default function EditExpense() {
   const navigate = useNavigate();
   const { expenseId } = useParams({ strict: false }) as { expenseId: string };
 
-  const expenseQuery = useExpenseByIdQuery(expenseId);
-  const updateExpenseMutation = useUpdateExpenseMutation();
+  const expenseQuery = useExpense(expenseId);
+  const updateExpenseMutation = useUpdateExpense();
 
   const expense = expenseQuery.data;
 
@@ -42,13 +42,13 @@ export default function EditExpense() {
     setActionError(null);
     try {
       await updateExpenseMutation.mutateAsync({
-        expenseId,
-        input: {
-          amountCents: parsedAmountCents,
-          categoryId: values.categoryId,
-          paidByProfileId: values.paidByProfileId,
+        id: expenseId,
+        update: {
+          amount_cents: parsedAmountCents,
+          category_id: values.categoryId,
+          paid_by_profile_id: values.paidByProfileId,
           description: values.description,
-          expenseDate: values.expenseDate,
+          expense_date: values.expenseDate,
         },
       });
 

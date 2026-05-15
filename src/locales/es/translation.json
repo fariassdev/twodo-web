@@ -158,9 +158,6 @@
     "filterStatus": "Estado",
     "filterAssignee": "Persona",
     "statusAll": "Todos",
-    "assigneeAll": "Cualquiera",
-    "assigneeShared": "Compartido",
-    "assigneeUnassigned": "Sin asignar",
     "clearFilters": "Limpiar",
     "sheetHandleAriaLabel": "Arrastrar para expandir o contraer la lista del día",
     "deletedBadge": "Eliminada"
@@ -443,7 +440,11 @@
       "pending": "Pendiente",
       "completed": "Completada",
       "expired": "Expirada",
-      "overdue": "Atrasada"
+      "past_due": "Atrasada"
+    },
+    "expiration": {
+      "daily": "Esta tarea diaria ha expirado. Solo puedes completar tareas de hoy o ayer.",
+      "others": "Esta tarea ha expirado. Solo puedes completar tareas de los últimos 7 días."
     },
     "assignment": {
       "strictRotation": "Rotación estricta",
