@@ -14,6 +14,7 @@ import {
 import type { CreateTaskInput, UpdateTaskInput, AssignmentOverride, AssignmentOverrideType } from '../../domain/types';
 import type { Task } from '../../domain/task';
 import { taskKeys } from './keys';
+import { metricKeys } from '../metrics';
 
 // ── Invalidation helper (private to module) ────────────────────────────────────
 
@@ -22,11 +23,14 @@ const useInvalidateTasks = () => {
   const { householdId } = useAuthScope();
 
   return {
-    invalidateAll: () =>
-      queryClient.invalidateQueries({ queryKey: taskKeys.all(householdId) }),
+    invalidateAll: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.all(householdId) });
+      queryClient.invalidateQueries({ queryKey: metricKeys.all(householdId) });
+    },
     invalidateDetail: (taskId: string) => {
       queryClient.invalidateQueries({ queryKey: taskKeys.detail(householdId, taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.completions(householdId, taskId) });
+      queryClient.invalidateQueries({ queryKey: metricKeys.all(householdId) });
     },
   };
 };
